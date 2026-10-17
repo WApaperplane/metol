@@ -1,5 +1,7 @@
 # T1 —— 统一证据与 LUT 基础语义（2026-10-16）
 
+> **2026-10-17 更新**：四池完整历史dump已核验；肤色池对应A17，标准池对应A12。镜像源→运行时池的启动复制代码已定位并仿真通过，取代下文“运行时字节读不到/来源未解”的旧状态；硬件消费及恢复效果仍分开验收。详见[运行时来源审计](LUT_RUNTIME_SOURCE_AUDIT_2026-10-17.md)。
+
 > **任务来源**：`FILMLAB_LUT_NATIVE_UI_GOALS_2026-10-16.md` §5（T1，P0：统一证据和 LUT 基础语义）。
 > **执行**：全离线；工具 `test_server/lutpipe/{lut_slot_scan.py, lut_slot_verify.py}`；证据 `lutpipe/logs/lut_slot_verify_2026-10-16.txt`（63 行）+ 两份 JSON。
 > **口径修正**：本文即 GOALS §2 两项修正的**执行结果**（对 `LUT_ROADMAP_RESTART_2026-10-16` 初稿错误的收口）。

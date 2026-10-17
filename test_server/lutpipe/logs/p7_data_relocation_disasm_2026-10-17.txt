@@ -1,0 +1,224 @@
+Offline disassembly; source p7_a2.bin md5 712c6fd0a49371ec05ce94c367b0d5c7
+
+Window 0x80011600..0x80011674
+80011600 ldr      ip, [pc, #0x154]
+80011604 msr      cpsr_xc, ip
+80011608 mrc      p15, #0, r4, c1, c0, #0
+8001160c orr      r4, r4, #4
+80011610 orr      r4, r4, #0x1800
+80011614 mvn      r1, #2
+80011618 and      r4, r4, r1
+8001161c mcr      p15, #0, r4, c1, c0, #0
+80011620 ldr      r1, [pc, #0x138]
+80011624 ldr      r2, [pc, #0x138]
+80011628 ldr      r3, [pc, #0x138]
+8001162c pld      [r1, #0xc0]
+80011630 vldmia   r1!, {d0, d1, d2, d3, d4, d5, d6, d7}
+80011634 vstmia   r2!, {d0, d1, d2, d3, d4, d5, d6, d7}
+80011638 cmp      r2, r3
+8001163c blo      #0x8001162c
+80011640 ldr      r2, [pc, #0x124]
+80011644 ldr      r3, [pc, #0x124]
+80011648 mov      r4, #0
+8001164c mov      r5, #0
+80011650 mov      r6, #0
+80011654 mov      r7, #0
+80011658 mov      r8, #0
+8001165c mov      sb, #0
+80011660 mov      sl, #0
+80011664 mov      fp, #0
+80011668 stm      r2!, {r4, r5, r6, r7, r8, sb, sl, fp}
+8001166c cmp      r2, r3
+80011670 blo      #0x80011668
+
+Window 0x80011760..0x8001176c
+80011760 .word 0x8079bdc0
+80011764 .word 0x81006000
+80011768 .word 0x813ee4c0
+
+Window 0x8009a3c8..0x8009a428
+8009a3c8 push     {r3, r4, r5, lr}
+8009a3cc mov      r5, r1
+8009a3d0 mov      r4, r2
+8009a3d4 bl       #0x802aebd8
+8009a3d8 mov      r1, r5
+8009a3dc mov      r2, r4
+8009a3e0 pop      {r3, r4, r5, lr}
+8009a3e4 b        #0x802b03d4
+8009a3e8 push     {r3, r4, r5, lr}
+8009a3ec mov      r5, r1
+8009a3f0 mov      r4, r2
+8009a3f4 bl       #0x802aebd8
+8009a3f8 mov      r1, r5
+8009a3fc mov      r2, r4
+8009a400 pop      {r3, r4, r5, lr}
+8009a404 b        #0x802b03f4
+8009a408 push     {r3, r4, r5, lr}
+8009a40c mov      r5, r1
+8009a410 mov      r4, r2
+8009a414 bl       #0x802aebd8
+8009a418 mov      r1, r5
+8009a41c mov      r2, r4
+8009a420 pop      {r3, r4, r5, lr}
+8009a424 b        #0x802b0414
+
+Window 0x802b03d4..0x802b0414
+802b03d4 push     {r3, r4, r5, lr}
+802b03d8 mov      r5, r1
+802b03dc mov      r4, r2
+802b03e0 bl       #0x8029b480
+802b03e4 mov      r1, r5
+802b03e8 mov      r2, r4
+802b03ec pop      {r3, r4, r5, lr}
+802b03f0 b        #0x8029ba84
+802b03f4 push     {r3, r4, r5, lr}
+802b03f8 mov      r5, r1
+802b03fc mov      r4, r2
+802b0400 bl       #0x8029b480
+802b0404 mov      r1, r5
+802b0408 mov      r2, r4
+802b040c pop      {r3, r4, r5, lr}
+802b0410 b        #0x8029baa4
+
+Window 0x8029ba84..0x8029bae4
+8029ba84 push     {r3, r4, r5, lr}
+8029ba88 mov      r5, r1
+8029ba8c mov      r4, r2
+8029ba90 bl       #0x80381a60
+8029ba94 mov      r1, r5
+8029ba98 mov      r2, r4
+8029ba9c pop      {r3, r4, r5, lr}
+8029baa0 b        #0x80381abc
+8029baa4 push     {r3, r4, r5, lr}
+8029baa8 mov      r5, r1
+8029baac mov      r4, r2
+8029bab0 bl       #0x80381a60
+8029bab4 mov      r1, r5
+8029bab8 mov      r2, r4
+8029babc pop      {r3, r4, r5, lr}
+8029bac0 b        #0x80381b2c
+8029bac4 push     {r3, r4, r5, lr}
+8029bac8 mov      r5, r1
+8029bacc mov      r4, r2
+8029bad0 bl       #0x80381a60
+8029bad4 mov      r1, r5
+8029bad8 mov      r2, r4
+8029badc pop      {r3, r4, r5, lr}
+8029bae0 b        #0x80381b4c
+
+Window 0x80381abc..0x80381adc
+80381abc push     {r3, r4, r5, lr}
+80381ac0 mov      r5, r1
+80381ac4 mov      r4, r2
+80381ac8 bl       #0x80382054
+80381acc mov      r1, r5
+80381ad0 mov      r2, r4
+80381ad4 pop      {r3, r4, r5, lr}
+80381ad8 b        #0x80382b30
+
+Window 0x80381b2c..0x80381b6c
+80381b2c push     {r3, r4, r5, lr}
+80381b30 mov      r5, r1
+80381b34 mov      r4, r2
+80381b38 bl       #0x80382054
+80381b3c mov      r1, r5
+80381b40 mov      r2, r4
+80381b44 pop      {r3, r4, r5, lr}
+80381b48 b        #0x803837d0
+80381b4c push     {r3, r4, r5, lr}
+80381b50 mov      r5, r1
+80381b54 mov      r4, r2
+80381b58 bl       #0x80382054
+80381b5c mov      r1, r5
+80381b60 mov      r2, r4
+80381b64 pop      {r3, r4, r5, lr}
+80381b68 b        #0x80383800
+
+Window 0x803837d0..0x803837f0
+803837d0 cmp      r2, #1
+803837d4 ldreq    r3, [pc, #0x14]
+803837d8 ldreq    r0, [pc, #0x14]
+803837dc ldrne    r3, [pc, #0x14]
+803837e0 ldrne    r0, [pc, #0x14]
+803837e4 cmp      r1, #1
+803837e8 moveq    r0, r3
+803837ec bx       lr
+
+Window 0x8011e254..0x8011e2e8
+8011e254 ldrb     r7, [r0, #0x20]
+8011e258 ldrb     r4, [r0, #0x21]
+8011e25c ldrb     r6, [r0, #0x22]
+8011e260 bl       #0x800f6474
+8011e264 bl       #0x800f1b58
+8011e268 cmp      r0, #0
+8011e26c bne      #0x8011e2d0
+8011e270 bl       #0x80099194
+8011e274 mov      r2, r4
+8011e278 mov      r1, r6
+8011e27c bl       #0x8009a3e8
+8011e280 mov      r4, r0
+8011e284 cmp      r4, #0
+8011e288 beq      #0x8011e320
+8011e28c mov      r0, #2
+8011e290 ldr      r1, [pc, #0xc8]
+8011e294 mov      r2, #0xb4
+8011e298 ldr      r3, [pc, #0xc4]
+8011e29c str      r0, [sp]
+8011e2a0 ldr      r0, [pc, #0xc0]
+8011e2a4 bl       #0x804dbb08
+8011e2a8 mov      r1, #0
+8011e2ac mov      r0, r4
+8011e2b0 mov      r2, r5
+8011e2b4 mov      r3, r1
+8011e2b8 bl       #0x80179314
+8011e2bc subs     r4, r0, #0
+8011e2c0 blt      #0x8011e304
+8011e2c4 mov      r0, r4
+8011e2c8 add      sp, sp, #0xc
+8011e2cc pop      {r4, r5, r6, r7, pc}
+8011e2d0 bl       #0x80099194
+8011e2d4 mov      r2, r4
+8011e2d8 mov      r1, r7
+8011e2dc bl       #0x8009a408
+8011e2e0 mov      r4, r0
+8011e2e4 b        #0x8011e284
+
+Initial MMU identity-map construction (not a proof of later page tables):
+80000190 mov      r0, #0x81000000
+80000194 mov      r1, #0
+80000198 ldr      r2, [pc, #0xa0]
+8000019c orr      r3, r1, r2
+800001a0 str      r3, [r0], #4
+800001a4 adds     r1, r1, #0x100000
+800001a8 bne      #0x8000019c
+800001ac ldr      r0, [pc, #0x90]
+800001b0 mov      r1, #0x80000000
+800001b4 ldr      r2, [pc, #0x8c]
+800001b8 orr      r3, r1, r2
+800001bc str      r3, [r0], #4
+800001c0 adds     r1, r1, #0x100000
+800001c4 mov      r4, #0x81000000
+800001c8 cmp      r1, r4
+800001cc bne      #0x800001b8
+800001d0 mov      r0, #4
+800001d4 mcr      p15, #0, r0, c2, c0, #2
+800001d8 ldr      r0, [pc, #0x6c]
+800001dc mcr      p15, #0, r0, c2, c0, #1
+800001e0 mcr      p15, #0, r0, c2, c0, #0
+800001e4 mov      r0, #0x80000000
+800001e8 mcr      p15, #0, r0, c12, c0, #0
+800001ec ldr      r0, [pc, #0x5c]
+800001f0 mcr      p15, #0, r0, c10, c2, #0
+800001f4 ldr      r0, [pc, #0x58]
+800001f8 mcr      p15, #0, r0, c10, c2, #1
+800001fc ldr      r0, [pc, #0x54]
+80000200 mcr      p15, #0, r0, c3, c0, #0
+80000204 dsb      sy
+80000208 mcr      p15, #0, r0, c8, c7, #0
+8000020c mcr      p15, #0, r0, c7, c5, #6
+80000210 dsb      sy
+80000214 isb      sy
+80000218 mrc      p15, #0, r0, c1, c0, #0
+8000021c orr      r0, r0, #1
+80000220 mcr      p15, #0, r0, c1, c0, #0
+80000224 isb      sy

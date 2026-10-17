@@ -1,0 +1,61 @@
+{
+  "note": "Copied existing local WorkBuddy artifacts; no new camera capture in this audit.",
+  "source_directory": "E:/NXWA/.tmp",
+  "files": [
+    {
+      "name": "dram_chk.bin",
+      "bytes": 262144,
+      "sha256": "894a134dd69b8d7b2b6734af9a40259119176c0b11fd9b835284af10adbe6d01"
+    },
+    {
+      "name": "dram_final.bin",
+      "bytes": 262144,
+      "sha256": "c84d83348a5fdeb9dee74c3aee67d579e01571f5c5e4025ad610687f62e1108d"
+    },
+    {
+      "name": "dram_pools_256k.bin",
+      "bytes": 262144,
+      "sha256": "c84d83348a5fdeb9dee74c3aee67d579e01571f5c5e4025ad610687f62e1108d"
+    },
+    {
+      "name": "dram_pools_after.bin",
+      "bytes": 196608,
+      "sha256": "fc674b52b8db192e73c1a3fb2bb3b571c0bf1a45537d18444bb610bf06abc05c"
+    },
+    {
+      "name": "identity_a12.bin",
+      "bytes": 19712,
+      "sha256": "a0692509fba710a54cf47c9ce4eb05c3ef2c9a7e514b3948468b3d415f99b056"
+    },
+    {
+      "name": "neg_test.bin",
+      "bytes": 19712,
+      "sha256": "64ec5d72c931b14069d2963b5e160bbf09242ffad6c712f4cf08ae032f7028bd"
+    },
+    {
+      "name": "nx_cmasearch.c",
+      "bytes": 3035,
+      "sha256": "9e50c59bc38ecbca751edaad9aef46640e76b453dbcc67114dd425cdbc5e5eba"
+    },
+    {
+      "name": "nx_lutdump.c",
+      "bytes": 2413,
+      "sha256": "ee6fe202dd1d0edfb1043001c6e7dc6708dd84bf36186918d01b0538a0881b8b"
+    },
+    {
+      "name": "nx_lutwrite.c",
+      "bytes": 3941,
+      "sha256": "49d5beecbf5c4ebb9cbb1adf0f727f8d4df0d48c9f66a2b6041292789449ec23"
+    },
+    {
+      "name": "nx_std_neg.c",
+      "bytes": 2401,
+      "sha256": "2afd99ba1868833de7fc64eaef39b922611a1f2c5bee303e9be12b43a034ee01"
+    },
+    {
+      "name": "nx_std_restore.c",
+      "bytes": 2383,
+      "sha256": "c36301c4baf72591df925206e4f0752ae31643109ee8feced061b3f503ce1593"
+    }
+  ]
+}

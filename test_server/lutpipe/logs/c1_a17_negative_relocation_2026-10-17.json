@@ -1,0 +1,674 @@
+{
+  "image": {
+    "path": "E:\\NXWA\\fw\\v1.12\\a2\\p7_a2.bin",
+    "bytes": 12075648,
+    "md5": "712c6fd0a49371ec05ce94c367b0d5c7",
+    "sha256": "df7f991317021949786eca5088180250816350245375f374cb176c9675764b93"
+  },
+  "relocation": {
+    "source": 2155462080,
+    "source_offset": 7978432,
+    "destination": 2164285440,
+    "end_exclusive": 2168382656,
+    "size": 4097216,
+    "delta": 8823360,
+    "slots": [
+      {
+        "slot": "A00",
+        "file_offset": 8753856,
+        "runtime": 2165060864,
+        "inside_copy": true
+      },
+      {
+        "slot": "A01",
+        "file_offset": 8773568,
+        "runtime": 2165080576,
+        "inside_copy": true
+      },
+      {
+        "slot": "A02",
+        "file_offset": 8793280,
+        "runtime": 2165100288,
+        "inside_copy": true
+      },
+      {
+        "slot": "A03",
+        "file_offset": 8812992,
+        "runtime": 2165120000,
+        "inside_copy": true
+      },
+      {
+        "slot": "A04",
+        "file_offset": 8832704,
+        "runtime": 2165139712,
+        "inside_copy": true
+      },
+      {
+        "slot": "A05",
+        "file_offset": 8852416,
+        "runtime": 2165159424,
+        "inside_copy": true
+      },
+      {
+        "slot": "A06",
+        "file_offset": 8872128,
+        "runtime": 2165179136,
+        "inside_copy": true
+      },
+      {
+        "slot": "A07",
+        "file_offset": 8891840,
+        "runtime": 2165198848,
+        "inside_copy": true
+      },
+      {
+        "slot": "A08",
+        "file_offset": 8911552,
+        "runtime": 2165218560,
+        "inside_copy": true
+      },
+      {
+        "slot": "A09",
+        "file_offset": 8931264,
+        "runtime": 2165238272,
+        "inside_copy": true
+      },
+      {
+        "slot": "A10",
+        "file_offset": 8950976,
+        "runtime": 2165257984,
+        "inside_copy": true
+      },
+      {
+        "slot": "A11",
+        "file_offset": 8970688,
+        "runtime": 2165277696,
+        "inside_copy": true
+      },
+      {
+        "slot": "A12",
+        "file_offset": 8990400,
+        "runtime": 2165297408,
+        "inside_copy": true
+      },
+      {
+        "slot": "A13",
+        "file_offset": 9010112,
+        "runtime": 2165317120,
+        "inside_copy": true
+      },
+      {
+        "slot": "A14",
+        "file_offset": 9029824,
+        "runtime": 2165336832,
+        "inside_copy": true
+      },
+      {
+        "slot": "A15",
+        "file_offset": 9049536,
+        "runtime": 2165356544,
+        "inside_copy": true
+      },
+      {
+        "slot": "A16",
+        "file_offset": 9069248,
+        "runtime": 2165376256,
+        "inside_copy": true
+      },
+      {
+        "slot": "A17",
+        "file_offset": 9088960,
+        "runtime": 2165395968,
+        "inside_copy": true
+      },
+      {
+        "slot": "A18",
+        "file_offset": 9108672,
+        "runtime": 2165415680,
+        "inside_copy": true
+      },
+      {
+        "slot": "A19",
+        "file_offset": 9128384,
+        "runtime": 2165435392,
+        "inside_copy": true
+      },
+      {
+        "slot": "B00",
+        "file_offset": 9149120,
+        "runtime": 2165456128,
+        "inside_copy": true
+      },
+      {
+        "slot": "B01",
+        "file_offset": 9168832,
+        "runtime": 2165475840,
+        "inside_copy": true
+      },
+      {
+        "slot": "B02",
+        "file_offset": 9188544,
+        "runtime": 2165495552,
+        "inside_copy": true
+      },
+      {
+        "slot": "B03",
+        "file_offset": 9208256,
+        "runtime": 2165515264,
+        "inside_copy": true
+      },
+      {
+        "slot": "B04",
+        "file_offset": 9227968,
+        "runtime": 2165534976,
+        "inside_copy": true
+      },
+      {
+        "slot": "B05",
+        "file_offset": 9247680,
+        "runtime": 2165554688,
+        "inside_copy": true
+      },
+      {
+        "slot": "B06",
+        "file_offset": 9267392,
+        "runtime": 2165574400,
+        "inside_copy": true
+      },
+      {
+        "slot": "B07",
+        "file_offset": 9287104,
+        "runtime": 2165594112,
+        "inside_copy": true
+      },
+      {
+        "slot": "B08",
+        "file_offset": 9306816,
+        "runtime": 2165613824,
+        "inside_copy": true
+      },
+      {
+        "slot": "B09",
+        "file_offset": 9326528,
+        "runtime": 2165633536,
+        "inside_copy": true
+      },
+      {
+        "slot": "B10",
+        "file_offset": 9346240,
+        "runtime": 2165653248,
+        "inside_copy": true
+      },
+      {
+        "slot": "B11",
+        "file_offset": 9365952,
+        "runtime": 2165672960,
+        "inside_copy": true
+      },
+      {
+        "slot": "B12",
+        "file_offset": 9385664,
+        "runtime": 2165692672,
+        "inside_copy": true
+      },
+      {
+        "slot": "B13",
+        "file_offset": 9405376,
+        "runtime": 2165712384,
+        "inside_copy": true
+      },
+      {
+        "slot": "B14",
+        "file_offset": 9425088,
+        "runtime": 2165732096,
+        "inside_copy": true
+      },
+      {
+        "slot": "B15",
+        "file_offset": 9444800,
+        "runtime": 2165751808,
+        "inside_copy": true
+      },
+      {
+        "slot": "B16",
+        "file_offset": 9464512,
+        "runtime": 2165771520,
+        "inside_copy": true
+      },
+      {
+        "slot": "B17",
+        "file_offset": 9484224,
+        "runtime": 2165791232,
+        "inside_copy": true
+      },
+      {
+        "slot": "B18",
+        "file_offset": 9503936,
+        "runtime": 2165810944,
+        "inside_copy": true
+      },
+      {
+        "slot": "B19",
+        "file_offset": 9523648,
+        "runtime": 2165830656,
+        "inside_copy": true
+      },
+      {
+        "slot": "B20",
+        "file_offset": 9543360,
+        "runtime": 2165850368,
+        "inside_copy": true
+      },
+      {
+        "slot": "B21",
+        "file_offset": 9563072,
+        "runtime": 2165870080,
+        "inside_copy": true
+      }
+    ],
+    "consumer_pointer_tables": [
+      {
+        "name": "view_static",
+        "address": 2151167984,
+        "entries": [
+          {
+            "index": 0,
+            "runtime": 2165297408,
+            "source_file_offset": 8990400,
+            "static_slots": [
+              "A12"
+            ]
+          },
+          {
+            "index": 1,
+            "runtime": 2165317120,
+            "source_file_offset": 9010112,
+            "static_slots": [
+              "A13"
+            ]
+          },
+          {
+            "index": 2,
+            "runtime": 2165336832,
+            "source_file_offset": 9029824,
+            "static_slots": [
+              "A14"
+            ]
+          },
+          {
+            "index": 3,
+            "runtime": 2165395968,
+            "source_file_offset": 9088960,
+            "static_slots": [
+              "A17"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "still_static",
+        "address": 2151165020,
+        "entries": [
+          {
+            "index": 0,
+            "runtime": 2165415680,
+            "source_file_offset": 9108672,
+            "static_slots": [
+              "A18"
+            ]
+          },
+          {
+            "index": 1,
+            "runtime": 2165395968,
+            "source_file_offset": 9088960,
+            "static_slots": [
+              "A17"
+            ]
+          },
+          {
+            "index": 2,
+            "runtime": 2165435392,
+            "source_file_offset": 9128384,
+            "static_slots": [
+              "A19"
+            ]
+          },
+          {
+            "index": 3,
+            "runtime": 2165356544,
+            "source_file_offset": 9049536,
+            "static_slots": [
+              "A15"
+            ]
+          },
+          {
+            "index": 4,
+            "runtime": 2165336832,
+            "source_file_offset": 9029824,
+            "static_slots": [
+              "A14"
+            ]
+          },
+          {
+            "index": 5,
+            "runtime": 2165376256,
+            "source_file_offset": 9069248,
+            "static_slots": [
+              "A16"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "bv",
+        "address": 2151164672,
+        "entries": [
+          {
+            "index": 0,
+            "runtime": 2165751808,
+            "source_file_offset": 9444800,
+            "static_slots": [
+              "B15"
+            ]
+          },
+          {
+            "index": 1,
+            "runtime": 2165791232,
+            "source_file_offset": 9484224,
+            "static_slots": [
+              "B17"
+            ]
+          },
+          {
+            "index": 2,
+            "runtime": 2165732096,
+            "source_file_offset": 9425088,
+            "static_slots": [
+              "B14"
+            ]
+          },
+          {
+            "index": 3,
+            "runtime": 2165771520,
+            "source_file_offset": 9464512,
+            "static_slots": [
+              "B16"
+            ]
+          },
+          {
+            "index": 4,
+            "runtime": 2165850368,
+            "source_file_offset": 9543360,
+            "static_slots": [
+              "B20"
+            ]
+          },
+          {
+            "index": 5,
+            "runtime": 2165297408,
+            "source_file_offset": 8990400,
+            "static_slots": [
+              "A12"
+            ]
+          },
+          {
+            "index": 6,
+            "runtime": 2165870080,
+            "source_file_offset": 9563072,
+            "static_slots": [
+              "B21"
+            ]
+          },
+          {
+            "index": 7,
+            "runtime": 2165317120,
+            "source_file_offset": 9010112,
+            "static_slots": [
+              "A13"
+            ]
+          },
+          {
+            "index": 8,
+            "runtime": 2165692672,
+            "source_file_offset": 9385664,
+            "static_slots": [
+              "B12"
+            ]
+          },
+          {
+            "index": 9,
+            "runtime": 2165810944,
+            "source_file_offset": 9503936,
+            "static_slots": [
+              "B18"
+            ]
+          },
+          {
+            "index": 10,
+            "runtime": 2165712384,
+            "source_file_offset": 9405376,
+            "static_slots": [
+              "B13"
+            ]
+          },
+          {
+            "index": 11,
+            "runtime": 2165830656,
+            "source_file_offset": 9523648,
+            "static_slots": [
+              "B19"
+            ]
+          }
+        ]
+      }
+    ],
+    "copy_code": [
+      {
+        "address": 2147554848,
+        "word": 3852407096
+      },
+      {
+        "address": 2147554852,
+        "word": 3852411192
+      },
+      {
+        "address": 2147554856,
+        "word": 3852415288
+      },
+      {
+        "address": 2147554860,
+        "word": 4124176576
+      },
+      {
+        "address": 2147554864,
+        "word": 3971025680
+      },
+      {
+        "address": 2147554868,
+        "word": 3970042640
+      },
+      {
+        "address": 2147554872,
+        "word": 3780247555
+      },
+      {
+        "address": 2147554876,
+        "word": 989855738
+      }
+    ]
+  },
+  "dumps": [],
+  "hardware_consumption_verified": false,
+  "emulation": {
+    "pass": true,
+    "pc": 2147554880,
+    "source_end": 2159559296,
+    "destination_end": 2168382656,
+    "copied": {
+      "bytes": 4097216,
+      "md5": "6b87fc0b9d4c83faa67e9e4470cf57b1",
+      "sha256": "51d6572659585937dcb623b10d64e00d636231ae585a89c83b8397de2ab805c5"
+    },
+    "stubs": [],
+    "mmio_mapped": false,
+    "static_view_selector": {
+      "address": 2151167952,
+      "selections": [
+        {
+          "r1": 0,
+          "r2": 0,
+          "pool": "skin",
+          "address": 2165395968,
+          "pass": true,
+          "copied_table": {
+            "bytes": 19712,
+            "md5": "4016e7ca231d270f63ecdb3edf09f938",
+            "sha256": "385d10cfc93e714f4bac3daf1e3619d4844f5b623979ea04466cb323a55c1161"
+          }
+        },
+        {
+          "r1": 1,
+          "r2": 0,
+          "pool": "cine",
+          "address": 2165336832,
+          "pass": true,
+          "copied_table": {
+            "bytes": 19712,
+            "md5": "67f11607141ac3e908e885b097362dce",
+            "sha256": "ffb718a520e370f240e637ce66327a810815f95b1b5c99ca2cd7dc0c091ddd0b"
+          }
+        },
+        {
+          "r1": 0,
+          "r2": 1,
+          "pool": "mono",
+          "address": 2165317120,
+          "pass": true,
+          "copied_table": {
+            "bytes": 19712,
+            "md5": "3ca4586270248ad4bcdb823341102ab7",
+            "sha256": "db76710c67ff4d76b4db15a7b750d32aa94ec74c952ab87f9ac6cf6413c4e9de"
+          }
+        },
+        {
+          "r1": 1,
+          "r2": 1,
+          "pool": "std",
+          "address": 2165297408,
+          "pass": true,
+          "copied_table": {
+            "bytes": 19712,
+            "md5": "058de5f8e5677b1cfe8eeb910b8e89ff",
+            "sha256": "7b6fcf5e7d55ec6ae75a8348d467252983b7a4571128b1d14b0b55fbbeebb568"
+          }
+        }
+      ]
+    },
+    "scope": "copy loop and static selector only; not full boot, cache, DMA or rendered effect"
+  },
+  "candidate": {
+    "path": "E:\\NXWA\\fw\\v1.12\\c1-a17-negative\\p7_c1_a17.bin",
+    "bytes": 12075648,
+    "md5": "55d1ad22e5c48e8c61bfd507f67cc52b",
+    "sha256": "7bdb788e80bb99947ef715437cf260e3a436b1d609398d069e901824d07c3b1d",
+    "bytes_changed": 14696,
+    "first_offset": 9088960,
+    "last_offset": 9108622,
+    "changes_confined_to_a12": false,
+    "changed_slots": [
+      {
+        "slot": "A17",
+        "file_offset": 9088960,
+        "runtime": 2165395968,
+        "inside_copy": true,
+        "bytes_changed": 14696,
+        "first_offset": 0,
+        "last_offset": 19662,
+        "new": {
+          "bytes": 19712,
+          "md5": "4a74f5cc8a3c7cc39be0659bb97b3fde",
+          "sha256": "3ad2d649a5e74ae7a52658558164d7e95828e67fdbace13a6747b3e3c7532f9f"
+        },
+        "original": {
+          "bytes": 19712,
+          "md5": "4016e7ca231d270f63ecdb3edf09f938",
+          "sha256": "385d10cfc93e714f4bac3daf1e3619d4844f5b623979ea04466cb323a55c1161"
+        }
+      }
+    ],
+    "changes_confined_to_known_slots": true,
+    "a12_runtime": 2165297408,
+    "a12": {
+      "bytes": 19712,
+      "md5": "058de5f8e5677b1cfe8eeb910b8e89ff",
+      "sha256": "7b6fcf5e7d55ec6ae75a8348d467252983b7a4571128b1d14b0b55fbbeebb568"
+    },
+    "emulation": {
+      "pass": true,
+      "pc": 2147554880,
+      "source_end": 2159559296,
+      "destination_end": 2168382656,
+      "copied": {
+        "bytes": 4097216,
+        "md5": "3156bf523eab3a9212fe97c3150e5f78",
+        "sha256": "b0a4cbad555f7e7a497b939b77cf6634b5c6232196eed87c6728ed33851d51e1"
+      },
+      "stubs": [],
+      "mmio_mapped": false,
+      "static_view_selector": {
+        "address": 2151167952,
+        "selections": [
+          {
+            "r1": 0,
+            "r2": 0,
+            "pool": "skin",
+            "address": 2165395968,
+            "pass": true,
+            "copied_table": {
+              "bytes": 19712,
+              "md5": "4a74f5cc8a3c7cc39be0659bb97b3fde",
+              "sha256": "3ad2d649a5e74ae7a52658558164d7e95828e67fdbace13a6747b3e3c7532f9f"
+            }
+          },
+          {
+            "r1": 1,
+            "r2": 0,
+            "pool": "cine",
+            "address": 2165336832,
+            "pass": true,
+            "copied_table": {
+              "bytes": 19712,
+              "md5": "67f11607141ac3e908e885b097362dce",
+              "sha256": "ffb718a520e370f240e637ce66327a810815f95b1b5c99ca2cd7dc0c091ddd0b"
+            }
+          },
+          {
+            "r1": 0,
+            "r2": 1,
+            "pool": "mono",
+            "address": 2165317120,
+            "pass": true,
+            "copied_table": {
+              "bytes": 19712,
+              "md5": "3ca4586270248ad4bcdb823341102ab7",
+              "sha256": "db76710c67ff4d76b4db15a7b750d32aa94ec74c952ab87f9ac6cf6413c4e9de"
+            }
+          },
+          {
+            "r1": 1,
+            "r2": 1,
+            "pool": "std",
+            "address": 2165297408,
+            "pass": true,
+            "copied_table": {
+              "bytes": 19712,
+              "md5": "058de5f8e5677b1cfe8eeb910b8e89ff",
+              "sha256": "7b6fcf5e7d55ec6ae75a8348d467252983b7a4571128b1d14b0b55fbbeebb568"
+            }
+          }
+        ]
+      },
+      "scope": "copy loop and static selector only; not full boot, cache, DMA or rendered effect"
+    }
+  }
+}

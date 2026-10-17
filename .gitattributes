@@ -8,3 +8,8 @@
 *.mo binary
 *.bin binary
 *.arm binary
+
+# Preserve the exact captured bytes covered by the LUT evidence manifests.
+raw8/gates/lut/memory_audit_2026-10-17/** -text -whitespace
+raw8/gates/lut/ondevice_selection_2026-10-17/** -text -whitespace
+raw8/gates/lut/verifier_offline_2026-10-17/** -text -whitespace

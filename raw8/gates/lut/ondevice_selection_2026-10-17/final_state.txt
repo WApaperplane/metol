@@ -1,0 +1,4 @@
+4277.39 25.87
+2.82 2.59 2.54 3/131 305
+  247 root      25:09 /usr/apps/com.samsung.di-camera-app/bin/di-camera-app
+  308 root       0:00 /opt/usr/nx-ks/busybox grep -E [l]utobserve|[l]utsentinel|di-camera-app

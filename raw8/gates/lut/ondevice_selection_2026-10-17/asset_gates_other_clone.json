@@ -1,0 +1,719 @@
+{
+  "ts": "2026-10-17T22:28:07",
+  "host": "192.168.0.106",
+  "probe_enabled": false,
+  "gates": [
+    {
+      "id": "G0",
+      "name": "上机可达",
+      "state": "BLOCKED",
+      "purpose": "21 端口能连上",
+      "on_fail": "退回离机轨（离机轨已清空，则可休整或做加固）",
+      "checks": [
+        {
+          "id": "G0-1",
+          "title": "探测 192.168.0.106:21",
+          "state": "BLOCKED",
+          "detail": "已用 --no-probe 跳过网络探测",
+          "next": "相机开机 + 与 PC 同网段；确认 telnetd/ftpd 已起（REFUSED 与 TIMEOUT 含义不同，铁律 90）"
+        }
+      ]
+    },
+    {
+      "id": "G1",
+      "name": "上机安全",
+      "state": "FAIL",
+      "purpose": "preflight 8 项全绿",
+      "on_fail": "修完再上机；绝不在红门下开机身",
+      "checks": [
+        {
+          "id": "G1-1",
+          "title": "21 端口可达",
+          "state": "BLOCKED",
+          "detail": "已用 --no-probe 跳过网络探测",
+          "next": "退，绝不盲发（铁律 90）"
+        },
+        {
+          "id": "G1-2",
+          "title": "EV_MOBILE.sh 非死循环版",
+          "state": "PASS",
+          "detail": "scripts/EV_MOBILE.sh = 54a308b8 OK(scripts/nx-rc 版（重写版）)；scripts/nx-rc/EV_MOBILE.sh = 54a308b8 OK(scripts/nx-rc 版（重写版）)；deploy/filmlab/EV_MOBILE.sh = 2657352e OK(deploy/filmlab 版（安全）)",
+          "next": "机上仍需核对 md5（铁律 105：别挂缺陷槽位）"
+        },
+        {
+          "id": "G1-3",
+          "title": "上机前负载基线",
+          "state": "MANUAL",
+          "detail": "需机上取心跳/uptime/ps 计数并落 SD 卡",
+          "next": "上机第一件事采集，作为'拖垮'的参照物（铁律 104）"
+        },
+        {
+          "id": "G1-4",
+          "title": "telnet 一会话只发一条命令",
+          "state": "MANUAL",
+          "detail": "纪律项，工具无法代签",
+          "next": "结果一律 FTP 拉，不信回显"
+        },
+        {
+          "id": "G1-5",
+          "title": "只读（O_RDONLY）",
+          "state": "PASS",
+          "detail": "7 个脚本，只读声明=一致",
+          "next": "写操作必须单列并写明回滚方法"
+        },
+        {
+          "id": "G1-6",
+          "title": "单段 <=768 regs",
+          "state": "PASS",
+          "detail": "50 段，最大 768 regs（3072 B）",
+          "next": "压死过相机 5 次；危险的是单次运行的循环总量（铁律 88）"
+        },
+        {
+          "id": "G1-7",
+          "title": "telnet 起的进程用 setsid",
+          "state": "PASS",
+          "detail": "runbook RUN 全 setsid=True，one_shot=True",
+          "next": "见 runbook.txt"
+        },
+        {
+          "id": "G1-7c",
+          "title": "上机包 lint（U6/PW/LUT：setsid/CRLF/安全闸标）",
+          "state": "PASS",
+          "detail": "U6=2脚本/OK；PW=1脚本/OK；LUT=3脚本/OK",
+          "next": "写类内嵌安全闸（cmasafe/mcb）"
+        },
+        {
+          "id": "G1-8",
+          "title": "脚本 CRLF/语法/执行位 CI",
+          "state": "FAIL",
+          "detail": "d\"}�s\tg�\u0016b(W https://github.com/microsoft/WSL/issues �c�N�e�\u00020",
+          "next": "python test_server/tools/apply_ci_fixes.py"
+        }
+      ]
+    },
+    {
+      "id": "G2",
+      "name": "U11 路线判定",
+      "state": "PASS",
+      "purpose": "/dev/mem 四点对照有结论",
+      "on_fail": "无（只读，等 U1 结果）",
+      "checks": [
+        {
+          "id": "G2-1",
+          "title": "四点对照完整性",
+          "state": "PASS",
+          "detail": "四点均有记录",
+          "next": ""
+        },
+        {
+          "id": "G2b",
+          "title": "LUT 缓冲不可读 -> 才评估 lutmod",
+          "state": "PASS",
+          "detail": "两个 LUT 缓冲均不可读",
+          "next": "评估 p7_full.lutmod.bin 前【必须重推目标地址】（CMA 窗口会变）"
+        }
+      ]
+    },
+    {
+      "id": "G3",
+      "name": "原生 UI 上机",
+      "state": "PASS",
+      "purpose": "离线五页出图 + 每处文本设了字体",
+      "on_fail": "回去改 UI",
+      "checks": [
+        {
+          "id": "G3-1",
+          "title": "离线 N 页预渲染出图",
+          "state": "PASS",
+          "detail": "10 张 720x480 PNG（ui_page_p1..p10），md5 互不相同",
+          "next": ""
+        },
+        {
+          "id": "G3-2",
+          "title": "每处文本都设了字体",
+          "state": "PASS",
+          "detail": "font_set 共 238 次；10 页 ink 全 >0 且与磁盘 PNG 一一对应",
+          "next": ""
+        },
+        {
+          "id": "G3-3",
+          "title": "nxfilmui 同款序列实测 PASS",
+          "state": "PASS",
+          "detail": "报告含同款调用序列实测 PASS",
+          "next": "应用 nxfilmui v4 后再上机"
+        }
+      ]
+    },
+    {
+      "id": "G4",
+      "name": "允许改 p7",
+      "state": "PASS",
+      "purpose": "U4 通过 且 U5 回滚演练成功",
+      "on_fail": "永远停在'用户态 + ISP 参数块'层",
+      "checks": [
+        {
+          "id": "G4-0",
+          "title": "不可再生资产在手",
+          "state": "PASS",
+          "detail": "官方 SLP 335MB；emmcbak/ 已备份",
+          "next": "缺：[] -> 没备份不许碰 p7"
+        },
+        {
+          "id": "G4-0b",
+          "title": "危险样本已隔离",
+          "state": "PASS",
+          "detail": "已隔离 p7_patched.bin.DO-NOT-FLASH；已隔离 NX500_FW_v1.12.zip.TRUNCATED-DO-NOT-USE",
+          "next": "改 0x200 破坏复位期 DACR 写入 => 不可刷，必须从可刷路径移走"
+        },
+        {
+          "id": "G4-1",
+          "title": "U4 官方升级路径接受重打包 SLP",
+          "state": "PASS",
+          "detail": "accepted=True, telnet_alive_after=True",
+          "next": "被拒就去看三个拒点 [IMG-CRC32] / [IMG-MAGIC] / [PROJECT]"
+        },
+        {
+          "id": "G4-2",
+          "title": "U5 单分区回滚演练",
+          "state": "PASS",
+          "detail": "drills=1, ok=True",
+          "next": "★ boot0/boot1 绝不碰"
+        }
+      ]
+    },
+    {
+      "id": "G5",
+      "name": "固件改动生效判据",
+      "state": "BLOCKED",
+      "purpose": "存在客观判据且能区分'值变了'与'被消费'",
+      "on_fail": "不许改（铁律 86）",
+      "checks": [
+        {
+          "id": "G5-1",
+          "title": "静态判据 ID 全表 >=184",
+          "state": "PASS",
+          "detail": "raw8\\p7\\tuning_keys.txt 命中 184 个唯一 eIQ_ID_*",
+          "next": "这是'改了生效没有'的唯一客观判据（st cap iqr）"
+        },
+        {
+          "id": "G5-2",
+          "title": "机上 iqr 值 dump",
+          "state": "PASS",
+          "detail": "dump 含 184 个唯一 ID",
+          "next": "不足则确认是否被截断（铁律 94）"
+        },
+        {
+          "id": "G5-3",
+          "title": "能区分'值变了'与'参数被消费'",
+          "state": "BLOCKED",
+          "detail": "关联表 缺失：raw8\\gates\\u1\\iqr_epmc_map.tsv",
+          "next": "需要 iqr(184 ID) x epmc(两块 21x10) 的关联（目标矩阵 C14）；★ 且必须记录写入瞬间的运行时槽号（U14）"
+        }
+      ]
+    }
+  ],
+  "capabilities": [
+    {
+      "name": "L1  用户态脚本 / 胶片引擎 / 3D LUT 写入",
+      "state": "PASS",
+      "blocked_by": "无门控",
+      "note": "已实机验证，常态允许"
+    },
+    {
+      "name": "L2  原生 EFL UI 上机（nxfilmui）",
+      "state": "FAIL",
+      "blocked_by": "G0,G1",
+      "note": "需人在机身判定'没拖垮'（铁律 104）"
+    },
+    {
+      "name": "路径 B  ISP 参数块写入（21 槽）",
+      "state": "FAIL",
+      "blocked_by": "G0,G1,G5",
+      "note": "生效判据是硬前置（铁律 86）"
+    },
+    {
+      "name": "U4  SLP 重打包无害实验",
+      "state": "FAIL",
+      "blocked_by": "G0,G1",
+      "note": "D3 已完成；先做等长只改 1 字节的最小实验"
+    },
+    {
+      "name": "L4  改 p7 分区",
+      "state": "FAIL",
+      "blocked_by": "G0,G1",
+      "note": "★ 唯一不可逆的一层"
+    }
+  ],
+  "u1_lint": {
+    "exists": true,
+    "scripts": [
+      "a1_preflight.sh",
+      "u1_epmc.sh",
+      "u1_input.sh",
+      "u1_iqr.sh",
+      "u1_probe.sh",
+      "u1_rd.sh",
+      "w6_cap_usage.sh"
+    ],
+    "segs": [
+      {
+        "script": "u1_epmc.sh",
+        "name": "epmc8_base",
+        "addr": "0x20820000+0",
+        "bytes": 16,
+        "regs": 4
+      },
+      {
+        "script": "u1_epmc.sh",
+        "name": "epmc0_0x1300",
+        "addr": "0x20820000+0x1300",
+        "bytes": 2048,
+        "regs": 512
+      },
+      {
+        "script": "u1_epmc.sh",
+        "name": "epmc2_base",
+        "addr": "0x20820000+0",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ctl_dram_94000000",
+        "addr": "0x94000000",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ctl_dev_2082b000",
+        "addr": "0x2082b000",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "lut_a_810fd100",
+        "addr": "0x810fd100",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "lut_b_81115200",
+        "addr": "0x81115200",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_20800000",
+        "addr": "0x20800000",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_20800c00",
+        "addr": "0x20800c00",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_20801800",
+        "addr": "0x20801800",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_20802400",
+        "addr": "0x20802400",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_20803000",
+        "addr": "0x20803000",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_20803c00",
+        "addr": "0x20803c00",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_20804800",
+        "addr": "0x20804800",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_20805400",
+        "addr": "0x20805400",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_20806000",
+        "addr": "0x20806000",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_20806c00",
+        "addr": "0x20806c00",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_20807800",
+        "addr": "0x20807800",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_20808400",
+        "addr": "0x20808400",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_20809000",
+        "addr": "0x20809000",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_20809c00",
+        "addr": "0x20809c00",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_2080a800",
+        "addr": "0x2080a800",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_2080b400",
+        "addr": "0x2080b400",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_2080c000",
+        "addr": "0x2080c000",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_2080cc00",
+        "addr": "0x2080cc00",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_2080d800",
+        "addr": "0x2080d800",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_2080e400",
+        "addr": "0x2080e400",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_2080f000",
+        "addr": "0x2080f000",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_2080fc00",
+        "addr": "0x2080fc00",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_20810800",
+        "addr": "0x20810800",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_20811400",
+        "addr": "0x20811400",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_20812000",
+        "addr": "0x20812000",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_20812c00",
+        "addr": "0x20812c00",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_20813800",
+        "addr": "0x20813800",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_20814400",
+        "addr": "0x20814400",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_20815000",
+        "addr": "0x20815000",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_20815c00",
+        "addr": "0x20815c00",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_20816800",
+        "addr": "0x20816800",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_20817400",
+        "addr": "0x20817400",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_20818000",
+        "addr": "0x20818000",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_20818c00",
+        "addr": "0x20818c00",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_20819800",
+        "addr": "0x20819800",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_2081a400",
+        "addr": "0x2081a400",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_2081b000",
+        "addr": "0x2081b000",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_2081bc00",
+        "addr": "0x2081bc00",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_2081c800",
+        "addr": "0x2081c800",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_2081d400",
+        "addr": "0x2081d400",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_2081e000",
+        "addr": "0x2081e000",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_2081ec00",
+        "addr": "0x2081ec00",
+        "bytes": 3072,
+        "regs": 768
+      },
+      {
+        "script": "u1_rd.sh",
+        "name": "ipc_2081f800",
+        "addr": "0x2081f800",
+        "bytes": 2048,
+        "regs": 512
+      }
+    ],
+    "max_regs": 768,
+    "readonly": true,
+    "one_shot": true,
+    "lf_only": true,
+    "shebang": true,
+    "setsid_ok": true,
+    "waits": [
+      60,
+      90,
+      90,
+      90,
+      90,
+      90,
+      90,
+      90,
+      90,
+      90,
+      90,
+      90,
+      90,
+      60,
+      60,
+      60,
+      90,
+      90,
+      90,
+      90
+    ],
+    "problems": []
+  },
+  "u6_lint": {
+    "exists": true,
+    "scripts": [
+      "u6_lut.sh",
+      "u6_probe.sh"
+    ],
+    "segs": [],
+    "max_regs": 0,
+    "readonly": true,
+    "one_shot": true,
+    "lf_only": true,
+    "shebang": true,
+    "setsid_ok": true,
+    "waits": [
+      60,
+      60,
+      60,
+      60,
+      60,
+      60,
+      60,
+      60,
+      60,
+      60,
+      60,
+      60,
+      60,
+      60,
+      60,
+      60,
+      60,
+      60,
+      60,
+      60,
+      60
+    ],
+    "problems": []
+  },
+  "pwsend_lint": {
+    "exists": true,
+    "scripts": [
+      "pwcalib.sh"
+    ],
+    "segs": [],
+    "max_regs": 0,
+    "readonly": true,
+    "one_shot": true,
+    "lf_only": true,
+    "shebang": true,
+    "setsid_ok": true,
+    "waits": [
+      60,
+      60,
+      60,
+      60,
+      60,
+      60,
+      60,
+      60
+    ],
+    "problems": []
+  },
+  "lutpipe_lint": {
+    "exists": true,
+    "scripts": [
+      "build_lut_tools.sh",
+      "lut_backend.sh",
+      "lutpick.sh"
+    ],
+    "segs": [],
+    "max_regs": 0,
+    "readonly": true,
+    "one_shot": true,
+    "lf_only": true,
+    "shebang": true,
+    "setsid_ok": true,
+    "waits": [],
+    "problems": []
+  }
+}

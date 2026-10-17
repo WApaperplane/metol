@@ -1,0 +1,577 @@
+{
+  "image": {
+    "path": "E:\\NXWA\\fw\\v1.12\\a2\\p7_a2.bin",
+    "bytes": 12075648,
+    "md5": "712c6fd0a49371ec05ce94c367b0d5c7",
+    "sha256": "df7f991317021949786eca5088180250816350245375f374cb176c9675764b93"
+  },
+  "relocation": {
+    "source": 2155462080,
+    "source_offset": 7978432,
+    "destination": 2164285440,
+    "end_exclusive": 2168382656,
+    "size": 4097216,
+    "delta": 8823360,
+    "slots": [
+      {
+        "slot": "A00",
+        "file_offset": 8753856,
+        "runtime": 2165060864,
+        "inside_copy": true
+      },
+      {
+        "slot": "A01",
+        "file_offset": 8773568,
+        "runtime": 2165080576,
+        "inside_copy": true
+      },
+      {
+        "slot": "A02",
+        "file_offset": 8793280,
+        "runtime": 2165100288,
+        "inside_copy": true
+      },
+      {
+        "slot": "A03",
+        "file_offset": 8812992,
+        "runtime": 2165120000,
+        "inside_copy": true
+      },
+      {
+        "slot": "A04",
+        "file_offset": 8832704,
+        "runtime": 2165139712,
+        "inside_copy": true
+      },
+      {
+        "slot": "A05",
+        "file_offset": 8852416,
+        "runtime": 2165159424,
+        "inside_copy": true
+      },
+      {
+        "slot": "A06",
+        "file_offset": 8872128,
+        "runtime": 2165179136,
+        "inside_copy": true
+      },
+      {
+        "slot": "A07",
+        "file_offset": 8891840,
+        "runtime": 2165198848,
+        "inside_copy": true
+      },
+      {
+        "slot": "A08",
+        "file_offset": 8911552,
+        "runtime": 2165218560,
+        "inside_copy": true
+      },
+      {
+        "slot": "A09",
+        "file_offset": 8931264,
+        "runtime": 2165238272,
+        "inside_copy": true
+      },
+      {
+        "slot": "A10",
+        "file_offset": 8950976,
+        "runtime": 2165257984,
+        "inside_copy": true
+      },
+      {
+        "slot": "A11",
+        "file_offset": 8970688,
+        "runtime": 2165277696,
+        "inside_copy": true
+      },
+      {
+        "slot": "A12",
+        "file_offset": 8990400,
+        "runtime": 2165297408,
+        "inside_copy": true
+      },
+      {
+        "slot": "A13",
+        "file_offset": 9010112,
+        "runtime": 2165317120,
+        "inside_copy": true
+      },
+      {
+        "slot": "A14",
+        "file_offset": 9029824,
+        "runtime": 2165336832,
+        "inside_copy": true
+      },
+      {
+        "slot": "A15",
+        "file_offset": 9049536,
+        "runtime": 2165356544,
+        "inside_copy": true
+      },
+      {
+        "slot": "A16",
+        "file_offset": 9069248,
+        "runtime": 2165376256,
+        "inside_copy": true
+      },
+      {
+        "slot": "A17",
+        "file_offset": 9088960,
+        "runtime": 2165395968,
+        "inside_copy": true
+      },
+      {
+        "slot": "A18",
+        "file_offset": 9108672,
+        "runtime": 2165415680,
+        "inside_copy": true
+      },
+      {
+        "slot": "A19",
+        "file_offset": 9128384,
+        "runtime": 2165435392,
+        "inside_copy": true
+      },
+      {
+        "slot": "B00",
+        "file_offset": 9149120,
+        "runtime": 2165456128,
+        "inside_copy": true
+      },
+      {
+        "slot": "B01",
+        "file_offset": 9168832,
+        "runtime": 2165475840,
+        "inside_copy": true
+      },
+      {
+        "slot": "B02",
+        "file_offset": 9188544,
+        "runtime": 2165495552,
+        "inside_copy": true
+      },
+      {
+        "slot": "B03",
+        "file_offset": 9208256,
+        "runtime": 2165515264,
+        "inside_copy": true
+      },
+      {
+        "slot": "B04",
+        "file_offset": 9227968,
+        "runtime": 2165534976,
+        "inside_copy": true
+      },
+      {
+        "slot": "B05",
+        "file_offset": 9247680,
+        "runtime": 2165554688,
+        "inside_copy": true
+      },
+      {
+        "slot": "B06",
+        "file_offset": 9267392,
+        "runtime": 2165574400,
+        "inside_copy": true
+      },
+      {
+        "slot": "B07",
+        "file_offset": 9287104,
+        "runtime": 2165594112,
+        "inside_copy": true
+      },
+      {
+        "slot": "B08",
+        "file_offset": 9306816,
+        "runtime": 2165613824,
+        "inside_copy": true
+      },
+      {
+        "slot": "B09",
+        "file_offset": 9326528,
+        "runtime": 2165633536,
+        "inside_copy": true
+      },
+      {
+        "slot": "B10",
+        "file_offset": 9346240,
+        "runtime": 2165653248,
+        "inside_copy": true
+      },
+      {
+        "slot": "B11",
+        "file_offset": 9365952,
+        "runtime": 2165672960,
+        "inside_copy": true
+      },
+      {
+        "slot": "B12",
+        "file_offset": 9385664,
+        "runtime": 2165692672,
+        "inside_copy": true
+      },
+      {
+        "slot": "B13",
+        "file_offset": 9405376,
+        "runtime": 2165712384,
+        "inside_copy": true
+      },
+      {
+        "slot": "B14",
+        "file_offset": 9425088,
+        "runtime": 2165732096,
+        "inside_copy": true
+      },
+      {
+        "slot": "B15",
+        "file_offset": 9444800,
+        "runtime": 2165751808,
+        "inside_copy": true
+      },
+      {
+        "slot": "B16",
+        "file_offset": 9464512,
+        "runtime": 2165771520,
+        "inside_copy": true
+      },
+      {
+        "slot": "B17",
+        "file_offset": 9484224,
+        "runtime": 2165791232,
+        "inside_copy": true
+      },
+      {
+        "slot": "B18",
+        "file_offset": 9503936,
+        "runtime": 2165810944,
+        "inside_copy": true
+      },
+      {
+        "slot": "B19",
+        "file_offset": 9523648,
+        "runtime": 2165830656,
+        "inside_copy": true
+      },
+      {
+        "slot": "B20",
+        "file_offset": 9543360,
+        "runtime": 2165850368,
+        "inside_copy": true
+      },
+      {
+        "slot": "B21",
+        "file_offset": 9563072,
+        "runtime": 2165870080,
+        "inside_copy": true
+      }
+    ],
+    "consumer_pointer_tables": [
+      {
+        "name": "view_static",
+        "address": 2151167984,
+        "entries": [
+          {
+            "index": 0,
+            "runtime": 2165297408,
+            "source_file_offset": 8990400,
+            "static_slots": [
+              "A12"
+            ]
+          },
+          {
+            "index": 1,
+            "runtime": 2165317120,
+            "source_file_offset": 9010112,
+            "static_slots": [
+              "A13"
+            ]
+          },
+          {
+            "index": 2,
+            "runtime": 2165336832,
+            "source_file_offset": 9029824,
+            "static_slots": [
+              "A14"
+            ]
+          },
+          {
+            "index": 3,
+            "runtime": 2165395968,
+            "source_file_offset": 9088960,
+            "static_slots": [
+              "A17"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "still_static",
+        "address": 2151165020,
+        "entries": [
+          {
+            "index": 0,
+            "runtime": 2165415680,
+            "source_file_offset": 9108672,
+            "static_slots": [
+              "A18"
+            ]
+          },
+          {
+            "index": 1,
+            "runtime": 2165395968,
+            "source_file_offset": 9088960,
+            "static_slots": [
+              "A17"
+            ]
+          },
+          {
+            "index": 2,
+            "runtime": 2165435392,
+            "source_file_offset": 9128384,
+            "static_slots": [
+              "A19"
+            ]
+          },
+          {
+            "index": 3,
+            "runtime": 2165356544,
+            "source_file_offset": 9049536,
+            "static_slots": [
+              "A15"
+            ]
+          },
+          {
+            "index": 4,
+            "runtime": 2165336832,
+            "source_file_offset": 9029824,
+            "static_slots": [
+              "A14"
+            ]
+          },
+          {
+            "index": 5,
+            "runtime": 2165376256,
+            "source_file_offset": 9069248,
+            "static_slots": [
+              "A16"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "bv",
+        "address": 2151164672,
+        "entries": [
+          {
+            "index": 0,
+            "runtime": 2165751808,
+            "source_file_offset": 9444800,
+            "static_slots": [
+              "B15"
+            ]
+          },
+          {
+            "index": 1,
+            "runtime": 2165791232,
+            "source_file_offset": 9484224,
+            "static_slots": [
+              "B17"
+            ]
+          },
+          {
+            "index": 2,
+            "runtime": 2165732096,
+            "source_file_offset": 9425088,
+            "static_slots": [
+              "B14"
+            ]
+          },
+          {
+            "index": 3,
+            "runtime": 2165771520,
+            "source_file_offset": 9464512,
+            "static_slots": [
+              "B16"
+            ]
+          },
+          {
+            "index": 4,
+            "runtime": 2165850368,
+            "source_file_offset": 9543360,
+            "static_slots": [
+              "B20"
+            ]
+          },
+          {
+            "index": 5,
+            "runtime": 2165297408,
+            "source_file_offset": 8990400,
+            "static_slots": [
+              "A12"
+            ]
+          },
+          {
+            "index": 6,
+            "runtime": 2165870080,
+            "source_file_offset": 9563072,
+            "static_slots": [
+              "B21"
+            ]
+          },
+          {
+            "index": 7,
+            "runtime": 2165317120,
+            "source_file_offset": 9010112,
+            "static_slots": [
+              "A13"
+            ]
+          },
+          {
+            "index": 8,
+            "runtime": 2165692672,
+            "source_file_offset": 9385664,
+            "static_slots": [
+              "B12"
+            ]
+          },
+          {
+            "index": 9,
+            "runtime": 2165810944,
+            "source_file_offset": 9503936,
+            "static_slots": [
+              "B18"
+            ]
+          },
+          {
+            "index": 10,
+            "runtime": 2165712384,
+            "source_file_offset": 9405376,
+            "static_slots": [
+              "B13"
+            ]
+          },
+          {
+            "index": 11,
+            "runtime": 2165830656,
+            "source_file_offset": 9523648,
+            "static_slots": [
+              "B19"
+            ]
+          }
+        ]
+      }
+    ],
+    "copy_code": [
+      {
+        "address": 2147554848,
+        "word": 3852407096
+      },
+      {
+        "address": 2147554852,
+        "word": 3852411192
+      },
+      {
+        "address": 2147554856,
+        "word": 3852415288
+      },
+      {
+        "address": 2147554860,
+        "word": 4124176576
+      },
+      {
+        "address": 2147554864,
+        "word": 3971025680
+      },
+      {
+        "address": 2147554868,
+        "word": 3970042640
+      },
+      {
+        "address": 2147554872,
+        "word": 3780247555
+      },
+      {
+        "address": 2147554876,
+        "word": 989855738
+      }
+    ]
+  },
+  "dumps": [
+    {
+      "path": "E:\\NXWA\\nx500-modding-work\\raw8\\gates\\lut\\ondevice_selection_2026-10-17\\pools.bin",
+      "address": 2165243904,
+      "expected_file_offset": 8936896,
+      "bytes": 262144,
+      "md5": "dcd845de72d4f2e456b5ce511ea46346",
+      "sha256": "c84d83348a5fdeb9dee74c3aee67d579e01571f5c5e4025ad610687f62e1108d",
+      "bytes_changed": 0,
+      "first_offset": null,
+      "last_offset": null,
+      "exact_image_match": true,
+      "pools": {
+        "std": {
+          "complete": true,
+          "runtime": 2165297408,
+          "expected_file_offset": 8990400,
+          "bytes": 19712,
+          "md5": "058de5f8e5677b1cfe8eeb910b8e89ff",
+          "sha256": "7b6fcf5e7d55ec6ae75a8348d467252983b7a4571128b1d14b0b55fbbeebb568",
+          "bytes_changed": 0,
+          "first_offset": null,
+          "last_offset": null,
+          "padding_byte_nonzero_count": 0,
+          "matching_static_slots": [
+            "A12"
+          ]
+        },
+        "mono": {
+          "complete": true,
+          "runtime": 2165317120,
+          "expected_file_offset": 9010112,
+          "bytes": 19712,
+          "md5": "3ca4586270248ad4bcdb823341102ab7",
+          "sha256": "db76710c67ff4d76b4db15a7b750d32aa94ec74c952ab87f9ac6cf6413c4e9de",
+          "bytes_changed": 0,
+          "first_offset": null,
+          "last_offset": null,
+          "padding_byte_nonzero_count": 0,
+          "matching_static_slots": [
+            "A13"
+          ]
+        },
+        "cine": {
+          "complete": true,
+          "runtime": 2165336832,
+          "expected_file_offset": 9029824,
+          "bytes": 19712,
+          "md5": "67f11607141ac3e908e885b097362dce",
+          "sha256": "ffb718a520e370f240e637ce66327a810815f95b1b5c99ca2cd7dc0c091ddd0b",
+          "bytes_changed": 0,
+          "first_offset": null,
+          "last_offset": null,
+          "padding_byte_nonzero_count": 0,
+          "matching_static_slots": [
+            "A14"
+          ]
+        },
+        "skin": {
+          "complete": true,
+          "runtime": 2165395968,
+          "expected_file_offset": 9088960,
+          "bytes": 19712,
+          "md5": "4016e7ca231d270f63ecdb3edf09f938",
+          "sha256": "385d10cfc93e714f4bac3daf1e3619d4844f5b623979ea04466cb323a55c1161",
+          "bytes_changed": 0,
+          "first_offset": null,
+          "last_offset": null,
+          "padding_byte_nonzero_count": 0,
+          "matching_static_slots": [
+            "A17"
+          ]
+        }
+      }
+    }
+  ],
+  "hardware_consumption_verified": false
+}

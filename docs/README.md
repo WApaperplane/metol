@@ -19,6 +19,8 @@ docs/
 
 | 文档 | 定位 |
 |---|---|
+| [`LUT_A17_ONDEVICE_C1_2026-10-17.md`](current/LUT_A17_ONDEVICE_C1_2026-10-17.md) | **LUT实机推进**：A2身份逐字节核对；两轮900样本与人工三次半按，Load源A17。A17负片诊断包和高版本A2回退候选离线就绪；固件/RAM/选表/画面分层验收，尚未刷机。 |
+| [`LUT_RUNTIME_SOURCE_AUDIT_2026-10-17.md`](current/LUT_RUNTIME_SOURCE_AUDIT_2026-10-17.md) | **LUT新证据**：定位启动整段复制，42个候选槽装载/运行映射闭合；A2/C1复制与View四档原指令仿真、历史256KB dump复核。修正T4调用链和填充者推断，收紧直写负结果及C1判据，明确C3推进条件。 |
 | [`NXUI_NUKLEAR_2026-10-17.md`](current/NXUI_NUKLEAR_2026-10-17.md) | **替代 UI 真机新证据**：Nuklear + X11/Xft 已安装启用；95 配方常驻滤镜条，用户确认取景色彩切换正常；小面积事件驱动避免持续重绘，含备份/回退与验证记录。 |
 | [`UI_FRAMEWORK_ALTERNATIVES_2026-10-17.md`](current/UI_FRAMEWORK_ALTERNATIVES_2026-10-17.md) | **UI 框架替换可行性分析（10-17）**：分层结论——全屏自绘 ⛔（实测墙）/ **小面板可换 ✅（Nuklear+Xlib+Xft 实验进行中，含三关验收清单）** / UI 内预览窗格 ⛔（无帧源）；「滤镜预览」由硬件链路提供、与框架无关；rootfs 实测 + 真机 `/dev` 复采 + nxui 实验独立对照。 |
 | [`ONDEVICE_NATIVE_LABEL_RESULT_2026-10-16.md`](current/ONDEVICE_NATIVE_LABEL_RESULT_2026-10-16.md) | **原生UI真机正证据**：用户授权单次11字节私有字典标签实验，目视看到NXWA Test 1并确认恢复；独立驻留读回/文件哈希收尾。仅标签POC通过，PW槽/确认应用/开机自动化未验。 |
@@ -28,7 +30,7 @@ docs/
 | [`T1_LUT_SEMANTICS_2026-10-16.md`](current/T1_LUT_SEMANTICS_2026-10-16.md) | **T1 证据收口（已执行）**：42 槽严格 identity 校验（=0，最接近 1045/4913）、轴序同序确认、槽边界/长度；**写表测试 / identity 诊断 / 恢复原厂**三概念分离；能力矩阵（E1✓/E3✓/E4✗）。工具 `lut_slot_verify.py`。 |
 | [`T2_PRESET_PROTOCOL_2026-10-16.md`](current/T2_PRESET_PROTOCOL_2026-10-16.md) | **T2 统一预设与适配器协议 v1**：`nxwa.preset/1` 格式（稳定 ID/能力标记/still 机制与验收分离）、状态机（含 partial/external_modified）、适配器接口、关闭=恢复原厂（禁 identity 冒充）；模拟后端 `preset_sim.py` 6/6 场景 PASS。 |
 | [`T3_NATIVE_UI_MINIMAL_2026-10-16.md`](current/T3_NATIVE_UI_MINIMAL_2026-10-16.md) | **T3 原生 UI 最小接入设计**：结论 = **零 UI 代码补丁「三件套」**（M2 文案 + A2 槽直推 + 官方原生选择事务）；不新增窗口；含交互映射、应用通道三候选、**状态反馈诚实边界**（第一期做不到的明列）、上机验证 7 步。 |
-| [`T4_TABLE_SOURCE_CONSUMPTION_2026-10-16.md`](current/T4_TABLE_SOURCE_CONSUMPTION_2026-10-16.md) | **T4 P7 表来源与消费路径补证**：消费链带地址（5 层封装 → 条件选表实现 `0x80382B30`）+ **三张静态登记表**（View 4/Still 6/BV 12 逐项）+ ★ **负证据：静态池 42 槽零引用、镜像无段表、运行时池不在 SMA 区** ⇒ 填充者未解（列候选+验证法）；对 C1/C3 的直接判定。 |
+| [`T4_TABLE_SOURCE_CONSUMPTION_2026-10-16.md`](current/T4_TABLE_SOURCE_CONSUMPTION_2026-10-16.md) | **T4历史补证及10-17修正入口**：保留三张静态登记表；“填充者不在镜像内”及View调用链已由启动复制审计修正，决策先读上方最新审计。 |
 | [`T5_LUT_BACKEND_2026-10-16.md`](current/T5_LUT_BACKEND_2026-10-16.md) | **T5 LUT 预览后端产品化**：`lut_backend.sh`（相机侧，probe/apply/rollback/status，JSON）+ PC 驱动/模拟 + 契约自测 8/8；★ **关闭语义修正**（`lutpick off` 是 identity 加载 ≠ 关闭 ⇒ 后端走 factory_restore，硬标注 `identity_used:false`）；U7 执行改用本后端。 |
 | [`T6_C1_SLOT_EXPERIMENT_2026-10-16.md`](current/T6_C1_SLOT_EXPERIMENT_2026-10-16.md) | **T6 C1 一槽机制实验**：离线产物已生成（`p7_c1_a12.bin` + 原字节快照 + SLP `slp_c1_a12_v118.bin`，11 项自检 PASS）；★ 依 T4 改为**三阶段设计**（先做只读 dump 前提验证）；判据矩阵/回退三路（含「保留 A2 改动」逐点核验）。 |
 | [`NATIVE_UI_ROADMAP_2026-10-15.md`](current/NATIVE_UI_ROADMAP_2026-10-15.md) | **原生 UI 任务规划**：复用官方菜单/事件/控件；M1 原生入口 → M2 三槽配方映射 → M3 实机一键效果 → M4 原生配方浏览。含定向 RE、投递选型、逐项完成标准及 A2 依赖；取代旧“独立窗口优先”和 restart 注入建议。当前为规划，未实施新补丁。 |

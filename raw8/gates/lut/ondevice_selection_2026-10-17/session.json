@@ -1,0 +1,27 @@
+{
+  "host": "192.168.0.106",
+  "remote_folder": "nxwa_lutsel_20261017T142003Z",
+  "collector_sha256": "c45360c19b3194ff6c80d8a951bc3d891502ebc3aa0681cce5985be68ad28384",
+  "collector_md5": "6a28bef463a77a5be585bef10a6b4fd0",
+  "events": [
+    {
+      "action": "baseline",
+      "host_started_utc": "2026-10-17T14:20:23.344508+00:00"
+    },
+    {
+      "action": "watch",
+      "host_started_utc": "2026-10-17T14:21:08.189134+00:00"
+    },
+    {
+      "action": "watch",
+      "tag": "halfpress",
+      "host_started_utc": "2026-10-17T14:23:33.321729+00:00"
+    },
+    {
+      "action": "identity",
+      "tag": "watch",
+      "host_started_utc": "2026-10-17T14:25:38.975511+00:00"
+    }
+  ],
+  "last_fetch_utc": "2026-10-17T14:26:39.999824+00:00"
+}

@@ -30,6 +30,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import struct
 import sys
 
@@ -111,14 +112,17 @@ def main():
         print("[%s] %s" % ("OK  " if ok else "FAIL", msg))
         if not ok:
             fails.append(msg)
+            raise ValueError(msg)  # Never write a candidate after a failed check.
 
     # ---- 0. 基线 ----
-    base = open(a.base, "rb").read()
+    with open(a.base, "rb") as source:
+        base = source.read()
     print("p7 基线  : %s (%d B, md5 %s)" % (a.base, len(base), hashlib.md5(base).hexdigest()))
     chk(hashlib.md5(base).hexdigest() == "712c6fd0a49371ec05ce94c367b0d5c7",
         "基线 md5 == A2 镜像 712c6fd0…（保证含 A2 既有改动）")
 
     # ---- 1. 槽定位 ----
+    chk(re.fullmatch(r"[ABab][0-9]{1,2}", a.slot) is not None, "槽号格式合法")
     blk, idx = a.slot[0].upper(), int(a.slot[1:])
     chk(blk in SLOT_BASE and 0 <= idx < COUNTS[blk], "槽号合法：%s" % a.slot)
     va = SLOT_BASE[blk] + idx * SLOT
@@ -127,13 +131,15 @@ def main():
 
     # ---- 2. 表 ----
     if a.table_file:
-        tbl = open(a.table_file, "rb").read()
+        with open(a.table_file, "rb") as source:
+            tbl = source.read()
         chk(len(tbl) == SLOT, "表文件长度 == %d（实得 %d）" % (SLOT, len(tbl)))
         tbl_md5 = hashlib.md5(tbl).hexdigest()
     else:
         tbl = make_identity_slot()
         tbl_md5 = hashlib.md5(tbl).hexdigest()
         print("表        : 内置 identity（4913/4913 严格恒等）md5 %s" % tbl_md5)
+    chk(not any(tbl[3:TABLE:4]), "4913 项 pad 字节全零")
 
     # ---- 3. 替换 + 原字节快照 ----
     snap = base[off:off + SLOT]
@@ -179,7 +185,8 @@ def main():
                   regions_head=[[hex(s), hex(e)] for s, e in regions[:20]],
                   note="全部差异均在 window 内；完整区间可由 mk_c1_patch.py 重算"),
         snapshot=dict(path=snap_out, md5=hashlib.md5(snap).hexdigest()),
-        restore="dd if=%s of=/dev/mmcblk0p7 bs=1M  (或用 A2 包重刷)" % os.path.basename(p7_out),
+        restore="Use the verified A2 SLP via the official update path; "
+                "do not use this patched candidate as a rollback image. A2 baseline: %s" % a.base,
         note="C1 实验：静态池一槽替换；消费判定与回退见 T6_C1_SLOT_EXPERIMENT_2026-10-16.md",
     )
 

@@ -1,0 +1,47 @@
+{
+  "status": "offline_payload_checks_passed; not hardware acceptance",
+  "on_camera_p7_a2_exact_match": true,
+  "slot": "A17",
+  "file_offset": 9088960,
+  "runtime": 2165395968,
+  "changed_bytes": 14696,
+  "slot_outside_unchanged": true,
+  "negative_table_md5": "4a74f5cc8a3c7cc39be0659bb97b3fde",
+  "candidate_only_partition_5_changed": true,
+  "candidate_crcs_all_passed": true,
+  "candidate_other_partitions_match_official": true,
+  "rollback_only_version_header_changed": true,
+  "rollback_hardware_acceptance_verified": false,
+  "packages": [
+    {
+      "path": "E:\\NXWA\\fw\\v1.12\\c1-a17-negative\\slp_c1_a17_v118.bin",
+      "bytes": 352121435,
+      "md5": "6a2ae11fbc9e7375c7bc7daf20cb5d70",
+      "sha256": "18893b5a410ec4f3296aa5ae148a25298b6d24037e719ea75387655920f670dc"
+    },
+    {
+      "path": "E:\\NXWA\\fw\\v1.12\\c1-a17-negative\\slp_a2_restore_v119.bin",
+      "bytes": 352121435,
+      "md5": "92b07aa68c79493244d075b1bd606331",
+      "sha256": "03864fe9f45f073d09b4295077532295cb5160dd35bf36cc23c04585979e76e2"
+    },
+    {
+      "path": "E:\\NXWA\\fw\\v1.12\\a2\\slp_a2_p7_v117.bin",
+      "bytes": 352121435,
+      "md5": "44b61efc0625874b62ef6a45517ffda8",
+      "sha256": "ab0a85e4eea70154a2be31e5f829d34bf77dc03e80684057ee7e8a4b466a286d"
+    },
+    {
+      "path": "E:\\tmp\\NXWA-nx500_modding\\.uploads\\fw\\nx500_v1.12.bin",
+      "bytes": 352121435,
+      "md5": "df08b6f802d548ed03bb9e974c9a9bbd",
+      "sha256": "f4c238e811970cf858b5d734119477ea191d35cd29d9f84b584157ecfc4ee997"
+    }
+  ],
+  "p7": {
+    "path": "E:\\NXWA\\fw\\v1.12\\c1-a17-negative\\p7_c1_a17.bin",
+    "bytes": 12075648,
+    "md5": "55d1ad22e5c48e8c61bfd507f67cc52b",
+    "sha256": "7bdb788e80bb99947ef715437cf260e3a436b1d609398d069e901824d07c3b1d"
+  }
+}

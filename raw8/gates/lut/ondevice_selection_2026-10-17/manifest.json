@@ -1,0 +1,150 @@
+{
+  "note": "Read-only on-camera capture. User chose to keep read-only results. No firmware flash performed.",
+  "files": [
+    {
+      "name": "after.csv",
+      "bytes": 115,
+      "sha256": "714285efd54a4ba670827164a31c93e5598f1c653ba53fe3dd1da0319e0a7963"
+    },
+    {
+      "name": "after.err",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "asset_gates_other_clone.json",
+      "bytes": 18410,
+      "sha256": "db4ea382dc79bb64e53fe374e6864e36b7640186fd6e59f8d43b385195d08e53"
+    },
+    {
+      "name": "asset_gates_wsl.json",
+      "bytes": 17641,
+      "sha256": "0722dabd7f68c0026716b947be77953b719c60666d02884dd13c2a2f44c1a800"
+    },
+    {
+      "name": "baseline.done",
+      "bytes": 6,
+      "sha256": "a17138988e1387532b5cb0bd7a23f18a11d537123873e67154dada3c6359e53e"
+    },
+    {
+      "name": "baseline.md5",
+      "bytes": 169,
+      "sha256": "5c63c1604dec58c1448c53d532a34ee4f452ed214aa2d0595781f5718417200c"
+    },
+    {
+      "name": "before.csv",
+      "bytes": 115,
+      "sha256": "0e0f2dbd2ae9a464bdd7070ab0a96a05783a3fcb0908329f7f57f57668fb37bd"
+    },
+    {
+      "name": "before.err",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "final_state.txt",
+      "bytes": 213,
+      "sha256": "6d30b6b62336ab110787a2dd99d3f17c58602d4e54a07c773ec7f0f814d1139f"
+    },
+    {
+      "name": "halfpress.csv",
+      "bytes": 59449,
+      "sha256": "f58f1c6cc9220f8d2fc60cb564d269b2d0a095883e59424226f96e0b36739f30"
+    },
+    {
+      "name": "halfpress.done",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "name": "halfpress.err",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "human_observation.json",
+      "bytes": 252,
+      "sha256": "309f49cd42dcd7176cc0dc76f4516a4212ab0c1108f5af3b0e71204731a0e649"
+    },
+    {
+      "name": "inventory.txt",
+      "bytes": 1200,
+      "sha256": "d2c368ccc7742ec2c0f6713db279b5f9921fb8ede0712e76994092f1f8badeab"
+    },
+    {
+      "name": "launcher.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "lutobserve.arm",
+      "bytes": 3776,
+      "sha256": "c45360c19b3194ff6c80d8a951bc3d891502ebc3aa0681cce5985be68ad28384"
+    },
+    {
+      "name": "network_gate.json",
+      "bytes": 11848,
+      "sha256": "9bbcfd4a42e81e3bce30e6406d589d5d7aae499e7d98bd95ea521ed100fb4d91"
+    },
+    {
+      "name": "p7.bin",
+      "bytes": 12079104,
+      "sha256": "46c864d7c206ef2db38667257bed22455ac89e66c9ecbf3c579877b0f7b610be"
+    },
+    {
+      "name": "p7.done",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "name": "p7.err",
+      "bytes": 88,
+      "sha256": "8686141a1701ac0f7010c2f919c9292ebb91c899e37b358cbbc3067a40ce6533"
+    },
+    {
+      "name": "p7.md5",
+      "bytes": 79,
+      "sha256": "e82384b059c923b4b1dcd5f7b1a687788eb5eb8084d26584cb11044f2396542c"
+    },
+    {
+      "name": "pools.bin",
+      "bytes": 262144,
+      "sha256": "c84d83348a5fdeb9dee74c3aee67d579e01571f5c5e4025ad610687f62e1108d"
+    },
+    {
+      "name": "pools.err",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "preflight_gates_wsl.json",
+      "bytes": 15259,
+      "sha256": "026f50ab1c0ae511716745143ededce7744d8facdbd1016dc35792d322caa6d5"
+    },
+    {
+      "name": "session.json",
+      "bytes": 777,
+      "sha256": "c1770b99d0cb2a74474c885782482d5642e00bc2ace672c9441affe69033dea7"
+    },
+    {
+      "name": "user_decision.json",
+      "bytes": 272,
+      "sha256": "9feb9981e7b2f14da74e18e0add6411b8a0ffe3ba1005898c37399b9bbcb4592"
+    },
+    {
+      "name": "watch.csv",
+      "bytes": 59449,
+      "sha256": "f8958ffcf4a96136049c1406ac288a0f8c497e168c9352cf4a226353dfa88258"
+    },
+    {
+      "name": "watch.done",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "name": "watch.err",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}

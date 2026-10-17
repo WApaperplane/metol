@@ -1,0 +1,41 @@
+{
+  "scope": "offline; only existing readback and references; no new camera operations",
+  "checks": [
+    {
+      "case": "saved_a2_matches",
+      "expected_exit": 0,
+      "actual_exit": 0,
+      "output": "PASS: A17, matched=a2, complete=True, diff=0\r\nFirmware identity only; preview/JPEG consumption remains unverified.\r\n"
+    },
+    {
+      "case": "a17_is_not_installed",
+      "expected_exit": 2,
+      "actual_exit": 2,
+      "output": "FAIL: A17, matched=a2, complete=True, diff=14696\r\nFirmware identity only; preview/JPEG consumption remains unverified.\r\n"
+    },
+    {
+      "case": "a17_reference_selftest",
+      "expected_exit": 0,
+      "actual_exit": 0,
+      "output": "PASS: offline identity logic; no camera evidence produced\r\n"
+    },
+    {
+      "case": "legacy_a12_selftest",
+      "expected_exit": 0,
+      "actual_exit": 0,
+      "output": "PASS: offline identity logic; no camera evidence produced\r\n"
+    },
+    {
+      "case": "wrong_reference_slot_rejected",
+      "expected_exit": 1,
+      "actual_exit": 1,
+      "output": "verification error: candidate changes bytes outside the selected slot\r\n"
+    },
+    {
+      "case": "implicit_a17_reference_rejected",
+      "expected_exit": 2,
+      "actual_exit": 2,
+      "output": "usage: c1_verify.py [-h] (--readback READBACK | --selftest) [--slot SLOT]\r\n                    [--expected-image EXPECTED_IMAGE]\r\n                    [--table-file TABLE_FILE] [--base BASE]\r\n                    [--expect {c1,a2,any}] [--json JSON]\r\nc1_verify.py: error: non-A12 slot requires an explicit --expected-image\r\n"
+    }
+  ]
+}

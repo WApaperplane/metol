@@ -1,0 +1,7 @@
+{
+  "recorded_utc": "2026-10-17T14:38:55.685780+00:00",
+  "source": "Direct user selection in this chat",
+  "decision": "Keep read-only results; do not proceed with C1 firmware flashing in this session.",
+  "firmware_uploaded": false,
+  "firmware_flashed": false
+}

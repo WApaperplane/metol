@@ -1,0 +1,13 @@
+{
+  "scope": "offline only; no new camera operations",
+  "unit_tests": {
+    "count": 26,
+    "result": "PASS",
+    "source": "completed unittest run recorded in this chat before evidence staging checks"
+  },
+  "six_reference_file_scenarios": "PASS; see verifier_offline integration_checks.json",
+  "staged_raw_files_identical": 37,
+  "original_manifests_verified": true,
+  "scripts_ci": "RESULT: PASS  (0 fail / 0 warn)",
+  "no_firmware_or_collector_binary_staged": true
+}

@@ -1,0 +1,39 @@
+p7 基线  : E:/NXWA/fw/v1.12/a2/p7_a2.bin (12075648 B, md5 712c6fd0a49371ec05ce94c367b0d5c7)
+[OK  ] 基线 md5 == A2 镜像 712c6fd0…（保证含 A2 既有改动）
+[OK  ] 槽号格式合法
+[OK  ] 槽号合法：A17
+目标槽   : A17  VA 0x808aafc0  file_off 0x8aafc0（长度 19712）
+[OK  ] 表文件长度 == 19712（实得 19712）
+[OK  ] 4913 项 pad 字节全零
+原字节快照: 19712 B  md5 4016e7ca231d270f63ecdb3edf09f938
+新 p7     : 12075648 B  md5 55d1ad22e5c48e8c61bfd507f67cc52b
+[OK  ] 目标槽之外逐字节不变（head 9088960 B / tail 2966976 B）
+[OK  ] 目标槽内容 == 目标表（md5 4a74f5cc8a3c7cc39be0659bb97b3fde）
+[OK  ] 全部差异均位于目标槽内（4945 处 / 14696 B）
+   差 0x8aafc0..0x8aafc3 (3 B)
+   差 0x8aafc4..0x8aafc7 (3 B)
+   差 0x8aafc8..0x8aafcb (3 B)
+   差 0x8aafcc..0x8aafcf (3 B)
+   差 0x8aafd0..0x8aafd3 (3 B)
+   …（共 4945 处）
+[OK  ] A2 特征保留：① 越界分支重定向 → 0x11504
+[OK  ] A2 特征保留：③ 外部写包装改道 → A2 块 0x11530
+[OK  ] A2 块（0x11530）非零（保留）
+[OK  ] A2 改动点 0x510b0 与基线逐字节一致（保留）
+[OK  ] A2 改动点 0x11504 与基线逐字节一致（保留）
+[OK  ] A2 改动点 0x4cd30 与基线逐字节一致（保留）
+[OK  ] A2 改动点 0x11530 与基线逐字节一致（保留）
+
+已落盘：
+  E:\NXWA\fw\v1.12\c1-a17-negative\p7_c1_a17.bin
+  E:\NXWA\fw\v1.12\c1-a17-negative\a17.orig.bin
+  E:\NXWA\fw\v1.12\c1-a17-negative\c1_bytepatch_a17.json
+
+---- SLP 打包 ----
+容器     : E:/NXWA/fw/v1.12/a2/slp_a2_p7_v117.bin（版本 1.17，分区 10）
+[OK  ] 容器 idx5 长度 == p7 基线（12075648）
+JAMCRC   : idx5 ff58ea14 → e518e888
+容器     : 352121435 B  md5 6a2ae11fbc9e7375c7bc7daf20cb5d70
+★ 已写 E:\NXWA\fw\v1.12\c1-a17-negative\slp_c1_a17_v118.bin
+
+== 结果：PASS（全部自检通过） ==
