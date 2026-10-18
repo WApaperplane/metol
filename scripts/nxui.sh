@@ -21,7 +21,7 @@ case "${1:-filmlab}" in
   available)
     [ -x "$BIN" ] && [ -f "$D/nxui/enabled" ] && /bin/grep -q '^NX500$' /etc/version.info
     exit $? ;;
-  menu|filmlab|demo|list) MODE=${1:-filmlab} ;;
+  menu|filmlab|lut|demo|list) MODE=${1:-filmlab} ;;
   *) echo 'nxui.sh menu|filmlab|demo|list|stop|enable|disable|available'; exit 2 ;;
 esac
 [ -x "$BIN" ] || exit 1
@@ -50,6 +50,16 @@ export LC_ALL=C
 # Xft uses fontconfig, so Chinese can use the existing Samsung TTF.
 set -- --root "$D" --recipes "$LAB/recipes.txt" --engine "$D/filmlab.sh"
 if [ "$MODE" = menu ]; then set -- "$@" --menu gui_ini.NX500; fi
+if [ "$MODE" = lut ]; then
+    # LUT 模式：滤镜库来自 lut.sh，执行器也是 lut.sh（apply / off）
+    LU=/mnt/mmc/lut
+    $BB mkdir -p "$LU" || exit 1
+    sh "$D/lut.sh" list > "$LU/list.txt" 2>/dev/null || exit 1
+    [ -s "$LU/list.txt" ] || exit 1
+    # 9 字段配方格式：key|label|7 个占位值（LUT 不使用 PW 分量）
+    $BB awk '{ print $0 "|" $0 "|0|0|0|0|0|0|0" }' "$LU/list.txt" > "$LU/list.rec" || exit 1
+    set -- --root "$D" --recipes "$LU/list.rec" --engine "$D/lut.sh" --lut
+fi
 if [ "$MODE" = demo ]; then set -- "$@" --dry-run; else set -- "$@" --live; fi
 # Keep lifetime/kill handling in the UI: close waits for an in-flight apply.
 # A separate session prevents telnet disconnect from terminating an apply halfway.

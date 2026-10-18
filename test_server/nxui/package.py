@@ -33,7 +33,7 @@ files = sorted(p for p in PAYLOAD.rglob("*") if p.is_file() and p.name != "manif
 for p in PAYLOAD.rglob("*"):
     if p.is_file() and p.suffix in (".sh", ".md5"):
         assert b"\r\n" not in p.read_bytes(), p
-target = REPO.parent / "release/NXUI-Nuklear-20261017.zip"
+target = REPO.parent / "release/NXUI-Nuklear-20261018.zip"
 target.parent.mkdir(exist_ok=True)
 with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED) as archive:
     for p in sorted(PAYLOAD.rglob("*")):

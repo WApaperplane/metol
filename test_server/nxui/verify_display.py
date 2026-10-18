@@ -64,6 +64,14 @@ try:
         records.append({"target": name, "mode": "service-interaction", "result": "PASS"})
         perf = run_performance(prefix, runenv, name)
         records.append({"target": name, "mode": "performance", "cases": perf, "result": "PASS"})
+    # Focus handoff: the panel must give the keyboard back to the camera window.
+    # The camera has no window manager, so nothing else restores it.
+    focus = subprocess.run(["python3", str(HERE / "test_focus.py")], env=env, timeout=120,
+                           stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    (OUT / "focus-run.log").write_bytes(focus.stdout)
+    if focus.returncode:
+        raise RuntimeError(focus.stdout.decode(errors="replace"))
+    records.append({"target": "host", "mode": "focus-handoff", "result": "PASS"})
     (OUT / "display-results.json").write_text(json.dumps(records, ensure_ascii=False, indent=2))
     print(json.dumps(records, ensure_ascii=False, indent=2))
 finally:

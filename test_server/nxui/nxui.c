@@ -32,6 +32,12 @@ static struct nx_item items[NXUI_MAX_ITEMS];
 static struct nx_queue queue;
 static const char *root = "/opt/usr/nx-ks", *engine = "/opt/usr/nx-ks/filmlab.sh";
 static int count, item_count, selected, menu, page, live, dirty = 1, quit;
+/* LUT mode: the same strip UI drives lut.sh instead of filmlab.sh, and the
+ * registry/slot state is restored when the panel closes.
+ * lut_keep is set when a shutter half-press closed the panel: the half-press
+ * is what makes P7 reload the table, so the table must survive the panel. */
+static int lut_mode = 0;
+static int lut_keep = 0;
 static int touch_x, touch_active, close_after_child;
 static char enum_cache[16]; static long long enum_cache_ms;
 static long long close_flag_check;
@@ -51,6 +57,41 @@ static Display *display;
 static Window window;
 static int screen, width, height;
 static struct nk_context *ctx;
+/* The camera runs without a window manager: an XSetInputFocus taken by this
+ * panel is never taken back by anyone else. Camera menu navigation (jog wheel
+ * and arrow keys) arrives as X KeyPress, which is delivered only to the focus
+ * window, so the panel has to record the previous focus and hand it back when
+ * it closes. Otherwise the native menu looks like its keys stopped working. */
+static Window prev_focus;
+static int prev_revert = RevertToPointerRoot;
+static int focus_saved, focus_restored, panel_unmapped;
+
+static int ignore_xerror(Display *dpy, XErrorEvent *ev) { (void)dpy; (void)ev; return 0; }
+
+static void save_focus(void) {
+    XErrorHandler old;
+    int revert = RevertToPointerRoot;
+    if (!display) return;
+    old = XSetErrorHandler(ignore_xerror);
+    XGetInputFocus(display, &prev_focus, &revert);
+    XSetErrorHandler(old);
+    prev_revert = revert;
+    focus_saved = 1; focus_restored = 0;
+}
+
+static void restore_focus(void) {
+    XErrorHandler old;
+    if (!display || !focus_saved || focus_restored) return;
+    focus_restored = 1;
+    old = XSetErrorHandler(ignore_xerror);
+    /* The previous window may be gone (an entry script may have killed the old
+     * menu). Fall back to PointerRoot so key events still follow the pointer
+     * instead of being dropped. */
+    XSetInputFocus(display, prev_focus == None ? PointerRoot : prev_focus,
+        prev_revert, CurrentTime);
+    XSync(display, False);
+    XSetErrorHandler(old);
+}
 
 static long long now_ms(void) {
     struct timespec t;
@@ -161,8 +202,13 @@ static int start_child(int kind, int index, const char *command) {
         snprintf(envpath, sizeof envpath, "%s:%s", root, old ? old : "/usr/bin:/bin");
         setenv("PATH", envpath, 1);
         if (kind == 1 && enum_cache[0]) setenv("FILMLAB_ENUM_CACHE", enum_cache, 1);
-        if (kind == 1)
-            execl("/bin/sh", "sh", engine, queue.committing ? "commit" : "preview", recipes[index].key, (char *)0);
+        if (kind == 1) {
+            /* In LUT mode a dry run must not touch the registry or the slot:
+             * "apply" is a real write, so it is only used when live. */
+            const char *action = lut_mode ? (live ? "apply" : "status")
+                                : (queue.committing ? "commit" : "preview");
+            execl("/bin/sh", "sh", engine, action, recipes[index].key, (char *)0);
+        }
         else execl("/bin/bash", "bash", "-c", command, (char *)0);
         _exit(127);
     }
@@ -308,7 +354,9 @@ static void draw(void) {
     if (nk_begin(ctx, "NXWA", nk_rect(0, 0, (float)width, (float)height), NK_WINDOW_NO_SCROLLBAR)) {
         nk_layout_row_begin(ctx, NK_STATIC, 24, 3);
         nk_layout_row_push(ctx, 460);
-        nk_label_colored(ctx, menu ? "NX-KS  /  菜单" : "FILMLAB  /  滤镜预览", NK_TEXT_LEFT, accent);
+        nk_label_colored(ctx, menu ? "NX-KS  /  菜单"
+                            : (lut_mode ? "LUT  /  3D 滤镜" : "FILMLAB  /  滤镜预览"),
+                         NK_TEXT_LEFT, accent);
         nk_layout_row_push(ctx, 104);
         if (nk_button_label(ctx, menu ? "滤镜" : "菜单")) {
             if (menu) { menu = 0; resize_panel(); }
@@ -344,7 +392,12 @@ static void draw(void) {
                 if (idx >= count) { nk_spacing(ctx, 1); continue; }
                 nk_bool picked = (idx == selected);
                 snprintf(line, sizeof line, "%s%s", idx == selected ? "● " : "", recipes[idx].label);
-                if (nk_selectable_label(ctx, line, NK_TEXT_CENTERED, &picked) && picked && idx != selected)
+                /* A tap always applies, including on the highlighted row: the
+                 * camera or the legacy menu may have changed ISP state since
+                 * the preview, so the marker is not proof the value is live.
+                 * Nuklear reports a press once and flips *picked, so the old
+                 * "&& idx != selected" guard made the highlighted row inert. */
+                if (nk_selectable_label(ctx, line, NK_TEXT_CENTERED, &picked))
                     choose(idx);
             }
             snprintf(line, sizeof line, "%d/%d   R%d G%d B%d   H%d S%d 锐%d 对比%d", selected+1, count,
@@ -367,7 +420,12 @@ static void draw(void) {
             }
             if (nk_button_label(ctx, "下一个 ›")) choose(selected+1);
         } else {
-            nk_layout_row_dynamic(ctx, 60, 1); nk_label(ctx, "配方表不可用 · 请先导出配方", NK_TEXT_LEFT);
+            /* Say where to look. The generic message cost an hour of guessing
+             * once: three uppercase look names had silently voided the list. */
+            nk_layout_row_dynamic(ctx, 60, 1);
+            nk_label(ctx, lut_mode ? "滤镜库为空 · 见 /tmp/nxui.log 与 /mnt/mmc/looks"
+                                   : "配方表不可用 · 见 /tmp/nxui.log",
+                     NK_TEXT_LEFT);
         }
         nk_layout_row_dynamic(ctx, 23, 1);
         nk_label_colored(ctx, live ? status : "演示模式 · 未连接相机", NK_TEXT_LEFT, nk_rgb(171, 182, 190));
@@ -404,6 +462,7 @@ int main(int argc, char **argv) {
     for (i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "--live")) live = 1;
         else if (!strcmp(argv[i], "--dry-run")) live = 0;
+        else if (!strcmp(argv[i], "--lut")) lut_mode = 1;
         else if (i+1 < argc && !strcmp(argv[i], "--root")) root = argv[++i];
         else if (i+1 < argc && !strcmp(argv[i], "--engine")) engine = argv[++i];
         else if (i+1 < argc && !strcmp(argv[i], "--recipes")) recipe_path = argv[++i];
@@ -467,6 +526,7 @@ int main(int argc, char **argv) {
     ctx->style.button.text_normal = nk_rgb(234, 239, 231);
     ctx->style.button.rounding = 4;
     if (initial_menu && !load_menu(initial_menu)) return 6;
+    save_focus();   /* remember the camera window that owns the keyboard now */
     XMapRaised(display, window); XSync(display, False);
     XSetInputFocus(display, window, RevertToPointerRoot, CurrentTime);
     started = now_ms();
@@ -485,8 +545,12 @@ int main(int argc, char **argv) {
         if (ev_fd >= 0) {
             struct input_event iev;
             while (read(ev_fd, &iev, sizeof iev) == (ssize_t)sizeof iev) {
-                if (iev.type == EV_KEY && iev.code == 125 && iev.value == 1)
+                if (iev.type == EV_KEY && iev.code == 125 && iev.value == 1) {
+                    /* A half-press is the operator's "close and apply" gesture:
+                     * it makes P7 reload the table, so keep the table. */
+                    if (lut_mode) lut_keep = 1;
                     queue.close_requested = 1;
+                }
             }
         }
         /* EV_S1.sh 通道（备用）：每 100ms 检查并消费标记 */
@@ -557,6 +621,15 @@ int main(int argc, char **argv) {
         }
         poll_child();
         refresh_services(0);
+        /* Unmap as soon as a close is requested: while the backend finishes
+         * (up to the 12 s timeout) the panel must not keep covering the frame
+         * or hold the keyboard focus away from the camera UI. */
+        if (queue.close_requested && !panel_unmapped) {
+            restore_focus();
+            XUnmapWindow(display, window);
+            XSync(display, False);
+            panel_unmapped = 1;
+        }
         /* Closing waits for an in-flight write; it discards unapplied browsing requests. */
         if (queue.close_requested && !queue.commit_requested && !child) break;
         if (!child && (!queue.close_requested || queue.commit_requested) && (index = nx_queue_take(&queue, now_ms())) >= 0)
@@ -603,7 +676,30 @@ int main(int argc, char **argv) {
     }
     fprintf(stderr, "EXIT renders=%d elapsed_ms=%lld wakeups=%d blits=%d max_draw_ms=%lld\n",
         render_count, now_ms()-started, wakeups, blits, max_draw_ms);
+    restore_focus();   /* also covers --snapshot / lifetime / signal exits */
     nk_xlib_shutdown(); nk_xfont_del(display, font);
+    /* Leaving the LUT panel restores the registry entries and the slot, so the
+     * camera is never left with a rewritten table behind the operator's back.
+     * A half-press only hides the panel, it does not come through here.
+     * A dry run or a snapshot never wrote anything, so it must not restore
+     * either -- restoring would be a real write. */
+    if (lut_mode && live) {
+        if (lut_keep) {
+            /* Closed by a half-press: the operator wants the look to stay.
+             * Mark the session so the next entry reuses the existing backup
+             * instead of restoring and re-snapshotting an already-changed slot. */
+            int kfd = open("/mnt/mmc/lut/state/keep", O_CREAT | O_WRONLY, 0644);
+            if (kfd >= 0) close(kfd);
+        } else {
+            pid_t restore_pid = fork();
+            if (restore_pid == 0) {
+                close(ConnectionNumber(display));
+                execl("/bin/sh", "sh", engine, "off", (char *)0);
+                _exit(127);
+            }
+            if (restore_pid > 0) waitpid(restore_pid, NULL, 0);
+        }
+    }
     XDestroyWindow(display, window); XCloseDisplay(display); close(lockfd);
     return 0;
 }

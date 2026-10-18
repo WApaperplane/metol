@@ -31,6 +31,11 @@ NX500 1.12 的独立替代界面，使用 Nuklear（MIT）+ 相机现有 X11/Xft
 3D LUT 的预览/成片限制继续以原 LUT 管线文档为准。
 标准方向键已接入；机身滚轮的 X11 映射尚未实测，不能据此声称滚轮可用。
 
+- **关闭时归还 X 输入焦点**。相机没有窗口管理器，原生菜单的方向键/滚轮是
+  X KeyPress，只投给持有输入焦点的窗口。面板打开会抢走焦点，因此关闭时必须
+  还给打开前的窗口；关闭请求一出现就卸窗，后端收尾期间不再遮挡取景。
+  回归见 `test_focus.py`（隔离 X server，检查焦点精确回到原窗口）。
+
 ## 相机使用
 
 安装并启用后，`EV+AEL` 打开滤镜条，原 NX-KS 主菜单入口打开新菜单。
@@ -64,6 +69,7 @@ cd /mnt/e/NXWA/nx500-modding-work/test_server/nxui
 bash prepare_dev.sh
 bash build.sh
 python3 test_engine.py
+python3 test_focus.py
 python3 verify_display.py
 ```
 

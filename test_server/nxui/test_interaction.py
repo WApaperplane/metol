@@ -48,9 +48,13 @@ def run_interaction(prefix, env, label):
             # physical camera controls may have changed ISP state in between.
             send("click", "350", "60", "5"); time.sleep(.9)
             assert calls.read_text().splitlines() == lines + [f"preview {keys[5]}"], calls.read_text()
-            send("click", "350", "130", "5")
+            # A row that is already applied saves straight to flash, so move the
+            # selection first: saving then has to go through apply + commit.
+            send("key", "Right"); time.sleep(.15)
+            # Save row sits at y=147..173 (24 title + 84 list + 16 status + 5 spacing).
+            send("click", "350", "160", "5")
             text = finish(p, stream, log)
-            assert calls.read_text().splitlines()[-1] == f"commit {keys[5]}", (calls.read_text(), text)
+            assert calls.read_text().splitlines()[-1] == f"commit {keys[6]}", (calls.read_text(), text)
             assert "ok=1" in text
         finally:
             if p.poll() is None: p.terminate(); p.wait(timeout=6)
