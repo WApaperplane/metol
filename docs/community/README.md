@@ -7,6 +7,7 @@
 | [`REDDIT_POST_EN.md`](REDDIT_POST_EN.md) | 完整英文技术贴（含 TL;DR、数据表、未验证项、评论区预案） | r/SamsungNX · r/cameras · r/ReverseEngineering |
 | [`FORUM_POST_ZH.md`](FORUM_POST_ZH.md) | 中文长文（同内容，中文读者关心的三条前置） | 色影无忌 · 蜂鸟 · 知乎 · V2EX |
 | [`VIDEO_SCRIPT_ZH.md`](VIDEO_SCRIPT_ZH.md) | 45s 主版 + 22s 快剪 + 小红书图文版 + 拍摄清单 | 抖音 · 小红书 |
+| [`assets/poster.html`](assets/poster.html) | **竖版海报源文件**（1080×1440，纯 HTML/CSS，无外部依赖） | 小红书首图 · 微博 · 朋友圈 |
 
 ## 一句话（所有平台通用）
 

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>NX-WA 海报 · 4 字节</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { background:#08080A; }
+  body {
+    display:flex; align-items:flex-start; justify-content:center;
+    font-family:"Segoe UI","Microsoft YaHei","PingFang SC","Noto Sans SC",sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .poster {
+    position:relative;
+    width:1080px; height:1440px;
+    padding:74px 76px 58px;
+    display:flex; flex-direction:column;
+    background:radial-gradient(120% 70% at 50% -10%, #17171C 0%, #0A0A0C 52%, #08080A 100%);
+    color:#F2F1ED;
+    overflow:hidden;
+  }
+
+  .poster::before{
+    content:""; position:absolute; inset:0; pointer-events:none;
+    background-image:radial-gradient(#ffffff0d 1px, transparent 1px);
+    background-size:26px 26px;
+    mask-image:radial-gradient(120% 85% at 50% 0%, #000 0%, transparent 72%);
+    -webkit-mask-image:radial-gradient(120% 85% at 50% 0%, #000 0%, transparent 72%);
+  }
+
+  .top { position:relative; display:flex; align-items:baseline; justify-content:space-between;
+         font-size:15px; letter-spacing:.22em; color:#6E6B65; text-transform:uppercase; }
+  .top b { color:#B9B4AA; font-weight:600; letter-spacing:.18em; }
+  .top .no-up { text-transform:none; letter-spacing:.12em; }
+  .rule { position:relative; height:1px; background:#26262B; margin-top:15px; }
+
+  .lead { position:relative; margin-top:54px; }
+  .figure { display:flex; align-items:flex-end; gap:22px; }
+  .num { font-size:300px; line-height:.76; font-weight:800; letter-spacing:-.055em; color:#F6F4EF; }
+  .unit { font-size:62px; font-weight:700; padding-bottom:36px; color:#F6F4EF; }
+
+  h1 { margin-top:24px; font-size:70px; line-height:1.14; font-weight:700; letter-spacing:-.028em; }
+  h1 em { font-style:normal; color:#FF4D2B; }
+
+  .sub { margin-top:24px; font-size:23px; line-height:1.7; color:#8F8B83; }
+  .sub b { color:#DAD5CB; font-weight:600; }
+
+  /* ── 正 / 反 成对色卡 ── */
+  .proof { position:relative; margin-top:42px; }
+  .pairs { display:flex; gap:9px; }
+  .pair { flex:1; border-radius:3px; overflow:hidden; display:flex; flex-direction:column; gap:5px; }
+  .pair i { display:block; height:76px; }
+  .pcap { margin-top:13px; display:flex; justify-content:space-between;
+          font-size:13px; letter-spacing:.16em; color:#5F5C57; }
+  .pcap em { font-style:normal; color:#8A867E; }
+
+  /* ── 槽阵列 ── */
+  .slots { position:relative; margin-top:38px; }
+  .srow { display:flex; gap:9px; margin-bottom:9px; }
+  .s { width:33px; height:33px; border-radius:2px; background:#1B1B20; border:1px solid #2A2A31; }
+  .s.hot { background:#FF4D2B; border-color:#FF8266; box-shadow:0 0 0 4px #ff4d2b20, 0 0 22px #ff4d2b55; }
+  .scap { display:flex; justify-content:space-between; align-items:baseline;
+          margin-top:13px; font-size:15px; color:#6E6B65; letter-spacing:.04em; }
+  .scap b { color:#C9C4BA; font-weight:600; }
+
+  /* ── 两条链路 ── */
+  .chains { position:relative; margin-top:40px; display:flex; gap:22px; align-items:stretch; }
+  .srcbox { width:126px; border:1px solid #33333B; border-radius:4px;
+            display:flex; flex-direction:column; justify-content:center; align-items:center;
+            background:#121216; flex:0 0 126px; }
+  .srcbox b { font-size:27px; font-weight:700; color:#FF4D2B; letter-spacing:.02em; }
+  .srcbox span { font-size:11px; color:#5F5C57; letter-spacing:.1em; margin-top:6px; }
+  .rows { flex:1; display:flex; flex-direction:column; justify-content:space-between; }
+  .chain { display:flex; align-items:center; gap:16px; height:60px; }
+  .chain .id { width:104px; font-size:15px; letter-spacing:.06em; color:#8F8B83; }
+  .chain .bar { flex:1; height:1px; background:#33333B; position:relative; }
+  .chain .bar::after { content:""; position:absolute; right:-1px; top:-3px;
+                       border-left:6px solid #FF4D2B; border-top:3.5px solid transparent; border-bottom:3.5px solid transparent; }
+  .chain .dst { width:150px; text-align:right; font-size:19px; font-weight:600; color:#E4E0D7; }
+  .chain .dst small { font-size:12px; color:#5F5C57; font-weight:400; margin-left:6px; }
+
+  /* ── 三步 ── */
+  .steps { position:relative; margin-top:auto; padding-top:28px; display:flex; gap:30px; }
+  .step { flex:1; border-top:1px solid #26262B; padding-top:15px; }
+  .step .k { font-size:13px; letter-spacing:.2em; color:#FF4D2B; font-weight:700; }
+  .step .v { margin-top:9px; font-size:21px; font-weight:600; line-height:1.4; color:#E4E0D7; }
+  .step .v small { display:block; font-size:13px; font-weight:400; color:#66635E; margin-top:5px; }
+
+  .foot { position:relative; margin-top:30px; padding-top:16px; border-top:1px solid #26262B;
+          display:flex; align-items:baseline; justify-content:space-between; }
+  .foot .repo { font-size:16px; letter-spacing:.03em; color:#B9B4AA; }
+  .foot .lic { font-size:12px; letter-spacing:.18em; color:#55524E; }
+</style>
+</head>
+<body>
+<div class="poster">
+
+  <div class="top">
+    <span><b>NX-WA</b> &nbsp;/&nbsp; Samsung NX500</span>
+    <span class="no-up">DRIMe5 · Tizen 2.2</span>
+  </div>
+  <div class="rule"></div>
+
+  <div class="lead">
+    <div class="figure">
+      <div class="num">4</div>
+      <div class="unit">字节</div>
+    </div>
+    <h1>换掉<em>取景器</em>里的色彩</h1>
+    <p class="sub">
+      改一个登记表项，写一张表，半按一次快门。<br>
+      <b>不刷固件 · 不改 p7 代码 · 断电即回原状</b>
+    </p>
+  </div>
+
+  <div class="proof">
+    <div class="pairs">
+      <div class="pair"><i style="background:#E8C4A0"></i><i style="background:#173B5F"></i></div>
+      <div class="pair"><i style="background:#7FA8C9"></i><i style="background:#805736"></i></div>
+      <div class="pair"><i style="background:#4E6B3A"></i><i style="background:#B194C5"></i></div>
+      <div class="pair"><i style="background:#C25B4A"></i><i style="background:#3DA4B5"></i></div>
+      <div class="pair"><i style="background:#D9CBB2"></i><i style="background:#26344D"></i></div>
+      <div class="pair"><i style="background:#2B2F36"></i><i style="background:#D4D0C9"></i></div>
+      <div class="pair"><i style="background:#A8D8C8"></i><i style="background:#572737"></i></div>
+      <div class="pair"><i style="background:#F0A500"></i><i style="background:#0F5AFF"></i></div>
+    </div>
+    <div class="pcap">
+      <span>同一张表 &nbsp;·&nbsp; 正 / 反</span>
+      <em>255 − RGB</em>
+    </div>
+  </div>
+
+  <div class="slots">
+    <div class="srow">
+      <div class="s"></div><div class="s"></div><div class="s"></div><div class="s"></div><div class="s"></div>
+      <div class="s"></div><div class="s"></div><div class="s"></div><div class="s"></div><div class="s"></div>
+      <div class="s"></div><div class="s"></div><div class="s"></div><div class="s"></div><div class="s"></div>
+      <div class="s"></div><div class="s"></div><div class="s"></div><div class="s hot"></div><div class="s"></div>
+    </div>
+    <div class="srow">
+      <div class="s"></div><div class="s"></div><div class="s"></div><div class="s"></div><div class="s"></div>
+      <div class="s"></div><div class="s"></div><div class="s"></div><div class="s"></div><div class="s"></div>
+      <div class="s"></div><div class="s"></div><div class="s"></div><div class="s"></div><div class="s"></div>
+      <div class="s"></div><div class="s"></div><div class="s"></div><div class="s"></div><div class="s"></div>
+      <div class="s"></div><div class="s"></div>
+    </div>
+    <div class="scap">
+      <span><b>42</b> 个 LUT 槽 &nbsp;·&nbsp; <b>17³ = 4,913</b> 项 &nbsp;·&nbsp; 每槽 <b>19,712</b> B</span>
+      <span>A18 · 0x81119F00</span>
+    </div>
+  </div>
+
+  <div class="chains">
+    <div class="srcbox">
+      <b>A18</b>
+      <span>0x81119F00</span>
+    </div>
+    <div class="rows">
+      <div class="chain">
+        <span class="id">VIEW4[3]</span>
+        <span class="bar"></span>
+        <span class="dst">取景器 <small>Live view</small></span>
+      </div>
+      <div class="chain">
+        <span class="id">STILL6[6]</span>
+        <span class="bar"></span>
+        <span class="dst">成片 <small>JPEG</small></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="k">01</div>
+      <div class="v">改 4 字节<small>View4[3] 登记表项</small></div>
+    </div>
+    <div class="step">
+      <div class="k">02</div>
+      <div class="v">写 19,712 字节<small>放进空闲槽 A18</small></div>
+    </div>
+    <div class="step">
+      <div class="k">03</div>
+      <div class="v">半按快门<small>让 p7 自己走完选表</small></div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <div class="repo">github.com/WApaperplane/NXWA-nx500_modding</div>
+    <div class="lic">AGPL-3.0</div>
+  </div>
+
+</div>
+</body>
+</html>
+<!--
+  重新导出（Windows / Edge 无头，输出 2× 即 2160×2880）：
+    msedge --headless=new --disable-gpu --hide-scrollbars ^
+      --force-device-scale-factor=2 --window-size=1080,1440 ^
+      --screenshot="poster_4byte.png" "file:///<绝对路径>/poster.html"
+
+  尺寸 1080×1440 = 3:4，小红书首图推荐比例。
+  改配色只需动 :root 里的 --ink / --accent（目前 accent #FF4D2B）。
+  色卡是「同一张表 正/反」的实物对照：上排任意一色与下排同列互为 255−RGB。
+-->
