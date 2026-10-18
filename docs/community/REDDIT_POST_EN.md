@@ -121,9 +121,15 @@ The ISP config register:
 
 The rootfs has no Python, so `cube2lut` is a freestanding ARM binary (no libc, no libm, no libgcc). It takes an Adobe `.cube`, resamples to the 17³ grid `{0,16,...,240,255}`, and writes the 19,712-byte slot table.
 
-I expected to have to tune a fixed-point implementation. Instead it came out **byte-identical to the PC float reference** on three test cubes — because the reference quantises to 8-bit before writing, so rounding differences have nowhere to survive.
+I expected to have to tune a fixed-point implementation. Instead it came out **byte-identical to the PC float reference** on the three 17³ test cubes — because the reference quantises to 8-bit before writing, so rounding differences have nowhere to survive.
+
+(Real film cubes are usually 13³ or 33³. Resampling those onto the 17³ grid puts them within **1 level** of the PC reference — that residual is grid interpolation, not a bug.)
 
 It deliberately **refuses** rather than guesses: `.cube` files with `DOMAIN_MIN != 0` / `DOMAIN_MAX != 1`, non-`N³` node counts, or 1D LUTs exit with an error. A wrong axis order or domain still produces a plausible-looking table, and a plausible-looking wrong table is far worse than a visible error.
+
+**And one bug worth admitting, because it nearly shipped.** The first number parser didn't handle scientific notation. G'MIC writes near-black values as `2.2439395252149552e-05`; the parser hit the `e`, returned 0, and — crucially — **didn't advance the pointer**. Every following value parsed as 0. The node counter still incremented to `N³`, so the "did I read 4,913 values?" check passed. The tool exited `OK` and emitted a table that was 93 % black.
+
+12 of 18 real film cubes were affected. The three test cubes we'd used (identity, invert, warm) contained no `e` notation, so the suite was green. Fixed: `e±NN` is parsed, unresolvable input returns `bad number at value index…`, and an all-zero table is rejected outright.
 
 ### 8. A practical test you can use on any `.cube`, today
 
