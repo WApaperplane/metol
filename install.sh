@@ -105,6 +105,14 @@ for _f in /opt/usr/nx-ks/* /opt/usr/nx-ks/nx-rc/* /opt/usr/nx-ks/nx-rc/thumb/* /
 done
 unset _f
 
+# ---- ★ 运行时数据目录（2026-10-17 加入）----
+# 一批老脚本把数据文件写死在 SD 的这两处（原版设计是 mod 整体放 /mnt/mmc/scripts/
+# 再 cp 到 /opt/usr/nx-ks/）。只从 tar 解压到 /opt/usr/nx-ks/ 的部署不会创建它们，
+# 结果是「对焦堆栈 / 对焦按钮 / EV 档位」保存静默失败（无报错、重启后回默认）。
+# 幂等；已存在则不动，绝不覆盖用户数据。
+mkdir -p /mnt/mmc/scripts /sdcard/presets 2>/dev/null
+[ -f /mnt/mmc/scripts/focus_stack.cfg ] || printf '10\n6\n' > /mnt/mmc/scripts/focus_stack.cfg 2>/dev/null
+
 # ---- ★ FilmLab（NX500 专属）：配方库种子 + 菜单生成（2026-10-08 加入）----
 #   配方库在 SD 卡（/mnt/mmc/filmlab/recipes.json，插卡即可编辑，加配方不用改代码）
 #   内部留只读种子（/opt/usr/nx-ks/filmlab/recipes.json，随 scripts/ 同步而来）

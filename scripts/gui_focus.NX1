@@ -1,5 +1,5 @@
 button|Focus Stacking|/opt/usr/nx-ks/fstack.sh
-button|Focus Buttons|/opt/usr/nx-ks/focus_buttons
+button|Focus Buttons|/opt/usr/nx-ks/fbuttons.sh
 
 button|Profiles|@/opt/usr/nx-ks/gui_profiles.NX1
 button|Focus-Pull Speed|/opt/usr/nx-ks/fpspeed.sh

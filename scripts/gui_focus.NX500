@@ -1,5 +1,5 @@
 button|对焦堆栈|/opt/usr/nx-ks/fstack.sh
-button|对焦按钮|/opt/usr/nx-ks/focus_buttons
+button|对焦按钮|/opt/usr/nx-ks/fbuttons.sh
 
 button|配置文件|@/opt/usr/nx-ks/gui_profiles.NX500
 button|对焦速度|/opt/usr/nx-ks/fpspeed.sh
