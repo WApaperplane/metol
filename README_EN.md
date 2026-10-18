@@ -23,7 +23,7 @@ An enhancement mod for the **Samsung NX500 / NX1** (Tizen / DRIMe5), built on th
 - **PW all-7-dimension one-tap**: `EV+AEL` → tap a recipe ⇒ **R/G/B/HUE/SAT/SHARP/CON are all pushed straight into the ISP and the image changes within a second** (A2 "slot-pool direct write" channel, `0x134..0x13B`; verified on-camera dimension by dimension, 2026-10-15).
   ★ Requires: **NXWA-A2 p7 firmware — shipped in this package (`patch-a2/`, with CN/EN flashing guide and md5)**; without A2 the push step is silently ineffective (it does not crash) — use "Picture Wizard → Custom 1" as the fallback for a full-range effect.
 - **Objective criterion**: `sh /opt/usr/nx-ks/filmlab.sh check` reads the 7 values the ISP is *actually* using and compares them with the recipe slot (read-only, zero risk) — **"the value changed" ≠ "the value is consumed"**, and that rule underpins the whole project.
-- **3D LUT pipeline** — any `.cube` → native table → preview direct-load (LUT1 + `lutsentinel` guard); `.cube ⇄ native table` converters included.
+- **3D LUT live retarget** — drop any `.cube` on the SD card, convert it **on the camera** with one command, then edit **one 4-byte registry entry** + write **19,712 bytes** into a spare slot + **half-press once**. The viewfinder switches tables. **Live view and stills are two independent chains** you can retarget separately. No firmware flash, no p7 code patch, power cycle restores stock.
 - **Web remote (`nx-rc`) photo gallery** — *collapsed directory model*: directories in reverse order, only the newest expanded by default, lazy loading + thumbnail cache. Fixes the first-paint stall on a single-core CPU when the SD card holds many directories.
 - **Live directory source for the gallery** — the `dirlist` CGI on port 8080 does a real `readdir` on every request, so brand-new photos appear instantly (the port-80 daemon's list is a boot-time snapshot; new photos never show up there).
 - **Thumbnail pre-warm** — enabling the remote spawns a background warmer (grid 320 px × newest 300 + lightbox 1024 px × newest 60, under `nice -n 19`, never disturbing shooting). The frontend shows progress; failed loads retry automatically.
@@ -90,13 +90,20 @@ To add one: edit that JSON -> copy back to the SD card -> reopen the menu (it re
 
 ## 3D LUT pipeline
 
+> **Route change, 2026-10-18**: **live retargeting** replaces the old "LUT1 + guard" approach. The old route (`lutapi` + LUT1 + `lutsentinel`) needed a timing race and only covered preview — retired.
+
 | Capability | Status |
 | --- | --- |
-| Table format | Solved: `4913×4B {R,G,B,pad}`, index `((B*17+G)*17+R)*4`, slot stride `0x4D00`, 17 evenly spaced levels |
-| Import | `.cube ⇄ native table` both ways (`test_server/isp/nx3dlut.py`, `test_server/lutpipe/deploy_luts.py`) |
-| Preview | `lutpipe/lutpick.sh apply` — landing-spot probe → safety gate (`cmasafe`, 4 checks) → `lutapi load`; the viewfinder changes within a second |
-| Survival | ★ **Write-to-take-effect law**: the write only lands when p7 is in the "reclaimed" state, and the shutter always triggers a reclaim ⇒ `lutsentinel.arm` guard + dual-channel isolation (table goes to LUT1, p7 only touches LUT0) |
-| Stills | ★ **Established rule: preview = direct load (LUT1 + guard) / stills = post-processing (ksfilm)**. "Direct-load into stills" is a proven dead end (the capture flow actively reconfigures the LUT slot pool) |
+| Table format | Solved: `4913×4B {R,G,B,pad}`, index `((B*17+G)*17+R)*4`, slot 19,712 B, stride `0x4D00` |
+| Load mechanism | ★ p7 **re-reads** three static registries on **every** load: `View4`@`0x803837F0` / `Still6`@`0x80382C5C` / `BV12`@`0x80382B00`; `+0x00C` = load source address |
+| Retarget | ★ **edit one 4-byte registry entry + write 19,712 B into spare slot A18 (`0x81119F00`) + half-press once** |
+| Import | `.cube → 19,712 B slot table`: **on-camera, one command** (`cube2lut.arm`, no libc/libm/libgcc), or on PC via `test_server/isp/nx3dlut.py` |
+| View / stills | ★ **two independent, separately retargetable chains**: editing `View4` only affects the viewfinder, editing `Still6` only affects the JPEG |
+| Boundary | All of it is RAM — **a power cycle restores stock**. "Live at boot" still needs a firmware image edit (C1) |
+| Forbidden | ⛔ Don't write `+0x00C` and pulse the config register yourself — the ISP then reads an address combination that never occurs in the stock sequence ⇒ **severe colour corruption**. The only safe reload is a **half-press** |
+
+Entry point: `sh /opt/usr/nx-ks/lut.sh list | apply <name> | off | status` (library at `/mnt/mmc/looks/`).
+See `docs/current/LUT_RETARGET_LIVE_2026-10-18.md`.
 
 ## Quick start
 
@@ -196,7 +203,7 @@ The following corrections are authoritative; **where they conflict with older te
 | Capability | Status |
 | --- | --- |
 | PW all-7-dimension direct push | ✅ verified on-camera (2026-10-15, A2 channel `0x134..0x13B`, dimension by dimension; legacy three-dimension channel regression 3/3 kept) |
-| 3D LUT userspace load | ✅ `lutapi load` (requires p7 "reclaimed" state) + dual-channel isolation + guard |
+| 3D LUT live retarget | ✅ edit `View4[3]` **4 bytes** + write A18 **19,712 B** + half-press (on-device, 2026-10-18, negative-image criterion); view / still chains independent |
 | `.cube ⇄ native table` | ✅ format solved (4913×4B, `0x4D00` slot stride) |
 | Camera system-menu extension | ✅ mod_gui overlay (4 widgets / 4 keysyms; replaces, cannot iterate) |
 | Live web-gallery directory | ✅ port-8080 `dirlist` readdir |

@@ -38,7 +38,7 @@ scripts/                          <- 整个目录(模块母本, 会被同步到�
 - **PW 全 7 维一键**：`EV+AEL` → 点配方，**R/G/B/HUE/SAT/SHARP/CON 七维一次全部直进 ISP，画面秒级变化**（A2「档位池直写」通道 `0x134..0x13B`；2026-10-15 上机实测逐维命中）。
   ★ 依赖：**NXWA-A2 p7 固件——已随包提供（`patch-a2/`，含中英文刷入教程与校验 md5）**；未刷 A2 时直推段静默无效（不崩），可用「画面向导 → 自定义1」保底全维效果。
 - **客观判据**：`sh /opt/usr/nx-ks/filmlab.sh check` 直接读 ISP 手上那 7 维并与配方槽位比对（只读、零风险）——**"值变了" ≠ "被消费"**，这一条是全项目的判据基准。
-- **3D LUT 链路**：任意 `.cube` → 原生表 → 预览直灌（LUT1 + `lutsentinel` 守护）；`.cube ⇄ 原生表` 双向工具齐备。
+- **3D LUT 运行态换表**：任意 `.cube` 丢进 SD 卡，**机身一条命令**转成原生表；改 1 个 4 字节登记表项 + 写 19,712 字节进空闲槽 + 半按一次快门，取景器即换表。**取景与成片是两条独立链路**，可分别重定向。不刷固件、不改 p7 代码、断电即回原状。
 - **Web 遥控 (`nx-rc`) 网页相册**：折叠目录模型（目录倒序、默认只展开最新），按需加载 + 缩略图缓存，根治单核 CPU 上目录多导致的首屏卡顿。
 - **相册实时目录源**：8080 端口 `dirlist` CGI 每次请求直接 `readdir` SD 卡，新拍照片立即可见（80 端口 daemon 的目录列表是启动快照，新照片永不出现）。
 - **缩略图预热**：开启遥控后台自动铺缓存（网格 320px 最新 300 张 + 灯箱 1024px 最新 60 张，`nice -n 19` 不影响拍摄），前端显示预热进度；加载失败自动重试。
@@ -104,13 +104,20 @@ PC 端排障工具：`test_server/telnet_run.py <相机IP> '命令'`（非交互
 
 ## 3D LUT / LUT pipeline
 
+> **2026-10-18 路线更换**：**运行态换表**取代「LUT1 + 守护」。旧路线（`lutapi` + LUT1 + `lutsentinel`）需抢时序、只覆盖预览，已退役。
+
 | 能力 | 现状 |
 | --- | --- |
-| 表格式 | 已解：`4913×4B {R,G,B,pad}`，索引 `((B*17+G)*17+R)*4`，槽步长 `0x4D00`，17 等距电平 |
-| 导入 | `.cube ⇄ 原生表` 双向（`test_server/isp/nx3dlut.py`、`test_server/lutpipe/deploy_luts.py`） |
-| 预览 | `lutpipe/lutpick.sh apply` — 落点探测 → 安全闸（`cmasafe` 四查）→ `lutapi load`，取景器秒级变化 |
-| 存活 | ★ **写表生效律**：写前必须处于"p7 抢回态"，否则写入不生效；快门必触发抢回 ⇒ `lutsentinel.arm` 守护 + 双通道隔离（表进 LUT1，p7 只碰 LUT0） |
-| 成片 | ★ **定式：预览直灌（LUT1 + 守护）/ 成片后处理（ksfilm）**。"成片直灌"已实测为死路（拍片流程会主动重配置 LUT 档位池） |
+| 表格式 | 已解：`4913×4B {R,G,B,pad}`，索引 `((B*17+G)*17+R)*4`，槽 19,712 B，步长 `0x4D00` |
+| 装载机制 | ★ p7 **每次 Load 都重读**三张静态登记表：`View4`@`0x803837F0` / `Still6`@`0x80382C5C` / `BV12`@`0x80382B00`；`+0x00C` = 装载源地址 |
+| 换表 | ★ **改 1 个 4 字节登记表项 + 写 19,712 B 进空闲槽 A18（`0x81119F00`）+ 半按一次快门** |
+| 导入 | `.cube → 19,712 B 槽表`：**机身一条命令**（`cube2lut.arm`，无 libc/libm/libgcc），或 PC 端 `test_server/isp/nx3dlut.py` |
+| 取景 / 成片 | ★ **两条独立可重定向的链路**：改 `View4` 只影响取景器，改 `Still6` 只影响成片 |
+| 边界 | 全部是内存操作，**断电即回原状**；「开机即生效」仍需改固件镜像（C1） |
+| 禁区 | ⛔ 自己写 `+0x00C` 再脉冲配置寄存器 ⇒ ISP 读到原厂时序外的地址组合 ⇒ **严重偏色花屏**。唯一安全重载 = **半按快门** |
+
+入口：`sh /opt/usr/nx-ks/lut.sh list | apply <名> | off | status`（滤镜库 `/mnt/mmc/looks/`）。
+详见 [`docs/current/LUT_RETARGET_LIVE_2026-10-18.md`](docs/current/LUT_RETARGET_LIVE_2026-10-18.md)。
 
 详见 [SYNC.md](SYNC.md)（中英双语安装/同步/回滚指南）。
 
@@ -125,6 +132,8 @@ PC 端排障工具：`test_server/telnet_run.py <相机IP> '命令'`（非交互
 | `scripts/EV_AEL.sh` | FilmLab 入口（`EV+AEL` 组合键）；NX1 自动回退 `EV_AEL.community.sh` |
 | `scripts/gui_filmlab*.NX500` | FilmLab 菜单：`1b`=配方主菜单（默认）；`2/3/4`=预设槽 / WB / 诊断页 |
 | `scripts/nx-rc/` | Web 遥控：`web_root/`(前端)、`thumb/`(缩略图)、`capdtm/`(参数API)、`push/`(WiFi同步) |
+| `scripts/lut.sh` | ★ **3D LUT 入口**：`list` / `begin` / `apply <名>` / `off` / `status`（滤镜库 `/mnt/mmc/looks/`） |
+| `scripts/lut/` | ★ LUT 工具四件套：`cube2lut` / `nx_slotwrite` / `nx_regtabwrite` / `nx_regtabdump`（随包分发） |
 | `test_server/` | PC 端开发/验证环境（模拟相机 API + 工具链 + 门控） |
 | `test_server/pwsend/` | ★ PW 直推工具（`pwsend.arm` / `pwcalib.sh` / `gen_pwpush.py`）+ 上机 runbook |
 | `test_server/lutpipe/` `test_server/isp/` | LUT 部署/守护工具与 `.cube ⇄ 原生表` 转换 |
@@ -175,7 +184,7 @@ PC 端排障工具：`test_server/telnet_run.py <相机IP> '命令'`（非交互
 | 3 | 内置 18 条配方 | **68 条**（彩色 60 + 黑白 8，自动分页） | `scripts/filmlab/recipes.json` |
 | 4 | 配方权威源 = `nx500_recipes.txt` | 权威源 = **`scripts/filmlab/recipes.json`**；`.txt` 为其 68 条扁平镜像（2026-10-11 已同步） | `flab.py` 数据流 |
 | 5 | 「点配方立即生效 / 两步出片」 | **全 7 维直推即时生效（2026-10-15 A2 通道达成）；官方固件下需机身「画面向导→自定义1」确认一次** | `PW_PARAM_CHANNEL` / `PW_ID_MAP_FULL` / `A2_*` |
-| 6 | 「View 与 Still 独立 ⇒ 改 View 表不影响照片」 | ❌ **已证伪**：`View 4 档 ⊆ Still 18 档`，View 独有 = 空 ⇒ 两路**共用同一缓冲池**，软件层无法隔离 | `3DLUT_VIEW_STILL_ISOLATION_2026-10-08.md` |
+| 6 | 「View 与 Still 共用缓冲池 ⇒ 软件层无法隔离」 | **部分推翻（2026-10-18）**：缓冲池确实共用（`View 4 档 ⊆ Still 18 档`），但**登记表是分开的** —— 改 `View4` 只影响取景、改 `Still6` 只影响成片，已实机实证 | `3DLUT_VIEW_STILL_ISOLATION_2026-10-08.md` / `LUT_RETARGET_LIVE_2026-10-18.md` |
 | 7 | 「用户态写 LUT 数据不可行」 | **已修**：用户态可 `lutapi load` 自有表（LUT1 + 守护）；**不可**读写的是 p7 那 4 个内置缓冲（`0x81xxxxxx`，超出 Linux 映射） | `U6_ONMACHINE_RESULT` / `3DLUT_APPLY_PATHS` |
 | 8 | 「内置 LUT 之一是纯 identity / 可作中性基准」 | ❌ **判据作废**：出厂表**全是风格表**（所谓 identity 槽实为低对比灰调） | `U6_ONMACHINE_RESULT` |
 | 9 | 「`setvar` 可写 PW 变量」 | ⛔ **禁区**：id 由 p7 运行时注册，盲扫曾写死 capture 服务 | `ERROR_CORRECTIONS` / `PW_PARAM_CHANNEL` |
@@ -191,7 +200,7 @@ PC 端排障工具：`test_server/telnet_run.py <相机IP> '命令'`（非交互
 | 能力 | 状态 |
 | --- | --- |
 | PW 全 7 维直推进 ISP | ✅ 上机验证（2026-10-15，A2 通道 `0x134..0x13B` 逐维精确命中；旧三维通道回归 3/3 保留） |
-| 3D LUT 用户态装载 | ✅ `lutapi load`（写前须"p7 抢回态"）+ 双通道隔离 + 守护 |
+| 3D LUT 运行态换表 | ✅ 改 `View4[3]` **4 字节** + 写 A18 **19,712 B** + 半按（2026-10-18 实机，负片判据目视）；取景 / 成片双链路独立 |
 | `.cube ⇄ 原生表` | ✅ 表格式已解（4913×4B / `0x4D00` 槽步长） |
 | 相机系统菜单扩展 | ✅ mod_gui 覆盖层（4 控件 / 4 keysym；只取代不迭代） |
 | Web 相册实时目录 | ✅ 8080 `dirlist` readdir |
@@ -201,7 +210,7 @@ PC 端排障工具：`test_server/telnet_run.py <相机IP> '命令'`（非交互
 - **全 7 维 PW 一键需 A2 固件**（p7 补丁直写通道，2026-10-15 达成）；官方固件下归一化器域 `0x100–0x12e` 外拒收 —— 需机身「画面向导」确认一次。
 - **p7 无 UI**（Font/DrawText/Dialog/Widget 全 0 命中）⇒ 系统菜单只能在 Linux 侧 `di-camera-app` 里改（无源码，成本极高）。
 - **长按 / 连击 / 组合键架构性不可得**（内核先消费按键）⇒ "一键"上限 = 一次按键一个动作。
-- **成片直灌 LUT 是死路**（拍片流程主动重配置档位池）⇒ 定式：预览直灌 / 成片后处理。
+- **「成片直灌 LUT」曾被判死路，2026-10-18 已推翻**：成片走 `Still6` 登记表，与 `View4` 是两条独立链路 —— 前提是表必须放 **LUT0 的槽**（旧结论把表放进 LUT1，而 Still 的 `_load` 固定 `sel=0`，bank 不匹配才是真正原因）。
 - **出厂 LUT 表全是风格表** ⇒ 不可用"写 identity 得中性"做判据。
 
 **工具链**：Ghidra（p7 静态）、QEMU/Unicorn（离线复现）、zig 交叉编译（`arm-linux-gnueabi.2.15`，**必须 `-O0`**）、`gate_flow.py`（门控）、`check_scripts.py`（CI）。
