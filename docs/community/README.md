@@ -7,7 +7,7 @@
 | [`REDDIT_POST_EN.md`](REDDIT_POST_EN.md) | 完整英文技术贴（含 TL;DR、数据表、未验证项、评论区预案） | r/SamsungNX · r/cameras · r/ReverseEngineering |
 | [`FORUM_POST_ZH.md`](FORUM_POST_ZH.md) | 中文长文（同内容，中文读者关心的三条前置） | 色影无忌 · 蜂鸟 · 知乎 · V2EX |
 | [`VIDEO_SCRIPT_ZH.md`](VIDEO_SCRIPT_ZH.md) | 45s 主版 + 22s 快剪 + 小红书图文版 + 拍摄清单 | 抖音 · 小红书 |
-| [`assets/poster_overview.html`](assets/poster_overview.html) | **整体介绍海报**（1080×1920，六层能力栈 + 六个功能格 + 天花板） | 长图 · 仓库介绍 · 社群置顶 |
+| [`assets/poster_overview.html`](assets/poster_overview.html) | **整体介绍海报**（1080×1780，NXUI 界面设计 + 六项功能 + 数字条，含实机面板截图） | 长图 · 仓库介绍 · 社群置顶 |
 | [`assets/poster_4byte.html`](assets/poster_4byte.html) | **单点海报**（1080×1440，只讲「4 字节」） | 小红书首图 · 微博 · 朋友圈 |
 
 ## 一句话（所有平台通用）

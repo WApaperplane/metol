@@ -11,81 +11,71 @@
          -webkit-font-smoothing:antialiased; }
 
   .poster {
-    position:relative; width:1080px; height:1920px; padding:72px 76px 56px;
+    position:relative; width:1080px; height:1780px; padding:70px 76px 54px;
     display:flex; flex-direction:column;
-    background:radial-gradient(130% 55% at 50% -8%, #191920 0%, #0A0A0C 55%, #08080A 100%);
+    background:radial-gradient(130% 62% at 50% -8%, #191920 0%, #0A0A0C 55%, #08080A 100%);
     color:#F2F1ED; overflow:hidden;
   }
   .poster::before{
     content:""; position:absolute; inset:0; pointer-events:none;
     background-image:radial-gradient(#ffffff0c 1px, transparent 1px);
     background-size:26px 26px;
-    mask-image:radial-gradient(130% 70% at 50% 0%, #000 0%, transparent 68%);
-    -webkit-mask-image:radial-gradient(130% 70% at 50% 0%, #000 0%, transparent 68%);
+    mask-image:radial-gradient(130% 78% at 50% 0%, #000 0%, transparent 70%);
+    -webkit-mask-image:radial-gradient(130% 78% at 50% 0%, #000 0%, transparent 70%);
   }
 
-  /* ── 页眉 ── */
   .top { position:relative; display:flex; align-items:baseline; justify-content:space-between;
          font-size:15px; letter-spacing:.22em; color:#6E6B65; }
   .top b { color:#F2F1ED; font-weight:700; letter-spacing:.16em; }
   .top .ver { color:#8F8B83; letter-spacing:.12em; }
   .rule { position:relative; height:1px; background:#26262B; margin-top:15px; }
 
-  /* ── 标题 ── */
-  .hero { position:relative; margin-top:52px; }
-  .hero .kicker { font-size:22px; color:#8F8B83; letter-spacing:.04em; }
-  .hero h1 { margin-top:12px; font-size:104px; line-height:1.04; font-weight:800; letter-spacing:-.045em; }
+  .hero { position:relative; margin-top:46px; }
+  .hero .kicker { font-size:21px; color:#8F8B83; letter-spacing:.04em; }
+  .hero h1 { margin-top:10px; font-size:96px; line-height:1.05; font-weight:800; letter-spacing:-.045em; }
   .hero h1 em { font-style:normal; color:#FF4D2B; }
-  .hero .meta { margin-top:28px; font-size:20px; line-height:1.62; color:#7D7A73; }
+  .hero .meta { margin-top:24px; font-size:19px; line-height:1.6; color:#7D7A73; }
   .hero .meta b { color:#C9C4BA; font-weight:600; }
 
-  /* ── 区块标题 ── */
-  .sec { position:relative; margin-top:44px; display:flex; align-items:center; gap:16px; }
+  .sec { position:relative; margin-top:40px; display:flex; align-items:center; gap:16px; }
   .sec span { font-size:13px; letter-spacing:.24em; color:#6E6B65; white-space:nowrap; }
   .sec i { flex:1; height:1px; background:#202026; }
 
-  /* ── 能力栈 ── */
-  .stack { position:relative; margin-top:20px; }
-  .lv { display:flex; align-items:center; gap:20px; height:74px;
-        border-bottom:1px solid #1C1C22; padding:0 2px; }
-  .lv:last-child { border-bottom:none; }
-  .lv .n { width:44px; font-size:15px; letter-spacing:.1em; color:#4F4C47; font-weight:700; }
-  .lv .nm { width:190px; font-size:25px; font-weight:700; letter-spacing:-.01em; color:#E4E0D7; }
-  .lv .nt { flex:1; font-size:17px; color:#75726C; }
-  .lv .st { font-size:14px; letter-spacing:.1em; padding:6px 12px; border-radius:3px;
-            border:1px solid currentColor; }
-  .lv .st.ok { color:#7FD1A6; }
-  .lv .st.mid { color:#FF4D2B; }
-  .lv .st.no { color:#4A4843; }
-  .lv.hero-line { background:#121418; box-shadow:inset 2px 0 0 #FF4D2B; }
-  .lv.hero-line .nm { color:#FFFFFF; }
-  .lv.hero-line .nt { color:#A9A49B; }
-  .lv .star { color:#FF4D2B; font-size:15px; margin-left:8px; }
+  /* ── UI 区 ── */
+  .ui { position:relative; margin-top:20px; }
+  .screen { border:1px solid #2A2A31; border-radius:7px; overflow:hidden;
+            background:#08080A; box-shadow:0 18px 44px #00000066, 0 0 0 1px #ffffff06; }
+  .screen img { display:block; width:100%; height:auto; }
+  .screen .cap { display:flex; justify-content:space-between; align-items:baseline;
+                 padding:11px 16px; border-top:1px solid #1E1E24; font-size:13px;
+                 letter-spacing:.1em; color:#5F5C57; }
+  .screen .cap em { font-style:normal; color:#8A867E; }
+
+  .specs { display:grid; grid-template-columns:1fr 1fr; gap:2px; margin-top:16px; }
+  .spec { background:#0F0F13; padding:16px 18px 17px; }
+  .spec .h { font-size:16px; font-weight:700; color:#EDE9E0; letter-spacing:.01em; }
+  .spec .p { margin-top:7px; font-size:14px; line-height:1.6; color:#75726C; }
+  .spec .p b { color:#FF4D2B; font-weight:600; }
+  .spec .p u { color:#B9B4AA; text-decoration:none; }
 
   /* ── 功能格 ── */
-  .grid { position:relative; margin-top:22px; display:grid; grid-template-columns:repeat(3,1fr); gap:2px; }
-  .cell { background:#0F0F13; padding:22px 20px 24px; min-height:152px; }
-  .cell .t { font-size:20px; font-weight:700; color:#EDE9E0; letter-spacing:-.01em; }
-  .cell .d { margin-top:10px; font-size:15px; line-height:1.6; color:#75726C; }
+  .grid { position:relative; margin-top:20px; display:grid; grid-template-columns:repeat(3,1fr); gap:2px; }
+  .cell { background:#0F0F13; padding:20px 18px 22px; min-height:142px; }
+  .cell .t { font-size:19px; font-weight:700; color:#EDE9E0; letter-spacing:-.01em; }
+  .cell .d { margin-top:9px; font-size:14px; line-height:1.58; color:#75726C; }
   .cell .d b { color:#B9B4AA; font-weight:600; }
 
-  /* ── 数字条 ── */
-  .nums { position:relative; margin-top:34px; display:flex; border-top:1px solid #26262B;
+  .nums { position:relative; margin-top:32px; display:flex; border-top:1px solid #26262B;
           border-bottom:1px solid #26262B; }
-  .num { flex:1; padding:22px 0 24px; text-align:center; border-right:1px solid #1C1C22; }
+  .num { flex:1; padding:20px 0 22px; text-align:center; border-right:1px solid #1C1C22; }
   .num:last-child { border-right:none; }
-  .num b { display:block; font-size:44px; font-weight:800; letter-spacing:-.03em; color:#F6F4EF; line-height:1; }
-  .num span { display:block; margin-top:9px; font-size:13px; letter-spacing:.16em; color:#6E6B65; }
+  .num b { display:block; font-size:40px; font-weight:800; letter-spacing:-.03em; color:#F6F4EF; line-height:1; }
+  .num b small { font-size:21px; font-weight:700; letter-spacing:0; }
+  .num span { display:block; margin-top:8px; font-size:13px; letter-spacing:.16em; color:#6E6B65; }
 
-  /* ── 天花板 ── */
-  .ceil { position:relative; margin-top:18px; }
-  .ceil .row { display:flex; gap:14px; font-size:16px; line-height:1.9; color:#6E6B65; }
-  .ceil .row s { color:#3E3C38; text-decoration:none; }
-
-  /* ── 页脚 ── */
-  .foot { position:relative; margin-top:auto; padding-top:18px; border-top:1px solid #26262B;
+  .foot { position:relative; margin-top:auto; padding-top:16px; border-top:1px solid #26262B;
           display:flex; align-items:baseline; justify-content:space-between; }
-  .foot .r { font-size:17px; color:#B9B4AA; letter-spacing:.02em; }
+  .foot .r { font-size:16px; color:#B9B4AA; letter-spacing:.02em; }
   .foot .l { font-size:12px; color:#55524E; letter-spacing:.18em; }
 </style>
 </head>
@@ -102,72 +92,76 @@
     <div class="kicker">Samsung NX500 / NX1 增强固件 mod</div>
     <h1>给十年前的相机<br><em>重写一层</em></h1>
     <p class="meta">
-      Tizen 2.2 · DRIMe5 · 双核：AP 跑界面，<b>p7 跑 ISP</b><br>
-      fork 自 <b>ottokiksmaler/nx500_nx1_modding</b>，血脉 NX-KS 2.88
+      Tizen 2.2 · DRIMe5 · fork 自 <b>ottokiksmaler/nx500_nx1_modding</b><br>
+      界面在 Linux 侧重画，色彩在 p7 的常量表里改
     </p>
   </div>
 
-  <div class="sec"><span>六层能力栈</span><i></i></div>
+  <div class="sec"><span>NXUI · 机上界面</span><i></i></div>
 
-  <div class="stack">
-    <div class="lv">
-      <div class="n">L5</div><div class="nm">UI 叠加</div>
-      <div class="nt">Nuklear + X11/Xft，不链接 EFL</div>
-      <div class="st ok">已通</div>
+  <div class="ui">
+    <div class="screen">
+      <img src="nxui_panel.png" alt="NXUI LUT 面板">
+      <div class="cap">
+        <span>720 × 192 常驻滤镜条 · 实机渲染（库中 3 个 look 时的快照）</span>
+        <em>Nuklear + X11/Xft</em>
+      </div>
     </div>
-    <div class="lv">
-      <div class="n">L4</div><div class="nm">用户态</div>
-      <div class="nt">脚本 · 守护 · 8080 服务群 · Web 相册</div>
-      <div class="st ok">全控</div>
-    </div>
-    <div class="lv">
-      <div class="n">L3</div><div class="nm">内核</div>
-      <div class="nt">GPL 源码在手，可重编 —— 代价极高</div>
-      <div class="st mid">极高风险</div>
-    </div>
-    <div class="lv hero-line">
-      <div class="n">L2</div><div class="nm">p7 ISP</div>
-      <div class="nt">只可改常量表：色彩 · 3D LUT · 档位池<span class="star">★</span></div>
-      <div class="st mid">主战场</div>
-    </div>
-    <div class="lv">
-      <div class="n">L1</div><div class="nm">sensor 寄存器</div>
-      <div class="nt">内核独占，外部够不到</div>
-      <div class="st no">不可改</div>
-    </div>
-    <div class="lv">
-      <div class="n">L0</div><div class="nm">机械 / 光学</div>
-      <div class="nt">——</div>
-      <div class="st no">不可改</div>
+
+    <div class="specs">
+      <div class="spec">
+        <div class="h">不新开窗口</div>
+        <div class="p">三处入口（EV+AEL / EV+WiFi / 主菜单）全部转发同一进程，只换数据源与执行器。</div>
+      </div>
+      <div class="spec">
+        <div class="h">不碰取景帧</div>
+        <div class="p">只画 720×192 的小面板，<b>不抓取、不重绘</b>取景画面 —— 单核 CPU 上全屏自绘是墙。</div>
+      </div>
+      <div class="spec">
+        <div class="h">半按 = 隐藏，不还原</div>
+        <div class="p">让开画面拍照。此时若还原，<b>照片就丢了 LUT</b> —— 这是刻意设计，不是 bug。</div>
+      </div>
+      <div class="spec">
+        <div class="h">退出 = 必还原</div>
+        <div class="p">退出时自动把登记表与槽恢复原厂，绝不留相机在「被改过」的状态。</div>
+      </div>
+      <div class="spec">
+        <div class="h">焦点要还回去</div>
+        <div class="p">相机没有窗口管理器。抢了 X 焦点不还，原生菜单方向键就会时灵时不灵。</div>
+      </div>
+      <div class="spec">
+        <div class="h">68 条横向滚动</div>
+        <div class="p">左右滑动或点选，<b>≈1.3 s 出画面</b>；<u>保存并关闭</u> 才写盘落状态。</div>
+      </div>
     </div>
   </div>
 
-  <div class="sec"><span>六个能用的东西</span><i></i></div>
+  <div class="sec"><span>功能</span><i></i></div>
 
   <div class="grid">
     <div class="cell">
-      <div class="t">NXUI 菜单</div>
-      <div class="d">Nuklear 重写，720×192 常驻滤镜条。<b>点配方即时预览</b>，半按快门关闭。</div>
-    </div>
-    <div class="cell">
       <div class="t">FilmLab 68</div>
-      <div class="d">负片 / 反转 / 黑白 / 电影 / 风格五族，<b>1.3 s 出画面</b>。</div>
+      <div class="d">负片 / 反转 / 黑白 / 电影 / 风格五族，菜单自动分页。<b>配方库在 SD 卡，可编辑可扩充。</b></div>
     </div>
     <div class="cell">
       <div class="t">PW 7 维</div>
-      <div class="d">R/G/B/HUE/SAT/SHARP/CON <b>一次直进 ISP</b>，逐维读回可验。</div>
+      <div class="d">R/G/B/HUE/SAT/SHARP/CON <b>一次直进 ISP</b>，逐维读回可验 ——「值变了」≠「被消费」。</div>
     </div>
     <div class="cell">
       <div class="t">3D LUT</div>
-      <div class="d"><b>4 字节换表</b>，取景与成片两条独立链路，不刷固件。</div>
+      <div class="d"><b>4 字节换表</b>：改一个登记表项 + 写 19,712 B + 半按。取景与成片两条独立链路。</div>
     </div>
     <div class="cell">
       <div class="t">Web 相册</div>
-      <div class="d">8080 实时目录源，<b>新拍照片立刻可见</b>；缩略图预热。</div>
+      <div class="d">8080 端口 <b>readdir 实时目录</b>，新拍照片立刻可见；缩略图后台预热，不抢拍摄。</div>
+    </div>
+    <div class="cell">
+      <div class="t">Web 遥控</div>
+      <div class="d">折叠目录模型 + 缩略图缓存，按需加载；WiFi 在线推送前端，免拔卡。</div>
     </div>
     <div class="cell">
       <div class="t">对焦与 EV</div>
-      <div class="d">对焦堆栈 / 对焦按钮 / EV 档位，全部脚本化。</div>
+      <div class="d">对焦堆栈 / 对焦按钮 / EV 档位，全部脚本化，配置写在 SD 卡。</div>
     </div>
   </div>
 
@@ -176,15 +170,7 @@
     <div class="num"><b>42</b><span>LUT 槽位</span></div>
     <div class="num"><b>4,913</b><span>表项 17³</span></div>
     <div class="num"><b>7</b><span>PW 维度</span></div>
-    <div class="num"><b>122</b><span>现行文档</span></div>
-  </div>
-
-  <div class="sec"><span>结构性天花板</span><i></i></div>
-
-  <div class="ceil">
-    <div class="row"><s>—</s><span>p7 无 UI：菜单只能在 Linux 侧改，无源码</span></div>
-    <div class="row"><s>—</s><span>长按 / 连击 / 组合键架构性不可得：内核先消费按键</span></div>
-    <div class="row"><s>—</s><span>出厂 LUT 全是风格表：没有可当中性基准的 identity</span></div>
+    <div class="num"><b>1.3<small>s</small></b><span>预览出画面</span></div>
   </div>
 
   <div class="foot">
