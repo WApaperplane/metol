@@ -2,8 +2,9 @@
 
 > ⚠ **这些文档的结论可能已被后续调查推翻。**
 > 取结论前，请先对照 [`../current/ERROR_CORRECTIONS_2026-10-07.md`](../current/ERROR_CORRECTIONS_2026-10-07.md)
-> 与 [`../current/HANDOVER_2026-10-07.md`](../current/HANDOVER_2026-10-07.md)。
-> 归档：2026-10-07
+> 与 [`../current/HANDOVER_2026-10-16.md`](../current/HANDOVER_2026-10-16.md)。
+
+归档共 **60 份**，分两批：2026-10-07 一次（10-05/10-06 的阶段性成果）、**2026-10-18 一次**（见文末 §2）。
 
 ## 为什么保留
 
@@ -27,3 +28,22 @@
 ## 完整历史
 
 如需当时的完整上下文，见 git 历史（归档前的路径均为 `docs/<文件名>`）。
+
+---
+
+## 2. 2026-10-18 批次（28 份）
+
+清理原则：**只在 `current/` 留「还能据以决策」的文档**。以下四类归档 ——
+正文一字未改，保留当时的推理原貌。
+
+| 类别 | 文件 | 为什么归档 |
+|---|---|---|
+| 旧交接 | `HANDOVER_2026-10-07 / 10-11 / 10-12` | 已被 `current/HANDOVER_2026-10-16` 取代 |
+| 旧任务流 | `TASKFLOW_2026-10-09 / 10-10 / 10-12` | 已被 `current/TASKFLOW_2026-10-16` 取代 |
+| 一次性执行记录 | `OFFLINE_TRACK_SUMMARY` `OFFLINE_VERIFICATION` `TIER1_AND_TIER3_OFFLINE` `QEMU_S4_AND_ENV_CLEANUP` `QEMU_S5_OFFLINE_USERSPACE` `UNBLOB_WSL_QEMU` `ST_RE_AND_REPRO` `WORKFLOW_PLAN` `AUDIT_2026-10-07` `D1_U11_STATIC_ATTACK` `D7_NXFILMUI_CJK_REBROADCAST` `D8_FORK_PREP` `STRATEGY_2026-10-07` `U2_UI_DISPLAY` `UI_PAGES_OFFLINE_RENDER` | 当日执行日志，结论已被总结吸收 |
+| 被取代的路线设计 | `NATIVE_UI_DESIGN_2026-10-07` `NATIVE_UI_DESIGN_FULL_2026-10-11` `NATIVE_UI_ROADMAP_2026-10-15` `UI0_HOST_FEASIBILITY_2026-10-13` | 原生 UI（EFL）主线已被 **NXUI（Nuklear）** 取代 |
+| 被取代的数据口径 | `RECIPES_BATCH2_2026-10-11` | 95 条 → 现 **68 条**，权威源是 `scripts/filmlab/recipes.json` |
+| 被取代的调查 | `3DLUT_DEEP_DIVE_2026-10-07`（中英） | 表格式终解在 `current/3DLUT_TABLE_FORMAT_2026-10-08` |
+
+> 另有 **24 份仍留在 `current/`** 的技术文档只加了「本文结论已被取代」横幅（不归档，
+> 因为它们承载的**证据与过程**仍需可查）。清单见 `../README.md` §5。

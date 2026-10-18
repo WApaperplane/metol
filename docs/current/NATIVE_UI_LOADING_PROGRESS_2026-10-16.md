@@ -1,5 +1,9 @@
 # 原生 UI 主线推进：单入口候选与真实加载边界
 
+> ⚠️ **2026-10-18 文档清理：本文结论已被取代。** 原生 UI（EFL）主线已被 NXUI（Nuklear）取代。
+> 现行结论见 [`NXUI_NUKLEAR_2026-10-17.md`](NXUI_NUKLEAR_2026-10-17.md)。
+
+
 > **后续真机更新**：已在用户单独授权下完成11字节私有字典标签实验，目视改名及恢复通过，见 [ONDEVICE_NATIVE_LABEL_RESULT_2026-10-16.md](ONDEVICE_NATIVE_LABEL_RESULT_2026-10-16.md)。本文为前一轮离线边界；标签现在有运行时数据层候选，不再只等待fresh-exec。持久化、PW槽一致性和完整原生确认仍未完成。
 
 > 2026-10-16；承接 [恢复链审计](DELIVERY_RESUME_AUDIT_2026-10-16.md)。

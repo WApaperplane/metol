@@ -1,5 +1,9 @@
 # T5 —— LUT 预览后端产品化（2026-10-16）
 
+> ⚠️ **2026-10-18 文档清理：本文结论已被取代。** `lut_backend.sh` 的产品化入口已被 `scripts/lut.sh` 取代；`lutpick.sh off` 的 identity 语义问题一并由 `lut.sh off` 解决。
+> 现行结论见 [`LUT_UI_2026-10-18.md`](LUT_UI_2026-10-18.md)。
+
+
 > **2026-10-18 离线更新**：后端支持`apply <name> --sel 0|1 [--dry]`（默认1）；picker显式接受`--ch0|--ch1`并拒绝冲突选项。状态从`current.sel`读取请求值，旧记账缺通道时返回null；sel=0拒绝活动守护，不自动启动守护，不宣称成片通过。本轮未部署，详见[LUT0路线复核](LUT_SEL0_ROUTE_REVIEW_2026-10-18.md)。
 
 > **同日后续修正**：真实shell调用漏传 `--ch1` 已修复；旧输出中的 `sel:1` 不能作为硬件证据。`status.sel` 改为 `null`，请求通道另列 `sel_requested`；模拟器不再虚构守护已启动。新增实际shell/驱动回归，详见 [恢复链审计与T5修正](DELIVERY_RESUME_AUDIT_2026-10-16.md) §5–6。机端仍是此前部署版本，本轮没有重新部署。
