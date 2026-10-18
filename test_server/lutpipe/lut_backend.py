@@ -45,6 +45,7 @@ class SimBackend:
             "luts": ["_identity", "portra400", "gold200", "trix400"],
             "guard": 0,
             "current": "",
+            "sel_requested": None,
         }
 
     def probe(self):
@@ -53,26 +54,32 @@ class SimBackend:
                 "guard": self.state["guard"],
                 "precondition": "apply 前需前置抢回态（先对焦一次）"}
 
-    def apply(self, name, dry=False):
+    def apply(self, name, dry=False, sel=1):
+        if sel not in (0, 1):
+            return {"ok": False, "level": "failed", "error": "invalid_sel"}
         if name not in self.state["luts"]:
             return {"ok": False, "level": "failed", "error": "table_not_found", "table": name}
+        if sel == 0 and self.state["guard"]:
+            return {"ok": False, "level": "failed", "error": "guard_conflict", "sel_requested": 0}
         if not dry:
             self.state["current"] = name
-        return {"ok": True, "level": "full", "table": name, "sel": 1,
-                "sel_requested": 1, "hardware_verified": False,
+            self.state["sel_requested"] = sel
+        return {"ok": True, "level": "full", "table": name, "sel": sel,
+                "sel_requested": sel, "hardware_verified": False, "still_verified": False,
                 "guard": self.state["guard"], "dry": bool(dry),
-                "note": "请求 LUT1；守护未自动启动，画面与成片另验"}
+                "note": "sel 为请求通道；守护未自动启动，画面与成片另验"}
 
     def rollback(self):
         self.state["guard"] = 0
         self.state["current"] = ""
+        self.state["sel_requested"] = None
         return {"ok": True, "path": "factory_restore", "identity_used": False,
                 "hardware_verified": False, "guard_stopped": True, "restore_rc": 0,
                 "note": "恢复命令返回结果，原厂画面另验（非 identity）"}
 
     def status(self):
         return {"ok": True, "guard": self.state["guard"], "current": self.state["current"],
-                "sel": None, "sel_requested": 1 if self.state["current"] else None,
+                "sel": None, "sel_requested": self.state["sel_requested"],
                 "hardware_verified": False,
                 "note": "current 与 sel_requested 为软件记账；sel 未读取硬件"}
 
@@ -135,6 +142,13 @@ def selftest():
     chk(b.status()["guard"] == 0 and b.status()["current"] == "",
         "rollback 后状态清空")
 
+    r0 = b.apply("portra400", sel=0)
+    chk(r0["sel_requested"] == 0 and not r0["still_verified"] and
+        b.status()["sel_requested"] == 0, "sel=0 明确记账，不宣称成片验证通过")
+    b.state["guard"] = 1
+    chk(b.apply("portra400", sel=0)["error"] == "guard_conflict",
+        "sel=0 与运行中的通道守护冲突时拒绝")
+
     print("\n== 结果：%s ==" % ("PASS" if not fails else "FAIL %s" % fails))
     return 0 if not fails else 2
 
@@ -145,9 +159,13 @@ def main():
                     choices=["probe", "apply", "rollback", "status"])
     ap.add_argument("name", nargs="?", default=None)
     ap.add_argument("--dry", action="store_true")
+    ap.add_argument("--sel", type=int, choices=(0, 1), default=None,
+                    help="apply 请求通道，默认 1；0 为待上机验证的 LUT0 路线")
     ap.add_argument("--sim", action="store_true")
     ap.add_argument("--selftest", action="store_true")
     a = ap.parse_args()
+    if a.sel is not None and a.cmd != "apply":
+        ap.error("--sel 仅适用于 apply")
 
     if a.selftest:
         return selftest()
@@ -157,7 +175,9 @@ def main():
         if a.cmd == "probe":
             print(json.dumps(b.probe(), ensure_ascii=False))
         elif a.cmd == "apply":
-            print(json.dumps(b.apply(a.name or "", a.dry), ensure_ascii=False))
+            result = b.apply(a.name or "", a.dry, sel=1 if a.sel is None else a.sel)
+            print(json.dumps(result, ensure_ascii=False))
+            return 0 if result.get("ok") else 2
         elif a.cmd == "rollback":
             print(json.dumps(b.rollback(), ensure_ascii=False))
         elif a.cmd == "status":
@@ -176,6 +196,8 @@ def main():
         args.append(a.name)
     if a.dry:
         args.append("--dry")
+    if a.sel is not None:
+        args.extend(["--sel", str(a.sel)])
     d = run_remote(args)
     if d is None:
         return 3

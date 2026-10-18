@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-18",
+  "scope": "on-device .cube -> slot table conversion; no camera writes",
+  "tool": {
+    "name": "cube2lut.arm",
+    "bytes": 7864,
+    "md5": "7cd4adffcb762d0437fb270e174eb563"
+  },
+  "verdict": "ARM fixed-point output is byte-identical to the PC float reference on all three cubes (identity 17^3, invert 17^3, warm 33^3)",
+  "files": {
+    "identity17.cube": {
+      "bytes": 137628,
+      "md5": "d5804b0f86b4d41400a1d5808512e7de"
+    },
+    "identity17_arm.bin": {
+      "bytes": 19712,
+      "md5": "f5b22a815e1cca2ed2c30df32a95886d"
+    },
+    "identity17_pc.bin": {
+      "bytes": 19652,
+      "md5": "66099183eda6a494db28e6a783eb940a"
+    },
+    "invert17.cube": {
+      "bytes": 137628,
+      "md5": "a24117a9d099dcf3799d6e512384cfb3"
+    },
+    "invert17_arm.bin": {
+      "bytes": 19712,
+      "md5": "4a74f5cc8a3c7cc39be0659bb97b3fde"
+    },
+    "invert17_pc.bin": {
+      "bytes": 19652,
+      "md5": "872b12ee92492237bd4c83fea1e53434"
+    },
+    "warm33.cube": {
+      "bytes": 1006300,
+      "md5": "1dd60f858dbaecb7da841c823492d783"
+    },
+    "warm33_arm.bin": {
+      "bytes": 19712,
+      "md5": "a22f730a78b7acab3689e261b09a5123"
+    },
+    "warm33_pc.bin": {
+      "bytes": 19652,
+      "md5": "f3d8b70fbbfd8b8d5a74c76c306cefd6"
+    }
+  }
+}

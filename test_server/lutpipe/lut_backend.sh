@@ -16,7 +16,7 @@
 #
 #   用法（相机端）：
 #     sh lut_backend.sh probe
-#     sh lut_backend.sh apply <表名> [--dry]
+#     sh lut_backend.sh apply <表名> [--sel 0|1] [--dry]
 #     sh lut_backend.sh rollback
 #     sh lut_backend.sh status
 #   输出：stdout = 单行 JSON（供控制器解析）；人类可读信息走 stderr。
@@ -64,26 +64,44 @@ cmd_probe(){
 }
 
 cmd_apply(){
-    name=$1; dry=$2
+    name=$1; dry=""; sel=1; sel_seen=0
     [ -n "$name" ] || { printf '{"ok":false,"level":"failed","error":"no_name"}\n'; return 1; }
+    shift
+    while [ "$#" -gt 0 ]; do
+        case "$1" in
+            --dry) dry=--dry; shift ;;
+            --sel)
+                [ "$sel_seen" = 0 ] && [ "$#" -ge 2 ] || { printf '{"ok":false,"level":"failed","error":"invalid_option"}\n'; return 1; }
+                case "$2" in 0|1) sel=$2 ;; *) printf '{"ok":false,"level":"failed","error":"invalid_sel"}\n'; return 1 ;; esac
+                sel_seen=1; shift 2 ;;
+            *) printf '{"ok":false,"level":"failed","error":"invalid_option"}\n'; return 1 ;;
+        esac
+    done
     case "$name" in
         *[!a-zA-Z0-9_.-]*|.|..) printf '{"ok":false,"level":"failed","error":"invalid_name"}\n'; return 1 ;;
     esac
-    [ -z "$dry" ] || [ "$dry" = "--dry" ] || { printf '{"ok":false,"level":"failed","error":"invalid_option"}\n'; return 1; }
     [ -f "$PICK" ] || { printf '{"ok":false,"level":"failed","error":"lutpick_missing"}\n'; return 1; }
     [ -f "$LUTS/$name.bin" ] || { printf '{"ok":false,"level":"failed","error":"table_not_found","table":%s}\n' "$(jstr "$name")"; return 1; }
+    # Existing sentinel changes Cfg only; it cannot protect LUT0 contents from a P7 reload.
+    # A running LUT1 guard would also undo a deliberate sel=0 request.
+    if [ "$sel" = 0 ] && [ "$(guard_state)" = 1 ]; then
+        printf '{"ok":false,"level":"failed","error":"guard_conflict","sel_requested":0}\n'
+        return 1
+    fi
     [ -f "$LUTS/_identity.bin" ] || log "(提示：无 _identity.bin；诊断表缺省)"
 
-    log "-- apply $name ${dry:+($dry)}（sel=1 通道）--"
+    log "-- apply $name ${dry:+($dry)}（sel=$sel 通道；成片待验）--"
+    channel=--ch1
+    [ "$sel" = 0 ] && channel=--ch0
     if [ "$dry" = "--dry" ]; then
-        out=$($RUNNER "$PICK" apply "$name" --ch1 --dry 2>&1); rc=$?
+        out=$($RUNNER "$PICK" apply "$name" "$channel" --dry 2>&1); rc=$?
     else
-        out=$($RUNNER "$PICK" apply "$name" --ch1 2>&1); rc=$?
+        out=$($RUNNER "$PICK" apply "$name" "$channel" 2>&1); rc=$?
     fi
     echo "$out" | sed 's/^/  /' >&2
     if [ "$rc" = "0" ]; then
-        printf '{"ok":true,"level":"full","table":%s,"sel":1,"sel_requested":1,"hardware_verified":false,"guard":%s,"dry":%s,"note":"sel 为请求通道；dry=true 仅探测，其余为加载命令返回成功；守护未自动启动，画面与成片另验"}\n' \
-            "$(jstr "$name")" "$(guard_state)" "$([ "$dry" = "--dry" ] && echo true || echo false)"
+        printf '{"ok":true,"level":"full","table":%s,"sel":%s,"sel_requested":%s,"hardware_verified":false,"still_verified":false,"guard":%s,"dry":%s,"note":"sel 为请求通道；dry=true 仅探测，其余为加载命令返回成功；守护未自动启动，画面与成片另验"}\n' \
+            "$(jstr "$name")" "$sel" "$sel" "$(guard_state)" "$([ "$dry" = "--dry" ] && echo true || echo false)"
     else
         printf '{"ok":false,"level":"failed","table":%s,"rc":%s,"error":"lutpick_apply_failed"}\n' "$(jstr "$name")" "$rc"
     fi
@@ -113,6 +131,7 @@ cmd_rollback(){
     if [ "$rc_r" = "0" ] && [ "$g_after" = "0" ]; then
         ok=true
         rm -f "$LUTS/current"
+        rm -f "$LUTS/current.sel"
     fi
     printf '{"ok":%s,"path":"factory_restore","identity_used":false,"hardware_verified":false,"guard_stopped":%s,"restore_rc":%s,"note":"恢复命令返回结果，原厂画面另验（非 identity）"}\n' \
         "$ok" "$([ "$g_after" = "0" ] && echo true || echo false)" "$rc_r"
@@ -120,16 +139,20 @@ cmd_rollback(){
 }
 
 cmd_status(){
-    cur=""
+    cur=""; requested=null
     [ -f "$LUTS/current" ] && cur=$(cat "$LUTS/current" 2>/dev/null)
+    if [ -n "$cur" ] && [ -f "$LUTS/current.sel" ]; then
+        stored=$(cat "$LUTS/current.sel" 2>/dev/null)
+        case "$stored" in 0|1) requested=$stored ;; esac
+    fi
     printf '{"ok":true,"guard":%s,"current":%s,"sel":null,"sel_requested":%s,"hardware_verified":false,"note":"current 与 sel_requested 为软件记账；sel 未读取硬件"}\n' \
-        "$(guard_state)" "$(jstr "$cur")" "$([ -n "$cur" ] && echo 1 || echo null)"
+        "$(guard_state)" "$(jstr "$cur")" "$requested"
 }
 
 case "$1" in
     probe)    cmd_probe ;;
-    apply)    cmd_apply "$2" "$3" ;;
+    apply)    shift; cmd_apply "$@" ;;
     rollback) cmd_rollback ;;
     status)   cmd_status ;;
-    *)        printf '{"ok":false,"error":"usage: lut_backend.sh probe|apply <name> [--dry]|rollback|status"}\n'; exit 2 ;;
+    *)        printf '{"ok":false,"error":"usage: lut_backend.sh probe|apply <name> [--sel 0|1] [--dry]|rollback|status"}\n'; exit 2 ;;
 esac

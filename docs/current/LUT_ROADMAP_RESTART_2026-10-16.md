@@ -1,5 +1,7 @@
 # LUT 路线重启方案（2026-10-16）
 
+> **2026-10-18 决策更新**：下文“E4证明成片直灌死路”的外推作废，保留所测LUT1序列的负观察。sel=0值得独立验证，但现有守护只改Cfg，不能阻止P7重灌LUT0；500ms预览恢复不证明赶得上Still。最新路线和离线脚本见[LUT0路线复核](LUT_SEL0_ROUTE_REVIEW_2026-10-18.md)。
+
 > **背景**：LUT 线于 10-09 冻结（工具链落地 + U6 波待上机）；A2/PW 线 10-15 达成后重启（用户指令：「LUT 路线还是要再提上日程了」）。
 > **输入**：`LUT_PIPELINE_DESIGN_2026-10-09`（链路）、`3DLUT_TABLE_FORMAT_2026-10-08`（表格式）、`3DLUT_VIEW_STILL_ISOLATION_2026-10-08`、`P7_RECLAIM_COUNTERMEASURE_2026-10-09`（守护）、`3DLUT_APPLY_PATHS_2026-10-08`（线路）、`test_server/u6/runbook.txt`。
 > **性质**：现状盘点 + 资产修复（本日已执行）+ 路线设计 + 上机批设计。

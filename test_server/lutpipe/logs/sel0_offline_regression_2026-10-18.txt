@@ -1,0 +1,28 @@
+test_apply_failure_is_not_success (test_lut_backend_shell.ShellBackendTests.test_apply_failure_is_not_success) ... ok
+test_apply_really_requests_lut1 (test_lut_backend_shell.ShellBackendTests.test_apply_really_requests_lut1) ... ok
+test_bad_channel_metadata_is_not_reported_as_a_channel (test_lut_backend_shell.ShellBackendTests.test_bad_channel_metadata_is_not_reported_as_a_channel) ... ok
+test_dry_run_does_not_claim_preview_or_change_bookkeeping (test_lut_backend_shell.ShellBackendTests.test_dry_run_does_not_claim_preview_or_change_bookkeeping) ... ok
+test_legacy_bookkeeping_does_not_invent_a_channel (test_lut_backend_shell.ShellBackendTests.test_legacy_bookkeeping_does_not_invent_a_channel) ... ok
+test_lut0_dry_run_keeps_prior_channel (test_lut_backend_shell.ShellBackendTests.test_lut0_dry_run_keeps_prior_channel) ... ok
+test_lut0_is_explicit_and_status_preserves_requested_channel (test_lut_backend_shell.ShellBackendTests.test_lut0_is_explicit_and_status_preserves_requested_channel) ... ok
+test_lut0_rejects_active_guard_before_calling_loader (test_lut_backend_shell.ShellBackendTests.test_lut0_rejects_active_guard_before_calling_loader) ... ok
+test_path_and_option_inputs_are_rejected_before_tool_call (test_lut_backend_shell.ShellBackendTests.test_path_and_option_inputs_are_rejected_before_tool_call) ... ok
+test_real_picker_api_failure_keeps_previous_channel (test_lut_backend_shell.ShellBackendTests.test_real_picker_api_failure_keeps_previous_channel) ... ok
+test_real_picker_default_lut1_reaches_api (test_lut_backend_shell.ShellBackendTests.test_real_picker_default_lut1_reaches_api) ... ok
+test_real_picker_dry_run_never_invokes_api (test_lut_backend_shell.ShellBackendTests.test_real_picker_dry_run_never_invokes_api) ... ok
+test_real_picker_off_dry_run_never_loads_identity (test_lut_backend_shell.ShellBackendTests.test_real_picker_off_dry_run_never_loads_identity) ... ok
+test_real_picker_receives_lut0_and_writes_correct_bookkeeping (test_lut_backend_shell.ShellBackendTests.test_real_picker_receives_lut0_and_writes_correct_bookkeeping) ... ok
+test_real_picker_rejects_channel_conflicts_and_typos (test_lut_backend_shell.ShellBackendTests.test_real_picker_rejects_channel_conflicts_and_typos) ... ok
+test_real_picker_rejects_missing_hit_before_safety_or_load (test_lut_backend_shell.ShellBackendTests.test_real_picker_rejects_missing_hit_before_safety_or_load) ... ok
+test_real_picker_safety_rejection_never_loads (test_lut_backend_shell.ShellBackendTests.test_real_picker_safety_rejection_never_loads) ... ok
+test_remote_driver_keeps_table_name_as_one_shell_argument (test_lut_backend_shell.ShellBackendTests.test_remote_driver_keeps_table_name_as_one_shell_argument) ... ok
+test_restore_failure_preserves_bookkeeping (test_lut_backend_shell.ShellBackendTests.test_restore_failure_preserves_bookkeeping) ... ok
+test_rollback_restores_factory_without_loading_identity (test_lut_backend_shell.ShellBackendTests.test_rollback_restores_factory_without_loading_identity) ... ok
+test_table_missing_is_rejected_before_tool_call (test_lut_backend_shell.ShellBackendTests.test_table_missing_is_rejected_before_tool_call) ... ok
+test_sel0_does_nothing_when_p7_reloads_lut0_without_changing_selection (test_lutsentinel_replay.SentinelReplayTests.test_sel0_does_nothing_when_p7_reloads_lut0_without_changing_selection) ... ok
+test_sel1_reacts_to_same_selection_trace_by_calling_op_init (test_lutsentinel_replay.SentinelReplayTests.test_sel1_reacts_to_same_selection_trace_by_calling_op_init) ... ok
+
+----------------------------------------------------------------------
+Ran 23 tests in 1.362s
+
+OK

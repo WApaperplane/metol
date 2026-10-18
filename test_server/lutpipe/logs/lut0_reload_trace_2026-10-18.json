@@ -1,0 +1,219 @@
+{
+  "scope": "offline_original_instructions_with_MMIO_memory_and_explicit_stubs",
+  "image_md5": "712c6fd0a49371ec05ce94c367b0d5c7",
+  "entry": "0x804a5c44",
+  "source": "0x81115200",
+  "hardware_consumption_verified": false,
+  "dma_completion_verified": false,
+  "still_timing_verified": false,
+  "scenarios": [
+    {
+      "cfg_before": "0x100",
+      "cfg_after": "0x100",
+      "sel_before": 0,
+      "sel_after": 0,
+      "return_register": "0x0",
+      "return_pc": "0x7efffffc",
+      "load_pulse_written": true,
+      "reg_writes": [
+        {
+          "offset": "0x0",
+          "value": "0x1",
+          "bytes": 4
+        },
+        {
+          "offset": "0x8",
+          "value": "0x0",
+          "bytes": 4
+        },
+        {
+          "offset": "0x8",
+          "value": "0x1",
+          "bytes": 4
+        },
+        {
+          "offset": "0xc",
+          "value": "0x81115200",
+          "bytes": 4
+        },
+        {
+          "offset": "0x4",
+          "value": "0x100",
+          "bytes": 4
+        },
+        {
+          "offset": "0x4",
+          "value": "0x100",
+          "bytes": 4
+        },
+        {
+          "offset": "0x8",
+          "value": "0x101",
+          "bytes": 4
+        },
+        {
+          "offset": "0x8",
+          "value": "0x1",
+          "bytes": 4
+        }
+      ],
+      "stubs_hit": [],
+      "watched_calls": [
+        {
+          "offset": "0x4a5c44",
+          "name": "load_lut(table,sel,fmt,0)",
+          "args": [
+            "0x81115200",
+            "0x0",
+            "0x1",
+            "0x0"
+          ]
+        },
+        {
+          "offset": "0x4a5e30",
+          "name": "load/save \u4e3b\u4f53(&desc)",
+          "args": [
+            "0x7f7fffe0",
+            "0x0",
+            "0x1",
+            "0x7f7fffd4"
+          ]
+        },
+        {
+          "offset": "0x4cf3d4",
+          "name": "reg OnOff",
+          "args": [
+            "0x1",
+            "0x0",
+            "0x1",
+            "0x7f7fffd4"
+          ]
+        },
+        {
+          "offset": "0x4cf4b4",
+          "name": "reg LUT \u5730\u5740",
+          "args": [
+            "0x81115200",
+            "0x0",
+            "0x1",
+            "0x7f7fffd4"
+          ]
+        },
+        {
+          "offset": "0x4cf484",
+          "name": "reg \u542f\u52a8\u8109\u51b2",
+          "args": [
+            "0x1",
+            "0x1",
+            "0x100",
+            "0x2082b000"
+          ]
+        }
+      ]
+    },
+    {
+      "cfg_before": "0x1100",
+      "cfg_after": "0x1100",
+      "sel_before": 0,
+      "sel_after": 0,
+      "return_register": "0x0",
+      "return_pc": "0x7efffffc",
+      "load_pulse_written": true,
+      "reg_writes": [
+        {
+          "offset": "0x0",
+          "value": "0x1",
+          "bytes": 4
+        },
+        {
+          "offset": "0x8",
+          "value": "0x0",
+          "bytes": 4
+        },
+        {
+          "offset": "0x8",
+          "value": "0x1",
+          "bytes": 4
+        },
+        {
+          "offset": "0xc",
+          "value": "0x81115200",
+          "bytes": 4
+        },
+        {
+          "offset": "0x4",
+          "value": "0x1100",
+          "bytes": 4
+        },
+        {
+          "offset": "0x4",
+          "value": "0x1100",
+          "bytes": 4
+        },
+        {
+          "offset": "0x8",
+          "value": "0x101",
+          "bytes": 4
+        },
+        {
+          "offset": "0x8",
+          "value": "0x1",
+          "bytes": 4
+        }
+      ],
+      "stubs_hit": [],
+      "watched_calls": [
+        {
+          "offset": "0x4a5c44",
+          "name": "load_lut(table,sel,fmt,0)",
+          "args": [
+            "0x81115200",
+            "0x0",
+            "0x1",
+            "0x0"
+          ]
+        },
+        {
+          "offset": "0x4a5e30",
+          "name": "load/save \u4e3b\u4f53(&desc)",
+          "args": [
+            "0x7f7fffe0",
+            "0x0",
+            "0x1",
+            "0x7f7fffd4"
+          ]
+        },
+        {
+          "offset": "0x4cf3d4",
+          "name": "reg OnOff",
+          "args": [
+            "0x1",
+            "0x0",
+            "0x1",
+            "0x7f7fffd4"
+          ]
+        },
+        {
+          "offset": "0x4cf4b4",
+          "name": "reg LUT \u5730\u5740",
+          "args": [
+            "0x81115200",
+            "0x0",
+            "0x1",
+            "0x7f7fffd4"
+          ]
+        },
+        {
+          "offset": "0x4cf484",
+          "name": "reg \u542f\u52a8\u8109\u51b2",
+          "args": [
+            "0x1",
+            "0x1",
+            "0x1100",
+            "0x2082b000"
+          ]
+        }
+      ]
+    }
+  ]
+}

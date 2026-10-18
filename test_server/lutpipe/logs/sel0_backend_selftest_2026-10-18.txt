@@ -1,0 +1,14 @@
+== T5 契约自测（模拟后端）==
+[OK  ] probe JSON 契约
+   {"ok": true, "tools": {"cmasafe": 1, "cmapick2": 1, "lutapi": 1, "lutload": 1, "lutsentinel": 1, "lutpick": 1}, "luts_count": 4, "guard": 0, "precondition": "apply 前需前置抢回态（先对焦一次）"}
+[OK  ] apply 成功 → level=full / sel=1
+[OK  ] apply 后 status：不虚构守护启动或硬件通道读回
+[OK  ] 表不存在 → failed/table_not_found
+[OK  ] dry-run 不改变状态
+[OK  ] ★ rollback 的 identity_used == false（关闭≠identity）
+[OK  ] rollback 走 factory_restore 且停守护
+[OK  ] rollback 后状态清空
+[OK  ] sel=0 明确记账，不宣称成片验证通过
+[OK  ] sel=0 与运行中的通道守护冲突时拒绝
+
+== 结果：PASS ==

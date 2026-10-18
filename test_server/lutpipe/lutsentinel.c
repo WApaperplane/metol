@@ -12,6 +12,8 @@
  *     · LUT1 里我们的表【原封不动】
  *     · 只需要把 Cfg.SelLUT 从 0 改回 1（一个 32-bit 寄存器写，无 DMA）
  *   本守护 = 轮询 Cfg；发现 SelLUT != 目标 → 调官方 op_init(sel=1) 恢复。
+ *   --sel 0 不能保护 LUT0 的内容：P7 重灌 LUT0 时 SelLUT 仍是 0，条件不会触发。
+ *   本工具不重新 load；op_init 成功也不证明在 Still 消费前恢复。
  *
  * 【与"重灌守护"的差别】
  *   重灌 = 20KB DMA + 撞上 p7 活动期的风险；本方案 = 1 个寄存器写（微秒级）。
@@ -30,7 +32,7 @@
  * 用法：
  *   lutsentinel.arm                        # 默认：守护 sel=1, fmt=1, cbcr=0, 500ms
  *   lutsentinel.arm --interval 300 --count 600
- *   lutsentinel.arm --sel 0 --count 1      # 单次体检（读 Cfg 后即退）
+ *   lutsentinel.arm --sel 0 --count 1      # 可能调用 op_init 写配置，不是只读体检
  *   lutsentinel.arm --quiet                # 只在恢复时输出
  * =====================================================================
  */
@@ -65,7 +67,7 @@ typedef int (*fn_ep_open)(void);
 #define R_ONOFF 0x000
 #define R_CFG   0x004   /* bits[1:0]=SelCbCr  bits[5:4]=SelLUT  bit8/12=格式位 */
 #define R_PULSE 0x008
-#define R_LUTA  0x00c   /* Load 目标地址（p7 抢回时写它的表地址） */
+#define R_LUTA  0x00c   /* Load 源地址；不是持久在线表指针 */
 
 #define EP_IOCTL_GET_PHYS_REG_INFO 0x80506864UL
 struct ep_reg_phys_info { unsigned int reg_start_addr, reg_size; };

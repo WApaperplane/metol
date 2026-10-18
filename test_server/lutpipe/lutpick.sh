@@ -18,7 +18,7 @@
 #
 # 子命令（一次只跑一条）：
 #   list                     列可用 LUT + 当前记账
-#   apply <name> [--dry] [--ch1]   应用一个 LUT
+#   apply <name> [--dry] [--ch0|--ch1]   应用一个 LUT（默认 sel=0）
 #       --dry : 只做落点探测与安全闸，不 load
 #       --ch1 : sel=1 双通道装载（★ 抗 p7 抢回；需先通过 E1 实验）
 #   off [--dry]              关闭（加载 _identity 表；等价"不加 LUT"）
@@ -31,12 +31,14 @@
 #   * 一次调用只处理一个表；失败不重试
 # =====================================================================
 
-BB=/opt/usr/nx-ks/busybox
-LUTS=/mnt/mmc/filmlab/luts
+D=${NXWA_MOD_ROOT:-/opt/usr/nx-ks}
+BB=${NXWA_BUSYBOX:-$D/busybox}
+LUTS=${NXWA_LUT_DIR:-${NXWA_LUT_MOD:-/mnt/mmc/filmlab}/luts}
 CUR=$LUTS/current
+CURSEL=$LUTS/current.sel
 # 工具：优先 SD 自包含（与 deploy_luts.py 推送落点一致），fallback /opt 部署版
-MOD=/mnt/mmc/filmlab
-[ -x "$MOD/cmasafe.arm" ] || MOD=/opt/usr/nx-ks
+MOD=${NXWA_LUT_MOD:-/mnt/mmc/filmlab}
+[ -x "$MOD/cmasafe.arm" ] || MOD=$D
 CMAP=$MOD/cmapick2.arm
 SAFE=$MOD/cmasafe.arm
 API=$MOD/lutapi.arm
@@ -91,7 +93,7 @@ do_load() {
     return 0
   fi
 
-  # 3) load（官方 API；SEL 由 --ch1 决定：0=对 p7 抢回无抵抗 / 1=双通道抗抢回）
+  # 3) load（官方 API；--ch0/--ch1 选择通道；均不证明 Still 成片生效）
   echo ">>> [3/3] lutapi load（sel=$SEL fmt=1 cbcr=0 settle=300）"
   "$API" load "$TBL" "$ADDR" "$SEL" 1 17 2 300 0 > "$LOG" 2>&1
   RC=$?
@@ -102,7 +104,7 @@ do_load() {
 
 usage() {
   echo "用法: lutpick.sh list | status"
-  echo "      lutpick.sh apply <name> [--dry] [--ch1]   # --ch1 = 双通道抗抢回（sel=1）"
+  echo "      lutpick.sh apply <name> [--dry] [--ch0|--ch1]   # 默认 sel=0；--ch1 请求 sel=1"
   echo "      lutpick.sh off [--dry]                    # 加载 identity（画面回中性）"
   echo "      lutpick.sh sentinel start|stop|status     # 抢回守护（配合 --ch1）"
   echo "  表目录: $LUTS"
@@ -112,10 +114,28 @@ CMD=$1
 NAME=$2
 SEL=0
 DRY=0
-for opt in "$3" "$4"; do
-  [ "$opt" = "--dry" ] && DRY=1
-  [ "$opt" = "--ch1" ] && SEL=1
-done
+SEEN_CHANNEL=0
+case "$CMD" in
+apply|off)
+  if [ "$CMD" = apply ]; then
+    [ "$#" -ge 2 ] || { usage; exit 1; }
+    shift 2
+  else
+    shift
+  fi
+  for opt in "$@"; do
+    case "$opt" in
+      --dry) DRY=1 ;;
+      --ch0|--ch1)
+        [ "$SEEN_CHANNEL" = 0 ] || { echo "ERR: 重复或冲突的通道选项"; exit 1; }
+        SEEN_CHANNEL=1
+        [ "$opt" = --ch1 ] && SEL=1
+        ;;
+      *) echo "ERR: 未知选项 $opt"; exit 1 ;;
+    esac
+  done
+  ;;
+esac
 
 case "$CMD" in
 
@@ -138,7 +158,7 @@ list|status)
   fi
   if [ "$CMD" = "status" ]; then
     echo
-    echo "★ 取景器判据：load 后 1-2 秒内画面应变化；半按快门会让 p7 抢回表指针"
+    echo "★ 取景器判据：load 后 1-2 秒内画面应变化；半按快门可能让 p7 重载原厂表"
     echo "  （正常现象）；『照片是否跟随』见 U6 runbook 拍片实验。"
   fi
   ;;
@@ -152,6 +172,7 @@ apply)
   RC=$?
   if [ $RC -eq 0 ] && [ "$DRY" != "1" ]; then
     "$BB" echo "$NAME" > "$CUR"
+    "$BB" echo "$SEL" > "$CURSEL"
     echo "★ 已应用 '$NAME'（记账已更新）。看取景器确认；"
     echo "  ★ 不半按快门则保持；拍片实验见 U6 runbook。"
   fi
@@ -170,6 +191,7 @@ off)
   do_load "$TBL"
   RC=$?
   [ $RC -eq 0 ] && [ "$DRY" != "1" ] && "$BB" echo "(off)" > "$CUR"
+  [ $RC -eq 0 ] && [ "$DRY" != "1" ] && "$BB" echo "$SEL" > "$CURSEL"
   exit $RC
   ;;
 

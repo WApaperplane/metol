@@ -1,0 +1,8 @@
+检查 204 个文件（169 个 .sh）
+  CRLF 违规     : 0
+  语法错误      : 0
+  无可执行位    : 0
+  无 shebang    : 0
+
+
+RESULT: PASS  (0 fail / 0 warn)

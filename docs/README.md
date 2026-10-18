@@ -1,7 +1,7 @@
 # NX-KS2 文档索引 / Documentation Index
 
 > 本目录按**时效**分区，避免"旧结论淹没新结论"。
-> 更新：2026-10-17 · 分支：`nxwa`
+> 更新：2026-10-18
 
 ## 目录结构
 
@@ -19,6 +19,13 @@ docs/
 
 | 文档 | 定位 |
 |---|---|
+| [`LUT_RETARGET_LIVE_2026-10-18.md`](current/LUT_RETARGET_LIVE_2026-10-18.md) | ★★★★★ **运行态换表闭环（新主线）**：改 `View4[3]` **4 字节** + 往空闲槽 A18 写 **19,712B** + **半按一次** ⇒ 取景器负片；`load_addr` 实测 `0x81115200→0x81119F00→0x810FD100`。★★ **Still6 六项全指负片槽 ⇒ 成片 `SAM_0044.JPG` 负片，而 View 仍指 A17（取景正常）** ⇒ View/Still 两条独立可重定向链路。两条写入双向可回滚（A18 备份 == 镜像切片 md5 `4c0cc78c…`）。不刷机、不改 p7、不用 CMA、不抢时序。工具 `nx_regtabdump/nx_regtabwrite/nx_slotwrite`。 |
+| [`LUT_UI_2026-10-18.md`](current/LUT_UI_2026-10-18.md) | ★★★★ **LUT 滤镜 UI 端口**：3D LUT 换表做成 NXUI 第三模式（入口 EV+WiFi / 主菜单「LUT 滤镜」/ `nxui.sh lut`），与 filmlab 数据通路独立、可叠加。三个安全设计（半按不还原 / 退出必 `lut.sh off` / dry-run 只读）。实测修复两 bug（apply 不触发重载、半按=退出导致最后一次写入被还原）。 |
+| [`CUBE2LUT_2026-10-18.md`](current/CUBE2LUT_2026-10-18.md) | ★★★★ **机身 .cube 转换器**：`.cube` 丢 SD 卡，机上一条命令转 19,712B 槽表，**ARM 定点输出与 PC 浮点逐字节相同**（无 libc/libm/libgcc 依赖）。格式契约：R 变化最快、DOMAIN 必须 0..1、拒绝 1D cube（宁报错不产出"看起来合理但是错的"表）。 |
+| [`LUT_REGTAB_READ_2026-10-18.md`](current/LUT_REGTAB_READ_2026-10-18.md) | ★★★ **Cfg 位定义与登记表回读**：bits[1:0]=SelCbCr、**bits[5:4]=SelLUT**、bit8/bit12=LUT0/LUT1 格式位 ⇒ 判 SelLUT 只算 bits[5:4]（把 bit12 当选择位会得出「Still 用 LUT1」的反向错误）。三张登记表上机 22/22 全中、`0x80380000` 起 16KB 与镜像 diff=0。 |
+| [`NXUI_FOCUS_HANDOFF_2026-10-18.md`](current/NXUI_FOCUS_HANDOFF_2026-10-18.md) | ★★★★ **NXUI 焦点不归还缺陷**：面板 `XSetInputFocus` 抢焦点、退出只 `XDestroyWindow` 从不归还 ⇒ 相机原生菜单方向键/JOG"有时候"失灵（X KeyPress 只投焦点窗口）。修法 = 保存/精确归还焦点 + 关闭即 `XUnmapWindow`；回归 `test_server/nxui/test_focus.py`（阴性对照焦点停 `0x1`=PointerRoot）。 |
+| [`LUT_WORKBUDDY_REVIEW_2026-10-18.md`](current/LUT_WORKBUDDY_REVIEW_2026-10-18.md) | **WorkBuddy新成果复核**：独立查看负片JPEG、核对三份转换样本和A18备份；运行态换表成为主线，主动reload已撤回、根因未定。指出dry-run退出写入、A18非空闲及会话恢复缺口。 |
+| [`LUT_SEL0_ROUTE_REVIEW_2026-10-18.md`](current/LUT_SEL0_ROUTE_REVIEW_2026-10-18.md) | **LUT0路线复核**：E4只保留所测LUT1序列的负结果；原P7指令证明sel不变也会触发Load，现有守护不能保护LUT0内容。显式sel=0后端与双层shell回归已完成，仍仅离线、未部署。 |
 | [`LUT_A17_ONDEVICE_C1_2026-10-17.md`](current/LUT_A17_ONDEVICE_C1_2026-10-17.md) | **LUT实机推进**：A2身份逐字节核对；两轮900样本与人工三次半按，Load源A17。A17负片诊断包和高版本A2回退候选离线就绪；固件/RAM/选表/画面分层验收，尚未刷机。 |
 | [`LUT_RUNTIME_SOURCE_AUDIT_2026-10-17.md`](current/LUT_RUNTIME_SOURCE_AUDIT_2026-10-17.md) | **LUT新证据**：定位启动整段复制，42个候选槽装载/运行映射闭合；A2/C1复制与View四档原指令仿真、历史256KB dump复核。修正T4调用链和填充者推断，收紧直写负结果及C1判据，明确C3推进条件。 |
 | [`NXUI_NUKLEAR_2026-10-17.md`](current/NXUI_NUKLEAR_2026-10-17.md) | **替代 UI 真机新证据**：Nuklear + X11/Xft 已安装启用；95 配方常驻滤镜条，用户确认取景色彩切换正常；小面积事件驱动避免持续重绘，含备份/回退与验证记录。 |
