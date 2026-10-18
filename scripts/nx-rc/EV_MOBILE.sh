@@ -20,8 +20,7 @@
 #   ⇒ ★ 13:53 我换上的 nxfilmui（EFL 事件循环）在此之上再抢一层单核 ⇒ 卡死加剧
 #
 # ★★★ 本版的原则
-#   ① UI 曾长期不挂这个槽位（旧的 nxfilmui/mod_gui 全屏窗口在单核上导致卡死）
-#      2026-10-18 起改为挂 NXUI(Nuklear) 的 LUT 面板 —— 见文件末尾，轻量、不抢取景帧
+#   ① ★★ 【安全】UI 不再挂这个槽位（它已导致卡死）
 #   ② ★★ 修掉 netcheck 的无限循环：有界轮询、到时安静退出、★ 绝不 cleanup
 #   ③ ★ 加互斥锁（替代原版脆弱的 ps|grep 计数）
 #   ④ 保留社区本意：EV+WiFi = 开 telnetd + FTP + 屏幕显示 IP
@@ -80,14 +79,4 @@ netcheck() {
 initserv
 # ★ 后台跑监控，限制优先级，且它自己会结束（≤60 秒）
 nice -n +19 netcheck &
-
-#★★★ 2026-10-18：本槽位顺带拉起 LUT 滤镜面板（与主菜单「LUT 滤镜」同一入口）
-#  历史：10-07 曾把 UI 从本槽位移除，因为当时的 nxfilmui/mod_gui 全屏窗口
-#        在单核上吃满 CPU（"按了 EV+WiFi 变慢"）。现在的 NXUI(Nuklear) 不是
-#        那一套：不链 EFL、不重绘取景帧、只在底部画 720×192，已长期挂在
-#        EV+AEL 上验证。⇒ 服务先起好，再开面板；退出面板由 nxui 内部 lut.sh off 还原。
-#  未装 NXUI 的机器（无 nxui.sh 或未 enable）自动跳过，行为与旧版一致。
-if [ -x "$D/nxui.sh" ] && "$D/nxui.sh" available; then
-    "$D/nxui.sh" lut
-fi
 exit 0
