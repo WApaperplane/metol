@@ -18,7 +18,7 @@
 | 24.0–30.0s | SD 卡插入读卡器 → 屏幕上 `portra400.cube` 拖进 `looks/` 文件夹 | `.cube` 丢进 SD 卡 | 不用电脑，机上直接转 |
 | 30.0–36.0s | 相机屏幕上的 LUT 面板（720×192，三个滤镜块） | 机上 UI<br>不是手机 App | — |
 | 36.0–41.0s | 取景器里同一场景，四个不同风格连切（每 1.2s 一个） | 一条链路<br>无限张表 | — |
-| 41.0–45.0s | 黑底白字：`github.com/WApaperplane/NXWA-nx500_modding` | 全部开源 · AGPL-3.0 | 代码和实验记录都在仓库里 |
+| 41.0–45.0s | 黑底白字：`github.com/WApaperplane/metol` | 全部开源 · AGPL-3.0 | 代码和实验记录都在仓库里 |
 
 **节奏要点**
 
@@ -38,7 +38,7 @@
 | 4–8s | 点三下，三次换色 | 改 4 个字节 |
 | 8–13s | 取景正常 / 成片负片 双画面 | 取景和成片是两条链路 |
 | 13–18s | `.cube` 拖进 SD 卡 + LUT 面板 | 机身直接转换 |
-| 18–22s | 仓库地址 | github.com/WApaperplane/NXWA-nx500_modding |
+| 18–22s | 仓库地址 | github.com/WApaperplane/metol |
 
 ---
 
@@ -147,7 +147,7 @@ p7 把 3D LUT 放在内存的 42 个槽里，每次装载都重新读一次代�
 .cube 文件直接丢进 SD 卡，相机上一条命令转成槽表，不需要电脑。
 
 全部开源，实验记录、地址表、判据都在仓库里：
-github.com/WApaperplane/NXWA-nx500_modding
+github.com/WApaperplane/metol
 
 #摄影 #胶片模拟 #LUT #相机改装 #三星NX500 #逆向工程 #开源 #数码影像
 ```

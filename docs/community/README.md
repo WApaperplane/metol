@@ -18,10 +18,10 @@
 
 | 用途 | 链接 |
 |---|---|
-| 本版 Release | https://github.com/WApaperplane/NXWA-nx500_modding/releases/tag/v2.88.0-nxwa.6 |
+| 本版 Release | https://github.com/WApaperplane/metol/releases/tag/v2.88.0-nxwa.6 |
 | 包直链 | `.../releases/download/v2.88.0-nxwa.6/NX-WA-2.88.0-nxwa.6.zip` |
 | 校验 | md5 `1f8cb2c85d79127347c1c42d7d6510e3`（7,751,707 B） |
-| 仓库 | https://github.com/WApaperplane/NXWA-nx500_modding |
+| 仓库 | https://github.com/WApaperplane/metol |
 
 > 论坛贴里优先给 Release 链接而不是 zip 直链 —— 直链会随版本失效，Release 页永远指向当前版。
 

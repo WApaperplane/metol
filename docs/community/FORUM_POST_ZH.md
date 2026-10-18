@@ -208,7 +208,7 @@ cast(v) = max(R,G,B) − min(R,G,B)     # 8 bit 级
 
 ### 仓库
 
-`https://github.com/WApaperplane/NXWA-nx500_modding` · 分支 `nxwa` · AGPL-3.0（派生自 `ottokiksmaler/nx500_nx1_modding`）
+`https://github.com/WApaperplane/metol` · 分支 `nxwa` · AGPL-3.0（派生自 `ottokiksmaler/nx500_nx1_modding`）
 
 今天的文档都在 `docs/current/`：
 

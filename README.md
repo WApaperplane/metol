@@ -1,4 +1,4 @@
-# NX-WA
+# Metol（旧称 NX-WA）
 
 Samsung NX500 / NX1 (Tizen / DRIMe5) 增强固件 mod —— 基于社区上游  
 [`ottokiksmaler/nx500_nx1_modding`](https://github.com/ottokiksmaler/nx500_nx1_modding) 改造与扩展。
@@ -7,14 +7,14 @@ Samsung NX500 / NX1 (Tizen / DRIMe5) 增强固件 mod —— 基于社区上游
 > `nx500_nx1_modding` upstream.  
 > **English version: [README_EN.md](README_EN.md)**
 
-**仓库 / Repository**：**[WApaperplane/NXWA-nx500_modding](https://github.com/WApaperplane/NXWA-nx500_modding)**
-（fork 自社区上游；旧地址 `WApaperplane/nx500_nx1_modding` 仍可重定向访问，**项目名以下载页显示名为准**。相机端安装路径 `/opt/usr/nx-ks/` 保持不变。）
+**仓库 / Repository**：**[WApaperplane/metol](https://github.com/WApaperplane/metol)**
+（fork 自社区上游；旧地址 `WApaperplane/NXWA-nx500_modding` 与 `WApaperplane/nx500_nx1_modding` 仍可重定向访问。相机端安装路径 `/opt/usr/nx-ks/` 保持不变。）
 
 **分支 / Branches**：`master` = 上游原始历史（勿动）；**`nxwa` = 本项目源码（本文档所在分支，亦是默认分支）**。
 
 **许可证与血缘 / License**：**AGPL-3.0**（派生自社区上游，已复核上游为 AGPL-3.0）—— 上游血缘表与发布前核对清单见 [ATTRIBUTION.md](ATTRIBUTION.md)。
 
-**发布物 / Releases**：见 [Releases](https://github.com/WApaperplane/NXWA-nx500_modding/releases)（含 SD 卡安装包 zip）。
+**发布物 / Releases**：见 [Releases](https://github.com/WApaperplane/metol/releases)（含 SD 卡安装包 zip）。
 
 ## 快速开始 / Quick start
 
@@ -179,7 +179,7 @@ PC 端排障工具：`test_server/telnet_run.py <相机IP> '命令'`（非交互
 
 | # | 旧表述 | 更正面 | 依据 |
 | - | --- | --- | --- |
-| 1 | 本 fork 仓库 = `github.com/WApaperplane/nxwa` | 规范仓库 = **`github.com/WApaperplane/NXWA-nx500_modding`**（fork；默认分支 `nxwa`；旧名 URL 仍重定向） | `gh repo view` 实测 |
+| 1 | 本 fork 仓库 = `github.com/WApaperplane/nxwa` | 规范仓库 = **`github.com/WApaperplane/metol`**（fork；默认分支 `nxwa`；原名 `NXWA-nx500_modding`，旧 URL 仍重定向） | `gh repo view` 实测；2026-10-18 改名 `metol` |
 | 2 | 上游 = `github.com/SamsungNX500/nx500_nx1_modding` | 上游（fork parent，其自身 parent 为空）= **`ottokiksmaler/nx500_nx1_modding`**；`SamsungNX500/...` 这个仓库**不存在** | `gh repo view` 实测 |
 | 3 | 内置 18 条配方 | **68 条**（彩色 60 + 黑白 8，自动分页） | `scripts/filmlab/recipes.json` |
 | 4 | 配方权威源 = `nx500_recipes.txt` | 权威源 = **`scripts/filmlab/recipes.json`**；`.txt` 为其 68 条扁平镜像（2026-10-11 已同步） | `flab.py` 数据流 |

@@ -182,7 +182,7 @@ Rollback is complete and verified: the spare slot's pre-write backup was byte-id
 
 ### Repository
 
-`https://github.com/WApaperplane/NXWA-nx500_modding` — branch `nxwa`. AGPL-3.0, derived from `ottokiksmaler/nx500_nx1_modding`.
+`https://github.com/WApaperplane/metol` — branch `nxwa`. AGPL-3.0, derived from `ottokiksmaler/nx500_nx1_modding`.
 
 Today's work landed in `docs/current/`:
 

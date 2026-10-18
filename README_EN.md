@@ -1,18 +1,18 @@
-# NX-WA
+# Metol (formerly NX-WA)
 
 An enhancement mod for the **Samsung NX500 / NX1** (Tizen / DRIMe5), built on the community
 [`ottokiksmaler/nx500_nx1_modding`](https://github.com/ottokiksmaler/nx500_nx1_modding) upstream.
 
 > 这是一个三星 NX500 / NX1 相机的增强 mod，基于社区上游工程改造与扩展。中文版见 [README.md](README.md)。
 
-**Repository**: **[WApaperplane/NXWA-nx500_modding](https://github.com/WApaperplane/NXWA-nx500_modding)**
-(a fork of the community upstream; the old URL `WApaperplane/nx500_nx1_modding` still redirects. The on-camera install path `/opt/usr/nx-ks/` is unchanged.)
+**Repository**: **[WApaperplane/metol](https://github.com/WApaperplane/metol)**
+(a fork of the community upstream; the old URLs `WApaperplane/NXWA-nx500_modding` and `WApaperplane/nx500_nx1_modding` still redirect. The on-camera install path `/opt/usr/nx-ks/` is unchanged.)
 
 **Branches**: `master` = untouched upstream history (do not touch); **`nxwa` = this project's source (the branch this document lives on, also the default branch)**.
 
 **License & attribution**: **AGPL-3.0** (derived from the community upstream, verified to be AGPL-3.0 itself) — upstream lineage table and the pre-release checklist live in [ATTRIBUTION.md](ATTRIBUTION.md).
 
-**Releases**: see [Releases](https://github.com/WApaperplane/NXWA-nx500_modding/releases) (including the SD-card install-package zip).
+**Releases**: see [Releases](https://github.com/WApaperplane/metol/releases) (including the SD-card install-package zip).
 
 ---
 
@@ -186,7 +186,7 @@ The following corrections are authoritative; **where they conflict with older te
 
 | # | Old statement | Correction | Evidence |
 | - | --- | --- | --- |
-| 1 | This fork = `github.com/WApaperplane/nxwa` | Canonical repo = **`github.com/WApaperplane/NXWA-nx500_modding`** (a fork; default branch `nxwa`; the old name still redirects) | `gh repo view`, measured |
+| 1 | This fork = `github.com/WApaperplane/nxwa` | Canonical repo = **`github.com/WApaperplane/metol`** (a fork; default branch `nxwa`; formerly `NXWA-nx500_modding`, the old URL still redirects) | `gh repo view`, measured; renamed to `metol` on 2026-10-18 |
 | 2 | Upstream = `github.com/SamsungNX500/nx500_nx1_modding` | GitHub fork parent (which itself has no parent) = **`ottokiksmaler/nx500_nx1_modding`**; the `SamsungNX500/...` repository **does not exist** | `gh repo view`, measured |
 | 3 | 18 built-in recipes | **68** (60 colour + 8 B&W, auto-paginated) | `scripts/filmlab/recipes.json` |
 | 4 | Authoritative recipe source = `nx500_recipes.txt` | Authoritative source = **`scripts/filmlab/recipes.json`**; the `.txt` is its 68-recipe flat mirror (synced 2026-10-11) | `flab.py` data flow |
