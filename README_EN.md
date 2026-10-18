@@ -24,8 +24,7 @@ An enhancement mod for the **Samsung NX500 / NX1** (Tizen / DRIMe5), built on th
 | Keys | Opens | Notes |
 | --- | --- | --- |
 | **EV + AEL** | **Filter strip** (NXUI, 720×192) | 68 recipes scroll horizontally; swipe/tap = **instant preview** (~1.3 s, always rendered into the Custom 1 canvas); `Save & close` commits and returns the field you started from; press again or **half-press** to close. **NX500 only** — NX1 falls back to the community script |
-| **EV + WiFi** | **LUT panel** + Telnet/FTP | Starts Telnet(23)/FTP(21) and shows the IP, then opens the LUT panel; leaving the panel runs `lut.sh off` and restores registry + slot |
-| **Double-tap WiFi** | Recipe rotation, no UI | Switches to the next recipe and shows its name for 2 s — the lightest way to change look while shooting |
+| **EV + WiFi** | **LUT panel** | Opens NXUI's LUT mode (`nxui.sh lut`); leaving the panel runs `lut.sh off` and restores registry + slot. If NXUI is not enabled you just get a one-line popup |
 | **Double-tap EV** | Main menu (NXUI, 720×336) | Paginated screen, replaces the old mod_gui menu |
 | **Half-press** | Closes the current panel | For the LUT panel this **only hides it, no restore** — shoot with the LUT still applied |
 
@@ -58,6 +57,7 @@ The camera menu also has `IP: x.x.x.x [Telnet关]` (tap to toggle 23/21), `远�
 - **The full 7-dimension push needs the A2 firmware** (`patch-a2/`, shipped with a flashing guide and md5). On stock firmware R/G/B/HUE need one confirmation in **Picture Wizard → Custom 1** — a structural limit of p7's normaliser domain (`0x100–0x12e`), not a script bug.
 - Honest limits: WB is not part of a recipe (use the camera's white balance); a recipe is a global colour vector, it cannot do highlight roll-off or zone-based exposure; NX1 is not enabled (the prefman offsets were only proven on NX500 1.12).
 - One criterion only: `sh /opt/usr/nx-ks/filmlab.sh check` reads the seven values the ISP is actually using (read-only, zero risk). **"The value changed" ≠ "the value is consumed"**.
+- There is also `scripts/nx-rc/MOBILE_MOBILE.sh` (double-tap WiFi = rotate to the next recipe with no UI) — it is not part of the install chain; copy it to `/opt/usr/nx-ks/` if you want it.
 
 ## 3D LUT
 
@@ -83,7 +83,7 @@ Details: [`docs/current/LUT_RETARGET_LIVE_2026-10-18.md`](docs/current/LUT_RETAR
 | `install.sh` `info.tg` `nx_cs.adj` | SD-card trigger trio (install / incremental sync) |
 | `scripts/` | All modules → synced to the camera's `/opt/usr/nx-ks/` |
 | `scripts/filmlab.sh` · `scripts/filmlab/recipes.json` | FilmLab engine / authoritative recipe library (68) |
-| `scripts/EV_AEL.sh` · `scripts/nx-rc/EV_MOBILE.sh` | The two key-combo entry points (`EV+AEL` strip / `EV+WiFi` LUT panel) |
+| `scripts/EV_AEL.sh` · `scripts/EV_MOBILE.sh` | The two key-combo entry points (`EV+AEL` strip / `EV+WiFi` LUT panel) |
 | `scripts/lut.sh` · `scripts/lut/` | 3D LUT entry + toolset (`cube2lut` / `nx_slotwrite` / `nx_regtabwrite` / `nx_regtabdump`) |
 | `scripts/nx-rc/` | Web remote: `web_root/` `thumb/` `capdtm/` `push/` |
 | `test_server/` | Host-side development environment (simulated API, toolchain, gates) |
@@ -104,7 +104,7 @@ Details: [`docs/current/LUT_RETARGET_LIVE_2026-10-18.md`](docs/current/LUT_RETAR
 
 - **The full 7-dimension one-tap needs the A2 firmware**; on stock firmware values outside the normaliser domain are rejected.
 - **p7 has no UI** (Font/DrawText/Dialog/Widget all zero hits) ⇒ the UI can only live on the Linux side.
-- **Long-press / multi-tap combos are architecturally limited** by the kernel consuming keys first ⇒ "one key" tops out at one action per press, combos at two keys.
+- **Long-press / 3+ key combos are not available** (the kernel consumes keys first) ⇒ only "hold EV + one key" style two-key combos work.
 - Factory LUT tables are **all style tables** — "write identity to get neutral" is not a valid criterion.
 
 > The film-simulation engine and `.cube` assets live in a separate repo:

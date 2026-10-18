@@ -24,8 +24,7 @@ Samsung NX500 / NX1（Tizen / DRIMe5）增强固件 mod，基于社区上游
 | 按键 | 打开 | 说明 |
 | --- | --- | --- |
 | **EV + AEL** | **滤镜条**（NXUI，720×192） | 68 条配方横向滚动，滑动/点选**即时预览**（约 1.3 s，画布固定「自定义1」）；`保存并关闭` 落盘并把档位还回打开时那一档；再按一次或**半按快门**关闭。**NX500 专属**，NX1 自动回退社区原版 |
-| **EV + WiFi** | **LUT 滤镜面板** + Telnet/FTP | 先起 Telnet(23)/FTP(21) 并在屏上显示 IP，再打开 LUT 面板；退出面板自动 `lut.sh off` 还原登记表与槽 |
-| **双击 WiFi** | 零 UI 轮换配方 | 直接切下一条配方，2 秒弹窗显示名字 —— 盲拍时换风格最轻的一键 |
+| **EV + WiFi** | **LUT 滤镜面板** | 打开 NXUI 的 LUT 模式（`nxui.sh lut`）；退出面板自动 `lut.sh off`，把登记表与槽还原。NXUI 未启用时只弹一句提示 |
 | **双击 EV** | 主菜单（NXUI，720×336） | 分页界面，替代旧的 mod_gui 主菜单 |
 | **半按快门** | 关闭当前面板 | LUT 面板**只隐藏不还原** —— 让开画面拍照，LUT 继续生效 |
 
@@ -58,6 +57,7 @@ Samsung NX500 / NX1（Tizen / DRIMe5）增强固件 mod，基于社区上游
 - **全七维直推需要 A2 固件**（`patch-a2/` 随包提供，含刷入教程与 md5）。官方固件下 R/G/B/HUE 需机身「画面向导 → 自定义1」确认一次 —— 这是 p7 归一化器域界（`0x100–0x12e`）的结构性限制，不是脚本 bug。
 - 诚实边界：WB 不在配方内（请用机身白平衡）；配方是全局色彩向量，做不出高光滚降 / 分区曝光；NX1 上不启用（prefman 偏移只在 NX500 1.12 实证）。
 - 判据只认一条：`sh /opt/usr/nx-ks/filmlab.sh check` 直接读 ISP 手上那七维跟配方比对（只读、零风险）。**"值变了" ≠ "被消费"**。
+- 另有 `scripts/nx-rc/MOBILE_MOBILE.sh`（双击 WiFi = 零 UI 轮换下一条配方）——不进安装链，需要时手动放到 `/opt/usr/nx-ks/`。
 
 ## 3D LUT
 
@@ -83,7 +83,7 @@ sh /opt/usr/nx-ks/lut.sh list | begin | apply <名> | off | status   # 滤镜库
 | `install.sh` `info.tg` `nx_cs.adj` | SD 卡根触发三件套（装机 / 增量同步） |
 | `scripts/` | 全部模块母本 → 同步到相机 `/opt/usr/nx-ks/` |
 | `scripts/filmlab.sh` · `scripts/filmlab/recipes.json` | FilmLab 引擎 / 权威配方库（68 条） |
-| `scripts/EV_AEL.sh` · `scripts/nx-rc/EV_MOBILE.sh` | 两个组合键入口（`EV+AEL` 滤镜条 / `EV+WiFi` LUT 面板） |
+| `scripts/EV_AEL.sh` · `scripts/EV_MOBILE.sh` | 两个组合键入口（`EV+AEL` 滤镜条 / `EV+WiFi` LUT 面板） |
 | `scripts/lut.sh` · `scripts/lut/` | 3D LUT 入口 + 四件套（`cube2lut` / `nx_slotwrite` / `nx_regtabwrite` / `nx_regtabdump`） |
 | `scripts/nx-rc/` | Web 遥控：`web_root/` `thumb/` `capdtm/` `push/` |
 | `test_server/` | PC 端开发验证环境（模拟 API、工具链、门控） |
@@ -104,7 +104,7 @@ sh /opt/usr/nx-ks/lut.sh list | begin | apply <名> | off | status   # 滤镜库
 
 - **全七维 PW 一键需 A2 固件**；官方固件下归一化器域外的值会被拒收。
 - **p7 无 UI**（Font/DrawText/Dialog/Widget 全 0 命中）⇒ 界面只能在 Linux 侧改。
-- **长按 / 连击 / 组合键受内核限制** ⇒ "一键"上限 = 一次按键一个动作，组合键只到两键。
+- **长按 / 三键以上组合不可得**（内核先消费按键）⇒ 能用的只有「按住 EV + 单键」这一类两键组合。
 - 出厂 LUT 表**全是风格表**，不能拿"写 identity 得中性"当判据。
 
 > 胶片仿真引擎与 `.cube` 素材另见 [nx500-filmsim](https://github.com/WApaperplane/nx500-filmsim)（public）。
