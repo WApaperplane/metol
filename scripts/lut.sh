@@ -21,21 +21,28 @@ set -u
 
 D=/opt/usr/nx-ks
 BB=$D/busybox
-T=/mnt/mmc/lut                  # 工具目录
+TD=$D/lut                       # 工具目录（随包安装：scripts/lut -> /opt/usr/nx-ks/lut）
 LAB=/mnt/mmc/looks              # 滤镜库：*.cube / *.bin
-ST=$T/state                     # 备份与状态
+ST=/mnt/mmc/lut/state           # 备份与状态（放 SD，随卡走）
 SLOT=0x81119F00                 # A18
 STILLBAK=/mnt/mmc/nxwa_regtab_20261018/still6_orig.bin
 
-SLOTW=$T/nx_slotwrite.arm
-REGT=$T/nx_regtabwrite.arm
-CUBE=$T/cube2lut.arm
+# 工具查找：优先随包安装的 $TD，其次手工部署的 /mnt/mmc/lut
+pick_tool() {
+    for d in "$TD" /mnt/mmc/lut; do
+        [ -x "$d/$1" ] && { echo "$d/$1"; return 0; }
+    done
+    return 1
+}
+SLOTW=$(pick_tool nx_slotwrite.arm)
+REGT=$(pick_tool nx_regtabwrite.arm)
+CUBE=$(pick_tool cube2lut.arm)
 
 die() { echo "ERR $*"; exit 1; }
 
 need_tools() {
-    [ -x "$SLOTW" ] || die "missing $SLOTW"
-    [ -x "$REGT" ]  || die "missing $REGT"
+    [ -n "$SLOTW" ] && [ -x "$SLOTW" ] || die "missing nx_slotwrite.arm (looked in $TD and /mnt/mmc/lut)"
+    [ -n "$REGT" ]  && [ -x "$REGT" ]  || die "missing nx_regtabwrite.arm (looked in $TD and /mnt/mmc/lut)"
 }
 
 case "${1:-status}" in

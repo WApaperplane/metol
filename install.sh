@@ -100,7 +100,7 @@ fi
 #   keyscan / mod_gui / popup_timeout / capdtm / thumb-cgi / push-cgi ...
 #   这些才是装机后真正要跑的东西。漏 chmod => "装完了但没反应"。
 #   现改为对 /opt/usr/nx-ks 下所有普通文件补位(chmod +x 对普通文件无害)。
-for _f in /opt/usr/nx-ks/* /opt/usr/nx-ks/nx-rc/* /opt/usr/nx-ks/nx-rc/thumb/* /opt/usr/nx-ks/dicam/* /opt/usr/nx-ks/nxui/*; do
+for _f in /opt/usr/nx-ks/* /opt/usr/nx-ks/nx-rc/* /opt/usr/nx-ks/nx-rc/thumb/* /opt/usr/nx-ks/dicam/* /opt/usr/nx-ks/nxui/* /opt/usr/nx-ks/lut/*; do
     [ -f "$_f" ] && chmod +x "$_f" 2>/dev/null
 done
 unset _f
