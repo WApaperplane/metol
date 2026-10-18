@@ -95,6 +95,16 @@
 </style>
 </head>
 <body>
+<!--
+  重新导出（Windows / Edge 无头，输出 2× 即 2160×2880）：
+    msedge --headless=new --disable-gpu --hide-scrollbars ^
+      --force-device-scale-factor=2 --window-size=1080,1440 ^
+      --screenshot="poster_4byte.png" "file:///<绝对路径>/poster.html"
+
+  尺寸 1080×1440 = 3:4，小红书首图推荐比例。
+  改配色只需动 :root 里的 --ink / --accent（目前 accent #FF4D2B）。
+  色卡是「同一张表 正/反」的实物对照：上排任意一色与下排同列互为 255−RGB。
+-->
 <div class="poster">
 
   <div class="top">
@@ -194,13 +204,3 @@
 </div>
 </body>
 </html>
-<!--
-  重新导出（Windows / Edge 无头，输出 2× 即 2160×2880）：
-    msedge --headless=new --disable-gpu --hide-scrollbars ^
-      --force-device-scale-factor=2 --window-size=1080,1440 ^
-      --screenshot="poster_4byte.png" "file:///<绝对路径>/poster.html"
-
-  尺寸 1080×1440 = 3:4，小红书首图推荐比例。
-  改配色只需动 :root 里的 --ink / --accent（目前 accent #FF4D2B）。
-  色卡是「同一张表 正/反」的实物对照：上排任意一色与下排同列互为 255−RGB。
--->
