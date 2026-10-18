@@ -12,6 +12,17 @@
 
 > 不刷固件，改 1 个 4 字节的登记表项 + 写 19,712 字节进空闲槽 + 半按一次快门 —— 取景器就换成任意 3D LUT。取景和成片还是两条独立链路。
 
+## 下载 / 引用链接
+
+| 用途 | 链接 |
+|---|---|
+| 本版 Release | https://github.com/WApaperplane/NXWA-nx500_modding/releases/tag/v2.88.0-nxwa.6 |
+| 包直链 | `.../releases/download/v2.88.0-nxwa.6/NX-WA-2.88.0-nxwa.6.zip` |
+| 校验 | md5 `1f8cb2c85d79127347c1c42d7d6510e3`（7,751,707 B） |
+| 仓库 | https://github.com/WApaperplane/NXWA-nx500_modding |
+
+> 论坛贴里优先给 Release 链接而不是 zip 直链 —— 直链会随版本失效，Release 页永远指向当前版。
+
 ## 三条硬卖点（按可信度排序）
 
 1. **4 字节换表** —— 可复现，有机器判据（`load_addr` 实测三段跳变）。
