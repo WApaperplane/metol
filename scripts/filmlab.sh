@@ -601,7 +601,14 @@ show)
   ;;
 
 #---------------------------------------------------------------
-# 面板「还原」：中性值（R/G/B=100，HUE/SAT/SHARP/CON=0）直推给 ISP。
+# 面板「还原」：中性值（R/G/B=100，HUE/SAT/SHARP/CON=10）直推给 ISP。
+#
+# ★★ 2026-10-19 修正（用户报「按还原变黑白」）：HUE/SAT/SHARP/CON 的中性值是 **10**，
+#   不是 0。四维值域是 0-20、10 才是零点（`VARIABLE_PWHUE/SATURATION/SHARPNESS/CONTRAST`
+#   = (raw16<<16)|0xD80A，raw16 = 16*(值-10)+15 ⇒ 值 10 ⇔ raw16=0x000F ⇔ 零偏移）。
+#   原先发 0 = 负向拉满 10 档：SAT 归零 ⇒ 直接变黑白（这是用户看到的症状），
+#   HUE/SHARP/CON 同时被压到底。R/G/B=100 的 1.0 增益没问题（100→2032），
+#   出错的是后四维 —— 不要拿 set_r 的「100 中性」类推过来。
 #
 # 与 preview 同语义 —— 只改运行时，不写槽、不落盘。所以：
 #   · 立刻生效，画面回中性；
@@ -617,9 +624,9 @@ neutral)
     echo "REJECT: neutral requires FILMLAB_PW=1, pwsend.arm and verified A2 firmware"
     exit 1
   fi
-  if pw_direct 100 100 100 0 0 0 0 --yes; then
-    log "$(date '+%H:%M:%S') neutral -> 100/100/100 0/0/0/0"
-    echo "✓ neutral (100/100/100 0/0/0/0)"
+  if pw_direct 100 100 100 10 10 10 10 --yes; then
+    log "$(date '+%H:%M:%S') neutral -> 100/100/100 10/10/10/10"
+    echo "✓ neutral (100/100/100 10/10/10/10)"
     exit 0
   fi
   echo "REJECT: PW backend failed"

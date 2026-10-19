@@ -28,8 +28,11 @@
 sh /opt/usr/nx-ks/filmlab.sh neutral
 ```
 
-- 中性值 = `R/G/B=100`、`HUE/SAT/SHARP/CON=0`（`set_r` 的换算里 100 → 2032，正是 1.0 增益）
-- 走 `pw_direct 100 100 100 0 0 0 0 --yes`，即 A2 的 7 维直推 + 提交位
+- 中性值 = `R/G/B=100`、`HUE/SAT/SHARP/CON=10`（`set_r` 的换算里 100 → 2032，正是 1.0 增益）
+  - ★ **2026-10-19 修正**：初版把这四维写成 0，实机按「还原」直接变黑白。原因是四维值域 0-20、
+    **10 才是零点**（`VARIABLE_PW{HUE,SATURATION,SHARPNESS,CONTRAST}` 的 `raw16 = 16*(值-10)+15`）。
+    发 0 = 负向拉满 ⇒ SAT 归零 ⇒ 黑白。R/G/B=100 的类比不适用于后四维。
+- 走 `pw_direct 100 100 100 10 10 10 10 --yes`，即 A2 的 7 维直推 + 提交位
 - 前提与 preview 相同：`FILMLAB_PW=1` 且 `pwsend.arm` 存在；不满足就 `REJECT`
 - 不 `prefman save`、不写槽 ⇒ 0 次 eMMC 写入
 
