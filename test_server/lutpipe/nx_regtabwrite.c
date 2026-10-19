@@ -36,6 +36,7 @@
 #define TAB_ADDR    0x80380000u
 #define TAB_SIZE    0x4000u
 #define VIEW_AT     0x37F0u
+#define VIEW1_OFF   0x37F4u   /* View4[1] -- the slot P7 actually loads today */
 #define VIEW3_OFF   0x37FCu
 #define STILL_AT    0x2C5Cu
 #define STILL_N     6u
@@ -46,6 +47,7 @@
 #define VAL_A18     0x81119F00u
 #define VAL_A19     0x8111EC00u
 #define VAL_A12     0x810FD100u
+#define VAL_A13     0x81101E00u
 
 static unsigned char snap[TAB_SIZE];
 
@@ -143,9 +145,9 @@ static int save_file(const char *path, const unsigned char *src, unsigned n)
     return rc;
 }
 
-/* Only these four slot addresses may ever appear in View4[3] under our hand. */
+/* Only these slot addresses may ever appear in the View4 entries under our hand. */
 static int known_slot(unsigned int v)
-{ return v == VAL_A17 || v == VAL_A18 || v == VAL_A19 || v == VAL_A12; }
+{ return v == VAL_A17 || v == VAL_A18 || v == VAL_A19 || v == VAL_A12 || v == VAL_A13; }
 
 /* Count bytes changed outside the target region (must stay zero), and
  * report how many bytes inside it actually differ. A word rewrite can change
@@ -224,10 +226,12 @@ static int do_write(const char *mode, unsigned int slot)
     volatile unsigned int *tab;
     volatile unsigned char *live;
     unsigned int expect, target, before, after;
+    unsigned off = VIEW3_OFF;
     unsigned i;
 
     if (equal(mode, "probe"))        { expect = 0xFFFFFFFFu; target = 0xFFFFFFFFu; }
     else if (equal(mode, "patch"))   { expect = 0xFFFFFFFFu; target = slot; }
+    else if (equal(mode, "patch1"))  { expect = 0xFFFFFFFFu; target = slot; off = VIEW1_OFF; }
     else if (equal(mode, "patch12")) { expect = 0xFFFFFFFFu; target = VAL_A12; }
     else if (equal(mode, "restore")) { expect = 0xFFFFFFFFu; target = VAL_A17; }
     else { say("unknown mode\n"); return 1; }
@@ -237,7 +241,7 @@ static int do_write(const char *mode, unsigned int slot)
     live = (volatile unsigned char *)base;
 
     for (i = 0; i < TAB_SIZE; ++i) snap[i] = live[i];
-    before = tab[VIEW3_OFF >> 2];
+    before = tab[off >> 2];
     line_registry("VIEW4 before", tab + (VIEW_AT >> 2), 4);
     say("MODE "); say(mode); say(" writable-mapping ok\n");
 
@@ -257,10 +261,10 @@ static int do_write(const char *mode, unsigned int slot)
     }
 
     say("WRITE "); { char b[16], *p = b; p = hex(p, target); *p++ = '\n'; write_all(1, b, (unsigned)(p - b)); }
-    tab[VIEW3_OFF >> 2] = target;
+    tab[off >> 2] = target;
     barrier();
 
-    after = tab[VIEW3_OFF >> 2];
+    after = tab[off >> 2];
     line_registry("VIEW4 after ", tab + (VIEW_AT >> 2), 4);
     say("READBACK "); { char b[16], *p = b; p = hex(p, after); *p++ = '\n'; write_all(1, b, (unsigned)(p - b)); }
 
@@ -269,7 +273,7 @@ static int do_write(const char *mode, unsigned int slot)
     /* Only the target word may differ; everything else must be untouched. */
     {
         unsigned in_word = 0;
-        unsigned stray = window_delta(live, VIEW3_OFF, 4, &in_word);
+        unsigned stray = window_delta(live, off, 4, &in_word);
         putu("WINDOW bytes changed inside target word = ", in_word);
         putu("WINDOW stray deltas outside target word = ", stray);
         if (stray != 0) { say("FAIL collateral change in window\n"); goto out; }
@@ -408,8 +412,10 @@ int nx_main(unsigned *initial_stack)
 
     say("=== regtabwrite (single word, View4[3] only) ===\n");
     if (argc < 2) {
-        say("usage: nx_regtabwrite.arm status|probe|patch|patch12|restore\n");
-        say("       nx_regtabwrite.arm patch|still-set|still-write <hexslot>\n");
+        say("usage: nx_regtabwrite.arm status|probe|patch|patch1|patch12|restore\n");
+        say("       patch  -> View4[3] (0x803837FC)\n");
+        say("       patch1 -> View4[1] (0x803837F4), the entry P7 loads today\n");
+        say("       nx_regtabwrite.arm patch|patch1|still-set|still-write <hexslot>\n");
         return 1;
     }
     if (argc >= 3) {

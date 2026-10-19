@@ -1,0 +1,1 @@
+/opt/usr/nx-ks/busybox setsid /bin/sh /mnt/mmc/lcp140225/a.sh fuji400h_candidate >/mnt/mmc/lcp140225/f.log 2>&1 &

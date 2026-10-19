@@ -1,0 +1,8 @@
+{
+  "look": "bw_acros100",
+  "oled": "OFF",
+  "load_addr": "0x81119f00",
+  "user_report": "明显偏绿",
+  "photo_sha256": "114495c5af5cf78e60bc17f119d3324e4c1a35be74f90f2fa909ea19876152a6",
+  "table_md5": "18f0e34bb5b13219863ee134ed1c6231"
+}

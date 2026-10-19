@@ -1,0 +1,209 @@
+{
+  "image_md5": "712c6fd0a49371ec05ce94c367b0d5c7",
+  "mode": "offline original ARM execution",
+  "stubbed": [
+    "DataManager singleton",
+    "DataManager getusr"
+  ],
+  "limitations": [
+    "not a camera capture",
+    "no DMA or image simulation",
+    "sender constructor state is a fixture"
+  ],
+  "passed": 13,
+  "cases": [
+    {
+      "oled": 0,
+      "adobe": 0,
+      "mode_byte": 0,
+      "smart_filter": 0,
+      "userdata_reads": [
+        108,
+        50,
+        62
+      ],
+      "order_sheet_54": 0,
+      "param_21": 0,
+      "param_22": 0,
+      "view_index": 3,
+      "native_slot": "0x81115200"
+    },
+    {
+      "oled": 1,
+      "adobe": 0,
+      "mode_byte": 0,
+      "smart_filter": 0,
+      "userdata_reads": [
+        108,
+        50,
+        62
+      ],
+      "order_sheet_54": 1,
+      "param_21": 1,
+      "param_22": 0,
+      "view_index": 1,
+      "native_slot": "0x81101e00"
+    },
+    {
+      "oled": 0,
+      "adobe": 1,
+      "mode_byte": 0,
+      "smart_filter": 0,
+      "userdata_reads": [
+        108,
+        50,
+        62
+      ],
+      "order_sheet_54": 2,
+      "param_21": 0,
+      "param_22": 1,
+      "view_index": 2,
+      "native_slot": "0x81106b00"
+    },
+    {
+      "oled": 1,
+      "adobe": 1,
+      "mode_byte": 0,
+      "smart_filter": 0,
+      "userdata_reads": [
+        108,
+        50,
+        62
+      ],
+      "order_sheet_54": 3,
+      "param_21": 1,
+      "param_22": 1,
+      "view_index": 0,
+      "native_slot": "0x810fd100"
+    },
+    {
+      "oled": 0,
+      "adobe": 0,
+      "mode_byte": 14,
+      "smart_filter": 0,
+      "userdata_reads": [
+        108,
+        50,
+        62
+      ],
+      "order_sheet_54": 0,
+      "param_21": 0,
+      "param_22": 0,
+      "view_index": 3,
+      "native_slot": "0x81115200"
+    },
+    {
+      "oled": 1,
+      "adobe": 0,
+      "mode_byte": 14,
+      "smart_filter": 0,
+      "userdata_reads": [
+        108,
+        50,
+        62
+      ],
+      "order_sheet_54": 0,
+      "param_21": 0,
+      "param_22": 0,
+      "view_index": 3,
+      "native_slot": "0x81115200"
+    },
+    {
+      "oled": 0,
+      "adobe": 1,
+      "mode_byte": 14,
+      "smart_filter": 0,
+      "userdata_reads": [
+        108,
+        50,
+        62
+      ],
+      "order_sheet_54": 2,
+      "param_21": 0,
+      "param_22": 1,
+      "view_index": 2,
+      "native_slot": "0x81106b00"
+    },
+    {
+      "oled": 1,
+      "adobe": 1,
+      "mode_byte": 14,
+      "smart_filter": 0,
+      "userdata_reads": [
+        108,
+        50,
+        62
+      ],
+      "order_sheet_54": 2,
+      "param_21": 0,
+      "param_22": 1,
+      "view_index": 2,
+      "native_slot": "0x81106b00"
+    },
+    {
+      "oled": 1,
+      "adobe": 0,
+      "mode_byte": 0,
+      "smart_filter": 14,
+      "userdata_reads": [
+        108,
+        50,
+        62
+      ],
+      "order_sheet_54": 4,
+      "view": "not evaluated: smart filters may use the dynamic path"
+    },
+    {
+      "oled": 1,
+      "adobe": 0,
+      "mode_byte": 0,
+      "smart_filter": 15,
+      "userdata_reads": [
+        108,
+        50,
+        62
+      ],
+      "order_sheet_54": 5,
+      "view": "not evaluated: smart filters may use the dynamic path"
+    },
+    {
+      "oled": 1,
+      "adobe": 0,
+      "mode_byte": 0,
+      "smart_filter": 16,
+      "userdata_reads": [
+        108,
+        50,
+        62
+      ],
+      "order_sheet_54": 6,
+      "view": "not evaluated: smart filters may use the dynamic path"
+    },
+    {
+      "oled": 1,
+      "adobe": 0,
+      "mode_byte": 0,
+      "smart_filter": 17,
+      "userdata_reads": [
+        108,
+        50,
+        62
+      ],
+      "order_sheet_54": 7,
+      "view": "not evaluated: smart filters may use the dynamic path"
+    },
+    {
+      "oled": 1,
+      "adobe": 0,
+      "mode_byte": 0,
+      "smart_filter": 18,
+      "userdata_reads": [
+        108,
+        50,
+        62
+      ],
+      "order_sheet_54": 8,
+      "view": "not evaluated: smart filters may use the dynamic path"
+    }
+  ]
+}

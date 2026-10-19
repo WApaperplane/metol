@@ -1,0 +1,573 @@
+{
+  "captured_at": "2026-10-19T13:53:07.454196+00:00",
+  "mode": "FTP reads only",
+  "files": {
+    "bw_acros100.bin": {
+      "bytes": 19712,
+      "md5": "18f0e34bb5b13219863ee134ed1c6231",
+      "archive_matches": [
+        {
+          "batch": "add",
+          "same_bytes": true,
+          "old_md5": "18f0e34bb5b13219863ee134ed1c6231"
+        }
+      ]
+    },
+    "bw_delta3200.bin": {
+      "bytes": 19712,
+      "md5": "330f348682efa2cdc8e4e68a476fdef6",
+      "archive_matches": [
+        {
+          "batch": "add",
+          "same_bytes": true,
+          "old_md5": "330f348682efa2cdc8e4e68a476fdef6"
+        }
+      ]
+    },
+    "bw_retro80s.bin": {
+      "bytes": 19712,
+      "md5": "3cfa011afccbfe737917cf8df85f3169",
+      "archive_matches": [
+        {
+          "batch": "add",
+          "same_bytes": true,
+          "old_md5": "3cfa011afccbfe737917cf8df85f3169"
+        }
+      ]
+    },
+    "ektachrome100.bin": {
+      "bytes": 19712,
+      "md5": "4730aaf5afda2af60b429f7dc3bffbb5",
+      "archive_matches": []
+    },
+    "ektachrome100.cube": {
+      "bytes": 134001,
+      "md5": "c04d6555dac0c7b447fec0e4ab931c93",
+      "archive_matches": [
+        {
+          "batch": "upload",
+          "same_bytes": true,
+          "old_md5": "c04d6555dac0c7b447fec0e4ab931c93"
+        }
+      ]
+    },
+    "ektar100.bin": {
+      "bytes": 19712,
+      "md5": "0b0c0172dc832b65c891922c01410116",
+      "archive_matches": []
+    },
+    "ektar100.cube": {
+      "bytes": 133867,
+      "md5": "27e3c0bc93945446b3e12a4acf0884fb",
+      "archive_matches": [
+        {
+          "batch": "upload",
+          "same_bytes": true,
+          "old_md5": "27e3c0bc93945446b3e12a4acf0884fb"
+        }
+      ]
+    },
+    "elitecolor400.bin": {
+      "bytes": 19712,
+      "md5": "482273b29ade0f8af4c24474c84054ef",
+      "archive_matches": [
+        {
+          "batch": "add",
+          "same_bytes": true,
+          "old_md5": "482273b29ade0f8af4c24474c84054ef"
+        }
+      ]
+    },
+    "fp100c.bin": {
+      "bytes": 19712,
+      "md5": "17b73bb92b0e861e05e086c5fa62cdd8",
+      "archive_matches": []
+    },
+    "fp100c.cube": {
+      "bytes": 133994,
+      "md5": "d53e8485f161de99c92a08e3db8de574",
+      "archive_matches": [
+        {
+          "batch": "upload",
+          "same_bytes": true,
+          "old_md5": "d53e8485f161de99c92a08e3db8de574"
+        }
+      ]
+    },
+    "fp3000b.bin": {
+      "bytes": 19712,
+      "md5": "ed0147df04db614e5d1a2beb1f449c84",
+      "archive_matches": [
+        {
+          "batch": "add",
+          "same_bytes": true,
+          "old_md5": "ed0147df04db614e5d1a2beb1f449c84"
+        }
+      ]
+    },
+    "fuji400h.bin": {
+      "bytes": 19712,
+      "md5": "4983b0c68790c9d09f926425449e791c",
+      "archive_matches": []
+    },
+    "fuji400h.cube": {
+      "bytes": 134079,
+      "md5": "58f69ddb48ca6d2399b4795455a9b9d6",
+      "archive_matches": [
+        {
+          "batch": "upload",
+          "same_bytes": true,
+          "old_md5": "58f69ddb48ca6d2399b4795455a9b9d6"
+        }
+      ]
+    },
+    "fuji800z.bin": {
+      "bytes": 19712,
+      "md5": "960b326317ab1452476951603a882eb3",
+      "archive_matches": [
+        {
+          "batch": "add",
+          "same_bytes": true,
+          "old_md5": "960b326317ab1452476951603a882eb3"
+        }
+      ]
+    },
+    "hp5.bin": {
+      "bytes": 19712,
+      "md5": "117bfbb9857c272388a7d05bc5bf83ef",
+      "archive_matches": []
+    },
+    "hp5.cube": {
+      "bytes": 133560,
+      "md5": "cd1ae04bc683550f4363efa1a05dfe11",
+      "archive_matches": [
+        {
+          "batch": "upload",
+          "same_bytes": true,
+          "old_md5": "cd1ae04bc683550f4363efa1a05dfe11"
+        }
+      ]
+    },
+    "identity17.bin": {
+      "bytes": 19712,
+      "md5": "f5b22a815e1cca2ed2c30df32a95886d",
+      "archive_matches": []
+    },
+    "identity17.cube": {
+      "bytes": 137628,
+      "md5": "d5804b0f86b4d41400a1d5808512e7de",
+      "archive_matches": []
+    },
+    "kodachrome64.bin": {
+      "bytes": 19712,
+      "md5": "9717395e68bc4bd0d3e69e8f703fa70a",
+      "archive_matches": []
+    },
+    "kodachrome64.cube": {
+      "bytes": 133897,
+      "md5": "6a8c7212a6e34afc8b8efd9af309145e",
+      "archive_matches": [
+        {
+          "batch": "upload",
+          "same_bytes": true,
+          "old_md5": "6a8c7212a6e34afc8b8efd9af309145e"
+        }
+      ]
+    },
+    "kodak_e100vs_legacy.bin": {
+      "bytes": 19712,
+      "md5": "fa2f1b7ecef6882a986d70175a4d9d52",
+      "archive_matches": []
+    },
+    "kodak_k64_legacy.bin": {
+      "bytes": 19712,
+      "md5": "c665cf684d7423b2f749cf5abd5f9997",
+      "archive_matches": []
+    },
+    "kodak_portra400_legacy.bin": {
+      "bytes": 19712,
+      "md5": "21074e36f1091cffde02539d7d9518f9",
+      "archive_matches": []
+    },
+    "polaroid665.bin": {
+      "bytes": 19712,
+      "md5": "314374b3cb553a85e05050c040c76860",
+      "archive_matches": [
+        {
+          "batch": "add",
+          "same_bytes": true,
+          "old_md5": "314374b3cb553a85e05050c040c76860"
+        }
+      ]
+    },
+    "portra160.bin": {
+      "bytes": 19712,
+      "md5": "a41070fdd763f0877a0d791358622e93",
+      "archive_matches": [
+        {
+          "batch": "add",
+          "same_bytes": true,
+          "old_md5": "a41070fdd763f0877a0d791358622e93"
+        }
+      ]
+    },
+    "portra160vc.bin": {
+      "bytes": 19712,
+      "md5": "dd29c1dd210e0eb886f0ae9b1c4a10bb",
+      "archive_matches": []
+    },
+    "portra160vc.cube": {
+      "bytes": 134132,
+      "md5": "7ac1d1edb0e0bea0032d863bd93e35c9",
+      "archive_matches": [
+        {
+          "batch": "upload",
+          "same_bytes": true,
+          "old_md5": "7ac1d1edb0e0bea0032d863bd93e35c9"
+        }
+      ]
+    },
+    "portra400.bin": {
+      "bytes": 19712,
+      "md5": "07110473046f41708351f47ad6972c9f",
+      "archive_matches": []
+    },
+    "portra400.cube": {
+      "bytes": 133889,
+      "md5": "c299c6e57e1830749934d7a8b154866f",
+      "archive_matches": [
+        {
+          "batch": "upload",
+          "same_bytes": true,
+          "old_md5": "c299c6e57e1830749934d7a8b154866f"
+        }
+      ]
+    },
+    "portra400nc.bin": {
+      "bytes": 19712,
+      "md5": "ec9fad9a448d2b782a74a241e858858d",
+      "archive_matches": []
+    },
+    "portra400nc.cube": {
+      "bytes": 133955,
+      "md5": "8f3de0adcba01a3d47e72bfccc855a59",
+      "archive_matches": [
+        {
+          "batch": "upload",
+          "same_bytes": true,
+          "old_md5": "8f3de0adcba01a3d47e72bfccc855a59"
+        }
+      ]
+    },
+    "portra400uc.bin": {
+      "bytes": 19712,
+      "md5": "efeef21ff78379b6f2dde7ed9f5f3691",
+      "archive_matches": [
+        {
+          "batch": "add",
+          "same_bytes": true,
+          "old_md5": "efeef21ff78379b6f2dde7ed9f5f3691"
+        }
+      ]
+    },
+    "portra800.bin": {
+      "bytes": 19712,
+      "md5": "18fca6aaa8773ce030ce45ccad978fa9",
+      "archive_matches": []
+    },
+    "portra800.cube": {
+      "bytes": 133842,
+      "md5": "ebf040f6a5257437c99623d146dd6d18",
+      "archive_matches": [
+        {
+          "batch": "upload",
+          "same_bytes": true,
+          "old_md5": "ebf040f6a5257437c99623d146dd6d18"
+        }
+      ]
+    },
+    "print2383.bin": {
+      "bytes": 19712,
+      "md5": "04958ad1cc846566505ddda67ff86c5d",
+      "archive_matches": []
+    },
+    "print2383.cube": {
+      "bytes": 134763,
+      "md5": "c48a14ad991f90a8de7ad6492be0cc31",
+      "archive_matches": [
+        {
+          "batch": "upload",
+          "same_bytes": true,
+          "old_md5": "c48a14ad991f90a8de7ad6492be0cc31"
+        }
+      ]
+    },
+    "print2393.bin": {
+      "bytes": 19712,
+      "md5": "2d4f39d0ee6ae1c96afacacd4b0bd7b2",
+      "archive_matches": [
+        {
+          "batch": "add",
+          "same_bytes": true,
+          "old_md5": "2d4f39d0ee6ae1c96afacacd4b0bd7b2"
+        }
+      ]
+    },
+    "print3510.bin": {
+      "bytes": 19712,
+      "md5": "1cb1370cf3e77ab474947fdc9fc66634",
+      "archive_matches": []
+    },
+    "print3510.cube": {
+      "bytes": 134726,
+      "md5": "79c1f2de7998cfb319e3365de18c5e1d",
+      "archive_matches": [
+        {
+          "batch": "upload",
+          "same_bytes": true,
+          "old_md5": "79c1f2de7998cfb319e3365de18c5e1d"
+        }
+      ]
+    },
+    "print3513.bin": {
+      "bytes": 19712,
+      "md5": "b044eb0ff20fd5b270fb2e10a8672da4",
+      "archive_matches": [
+        {
+          "batch": "add",
+          "same_bytes": true,
+          "old_md5": "b044eb0ff20fd5b270fb2e10a8672da4"
+        }
+      ]
+    },
+    "samsung_a00.bin": {
+      "bytes": 19712,
+      "md5": "134909c75c58ba73104edeb68bf6ffc1",
+      "archive_matches": []
+    },
+    "samsung_a01.bin": {
+      "bytes": 19712,
+      "md5": "69a4ac46b1c898409e201e92620a621f",
+      "archive_matches": []
+    },
+    "samsung_a02.bin": {
+      "bytes": 19712,
+      "md5": "3ac9383743b305a10ee3e9b0a9cea2dd",
+      "archive_matches": []
+    },
+    "slide_astia100f.bin": {
+      "bytes": 19712,
+      "md5": "922c10b02ae246527267da4f2675ed0b",
+      "archive_matches": [
+        {
+          "batch": "add",
+          "same_bytes": true,
+          "old_md5": "922c10b02ae246527267da4f2675ed0b"
+        }
+      ]
+    },
+    "slide_kodachrome25.bin": {
+      "bytes": 19712,
+      "md5": "bba7ed12a7e0655cea6b504883e3f4e7",
+      "archive_matches": [
+        {
+          "batch": "add",
+          "same_bytes": true,
+          "old_md5": "bba7ed12a7e0655cea6b504883e3f4e7"
+        }
+      ]
+    },
+    "slide_precisa100.bin": {
+      "bytes": 19712,
+      "md5": "ca026397cb37e2b26e4f206afb01e758",
+      "archive_matches": [
+        {
+          "batch": "add",
+          "same_bytes": true,
+          "old_md5": "ca026397cb37e2b26e4f206afb01e758"
+        }
+      ]
+    },
+    "slide_provia100f.bin": {
+      "bytes": 19712,
+      "md5": "bb6b1408e706b36a813c2f94bca5b6e2",
+      "archive_matches": [
+        {
+          "batch": "add",
+          "same_bytes": true,
+          "old_md5": "bb6b1408e706b36a813c2f94bca5b6e2"
+        }
+      ]
+    },
+    "superia200.bin": {
+      "bytes": 19712,
+      "md5": "0b5cbb63e24af6b2929b84d291ed8080",
+      "archive_matches": [
+        {
+          "batch": "add",
+          "same_bytes": true,
+          "old_md5": "0b5cbb63e24af6b2929b84d291ed8080"
+        }
+      ]
+    },
+    "superia400.bin": {
+      "bytes": 19712,
+      "md5": "ee411d7f9f325b61a9aa26bf7f766e58",
+      "archive_matches": [
+        {
+          "batch": "add",
+          "same_bytes": true,
+          "old_md5": "ee411d7f9f325b61a9aa26bf7f766e58"
+        }
+      ]
+    },
+    "tmax3200.bin": {
+      "bytes": 19712,
+      "md5": "b16eb63543cdd469f369484bb95678ba",
+      "archive_matches": []
+    },
+    "tmax3200.cube": {
+      "bytes": 133685,
+      "md5": "ea26d68adde37e9f1a504511d4f53c1d",
+      "archive_matches": [
+        {
+          "batch": "upload",
+          "same_bytes": true,
+          "old_md5": "ea26d68adde37e9f1a504511d4f53c1d"
+        }
+      ]
+    },
+    "trix400.bin": {
+      "bytes": 19712,
+      "md5": "e3d3125cbee97826a3ddea7115fd91ae",
+      "archive_matches": []
+    },
+    "trix400.cube": {
+      "bytes": 133474,
+      "md5": "fbbe7e0a7cbb231ca8f954f0f4281998",
+      "archive_matches": [
+        {
+          "batch": "upload",
+          "same_bytes": true,
+          "old_md5": "fbbe7e0a7cbb231ca8f954f0f4281998"
+        }
+      ]
+    },
+    "velvia50.bin": {
+      "bytes": 19712,
+      "md5": "221ca6055c66d68e924f6bb9b693c61e",
+      "archive_matches": []
+    },
+    "velvia50.cube": {
+      "bytes": 132688,
+      "md5": "ca26f93f69a18a132e72ee159dc385c9",
+      "archive_matches": [
+        {
+          "batch": "upload",
+          "same_bytes": true,
+          "old_md5": "ca26f93f69a18a132e72ee159dc385c9"
+        }
+      ]
+    },
+    "xt3classic.bin": {
+      "bytes": 19712,
+      "md5": "5c96cb325ebf85c291afda6ac99bcaa8",
+      "archive_matches": [
+        {
+          "batch": "add",
+          "same_bytes": true,
+          "old_md5": "5c96cb325ebf85c291afda6ac99bcaa8"
+        }
+      ]
+    },
+    "xt3proneg.bin": {
+      "bytes": 19712,
+      "md5": "f5bf445a8a2e761a68212db6d6c4be2d",
+      "archive_matches": []
+    },
+    "xt3proneg.cube": {
+      "bytes": 134042,
+      "md5": "02536947871a58f771c6e43c21987f7b",
+      "archive_matches": [
+        {
+          "batch": "upload",
+          "same_bytes": true,
+          "old_md5": "02536947871a58f771c6e43c21987f7b"
+        }
+      ]
+    },
+    "xt3provia.bin": {
+      "bytes": 19712,
+      "md5": "60245ee4afe2430230172c2169c87169",
+      "archive_matches": [
+        {
+          "batch": "add",
+          "same_bytes": true,
+          "old_md5": "60245ee4afe2430230172c2169c87169"
+        }
+      ]
+    },
+    "xt3velvia.bin": {
+      "bytes": 19712,
+      "md5": "b4cb0556323d0a1cf5c5628ad514e530",
+      "archive_matches": []
+    },
+    "xt3velvia.cube": {
+      "bytes": 133780,
+      "md5": "949d7534d8dab01273a86ca9879da453",
+      "archive_matches": [
+        {
+          "batch": "upload",
+          "same_bytes": true,
+          "old_md5": "949d7534d8dab01273a86ca9879da453"
+        }
+      ]
+    }
+  },
+  "state": {
+    "current": {
+      "bytes": 9,
+      "md5": "41c846318126b3e01819cb8b72dbc123",
+      "text": "fuji400h\n"
+    },
+    "active": {
+      "bytes": 4,
+      "md5": "c2c559124b84c969f778aba8f7699c87",
+      "text": "a18\n"
+    },
+    "current.bin": {
+      "bytes": 19712,
+      "md5": "4983b0c68790c9d09f926425449e791c"
+    },
+    "convert.log": {
+      "bytes": 248,
+      "md5": "5277f6f5c90ae90bdeb99ecfbd481558",
+      "text": "=== cube2lut (cube -> 19712B slot table) ===\nINPUT bytes = 134079\nGRID n = 13\nNODES parsed = 2197\nOUTPUT bytes = 19712\nfirst entry R = 10\nfirst entry G = 12\nfirst entry B = 8\nlast entry  R = 248\nlast entry  G = 243\nlast entry  B = 240\n=== done ===\n"
+    },
+    "loaded.log": {
+      "bytes": 291,
+      "md5": "ddb0ced28c89e7098e60dceee3362d90",
+      "text": "=== regtabwrite (single word, View4[3] only) ===\nVIEW4 : 0x810fd100 0x81119f00 0x81106b00 0x81119f00\nSTILL6: 0x81119f00 0x81119f00 0x81119f00 0x81119f00 0x81119f00 0x81119f00\nREGS: 0x00000001 0x00000100 0x00000000 0x81119f00 0x00000000\nREGS: onoff cfg pulse load_addr save_addr\n=== done ===\n"
+    },
+    "before.log": {
+      "bytes": 291,
+      "md5": "6655471bdb6f41036eedad5ff503b767",
+      "text": "=== regtabwrite (single word, View4[3] only) ===\nVIEW4 : 0x810fd100 0x8111ec00 0x81106b00 0x8111ec00\nSTILL6: 0x8111ec00 0x8111ec00 0x8111ec00 0x8111ec00 0x8111ec00 0x8111ec00\nREGS: 0x00000001 0x00000100 0x00000000 0x8111ec00 0x00000000\nREGS: onoff cfg pulse load_addr save_addr\n=== done ===\n"
+    },
+    "patched.log": {
+      "bytes": 291,
+      "md5": "4639acae1b8f9d1fe1b735294fe39324",
+      "text": "=== regtabwrite (single word, View4[3] only) ===\nVIEW4 : 0x810fd100 0x81119f00 0x81106b00 0x81119f00\nSTILL6: 0x8111ec00 0x8111ec00 0x8111ec00 0x8111ec00 0x8111ec00 0x8111ec00\nREGS: 0x00000001 0x00000100 0x00000000 0x8111ec00 0x00000000\nREGS: onoff cfg pulse load_addr save_addr\n=== done ===\n"
+    },
+    "refresh.log": {
+      "bytes": 36,
+      "md5": "54203c10763e577b5565396d253b27ac",
+      "text": "UserData is set\r\nUserData is set\r\n"
+    },
+    "write.log": {
+      "bytes": 173,
+      "md5": "68fc77ed255552e10ac3332b0816896e",
+      "text": "=== slotwrite (one 19712-byte LUT slot) ===\nMODE write\nADDR 0x81119f00\nSOURCE differs from current slot bytes = 14462\nREADBACK mismatched bytes = 0\nREADBACK ok\n=== done ===\n"
+    }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "recorded_at": "2026-10-19T14:03:35.923277+00:00",
+  "user_answer": "正常黑白，严重偏色消失",
+  "source": "unchanged original hp5.cube",
+  "candidate": "hp5_candidate.bin",
+  "matrix": "BT.601 full range; Cr,Cb,Y packing"
+}

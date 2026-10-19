@@ -1,0 +1,145 @@
+{
+  "scope": "offline byte comparisons; no camera access or visual verdict",
+  "releases": {
+    "v6": {
+      "bytes": 7751707,
+      "md5": "1f8cb2c85d79127347c1c42d7d6510e3",
+      "sha256": "18a755e0a941eaedf07ecea2e31d731acfff9e1f3e7625be2f0614695072ecb9",
+      "path": "E:\\NXWA\\nx500-modding-work\\dist\\NX-WA-2.88.0-nxwa.6.zip",
+      "files": {
+        "scripts/lut.sh": {
+          "bytes": 6670,
+          "md5": "c808d1b49cad47a5a8b822ab0c6052b7",
+          "sha256": "3a408dad632816a76a6a126f147ab829b8059cf7466ebe1623f618a76fadad51"
+        },
+        "scripts/lut/cube2lut.arm": {
+          "bytes": 8880,
+          "md5": "582b12f0cc9f04ca765a8989d664b580",
+          "sha256": "1f8c7fbc65cbd1e204789d8003c320e686b09932ce345c379c596068a0b710be"
+        },
+        "scripts/lut/nx_slotwrite.arm": {
+          "bytes": 5952,
+          "md5": "ed1708306d8110ef1950bef2843e4747",
+          "sha256": "cf7ad8c82438a477eb2d6f9568bd992ab31c99b8c3d66d330f0b9df121f96241"
+        },
+        "scripts/lut/nx_regtabwrite.arm": {
+          "bytes": 10396,
+          "md5": "6d82f43ca616d5a5a4cdc655f8edba7c",
+          "sha256": "37666a4a3530c580e859cd17580f2c5ee462ac51a2adf93396f8ea032385b742"
+        },
+        "scripts/filmlab.sh": {
+          "bytes": 58155,
+          "md5": "021a7aff98d724f1eaf6309c04ffcd62",
+          "sha256": "d3f11c833b8bcad18695d9838434f667bf5a77f7e5e968fc89171fdd4baee8c8"
+        },
+        "scripts/nxui/nxui.arm": {
+          "bytes": 451328,
+          "md5": "2e94efaea6cebe844b28e95b2b4277f3",
+          "sha256": "81a5eea29e16b16bedc3fd47c96de4995a4985058c4cf01b249d37663686aa5b"
+        }
+      },
+      "manifest_header": [
+        "NX-WA release manifest",
+        "======================",
+        "version      : 2.88.0-nxwa.6",
+        "git commit   : f867af0 (codex/firmware-preflight-windows)",
+        "built at     : 2026-10-18 12:33:56",
+        "install      : 解压到 SD 卡根目录 -> 插卡自动安装/增量同步"
+      ]
+    },
+    "v7": {
+      "bytes": 8888157,
+      "md5": "ca590b6e6db881c9446512cdbca0cf1a",
+      "sha256": "2dacab505a6c14524cf383430407a222ea4c193b46080368f0f6cfaadb7508ce",
+      "path": "E:\\NXWA\\nx500-modding-work\\dist\\NX-WA-2.88.0-nxwa.7.zip",
+      "files": {
+        "scripts/lut.sh": {
+          "bytes": 8671,
+          "md5": "813b6d22e33de436bfbb33716d3adeb2",
+          "sha256": "5ea6d38caf97c01826e77e11cf04ca556d9b943c79753b6576181321a472e603"
+        },
+        "scripts/lut/cube2lut.arm": {
+          "bytes": 8880,
+          "md5": "582b12f0cc9f04ca765a8989d664b580",
+          "sha256": "1f8c7fbc65cbd1e204789d8003c320e686b09932ce345c379c596068a0b710be"
+        },
+        "scripts/lut/nx_slotwrite.arm": {
+          "bytes": 5952,
+          "md5": "ed1708306d8110ef1950bef2843e4747",
+          "sha256": "cf7ad8c82438a477eb2d6f9568bd992ab31c99b8c3d66d330f0b9df121f96241"
+        },
+        "scripts/lut/nx_regtabwrite.arm": {
+          "bytes": 10632,
+          "md5": "896de680e99ae11c57082dfc6bf66913",
+          "sha256": "5ffe7b3892f55bbdb27122e5effc2c07cad887c7f95ac87ef3244f611968636e"
+        },
+        "scripts/filmlab.sh": {
+          "bytes": 59542,
+          "md5": "48fe58a91bc2d919e48347d6991f81c7",
+          "sha256": "0c3026069fee8940ad7346a33c6727565cb1a769a86376801a3a7a2dd859d633"
+        },
+        "scripts/nxui/nxui.arm": {
+          "bytes": 460628,
+          "md5": "cedc8305dd5fa506ab3c978dd802d9b7",
+          "sha256": "b2f903b6d43ff18cb3c34f335ba25336cbf3e8d5ec929aa0c8be07b0690f4946"
+        }
+      },
+      "manifest_header": [
+        "NX-WA release manifest",
+        "======================",
+        "version      : 2.88.0-nxwa.7",
+        "git commit   : 2fb6b01 (codex/firmware-preflight-windows)",
+        "built at     : 2026-10-19 19:58:12",
+        "install      : 解压到 SD 卡根目录 -> 插卡自动安装/增量同步"
+      ]
+    }
+  },
+  "release_file_equalities": {
+    "scripts/lut.sh": false,
+    "scripts/lut/cube2lut.arm": true,
+    "scripts/lut/nx_slotwrite.arm": true,
+    "scripts/lut/nx_regtabwrite.arm": false,
+    "scripts/filmlab.sh": false,
+    "scripts/nxui/nxui.arm": false
+  },
+  "artifact_pairs": {
+    "acros_18_vs_19": {
+      "left": {
+        "path": "E:\\NXWA\\.tmp\\add\\bw_acros100.bin",
+        "bytes": 19712,
+        "md5": "18f0e34bb5b13219863ee134ed1c6231",
+        "sha256": "281776eb97cd3bf780f6bc8e3e88525bf747c5bcb42d88f2496e50e506734c34"
+      },
+      "right": {
+        "path": "E:\\NXWA\\_probe_bw.bin",
+        "bytes": 19712,
+        "md5": "18f0e34bb5b13219863ee134ed1c6231",
+        "sha256": "281776eb97cd3bf780f6bc8e3e88525bf747c5bcb42d88f2496e50e506734c34"
+      },
+      "equal": true
+    },
+    "negative17_vs_rgb_invert_archive": {
+      "left": {
+        "path": "E:\\NXWA\\fw\\v1.12\\c1-a17-negative\\negative17_slot.bin",
+        "bytes": 19712,
+        "md5": "4a74f5cc8a3c7cc39be0659bb97b3fde",
+        "sha256": "3ad2d649a5e74ae7a52658558164d7e95828e67fdbace13a6747b3e3c7532f9f"
+      },
+      "right": {
+        "path": "E:\\NXWA\\nx500-modding-work\\raw8\\gates\\lut\\cube2lut_2026-10-18\\invert17_arm.bin",
+        "bytes": 19712,
+        "md5": "4a74f5cc8a3c7cc39be0659bb97b3fde",
+        "sha256": "3ad2d649a5e74ae7a52658558164d7e95828e67fdbace13a6747b3e3c7532f9f"
+      },
+      "equal": true
+    }
+  },
+  "negative_provenance": {
+    "body_equals_rgb_identity_complement": true,
+    "body_equals_native_a17_complement": false
+  },
+  "neutral_zero_call_present": {
+    "v6": false,
+    "v7": true
+  }
+}

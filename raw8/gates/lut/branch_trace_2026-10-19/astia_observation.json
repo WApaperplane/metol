@@ -1,0 +1,9 @@
+{
+  "look": "slide_astia100f",
+  "oled_test_state": "OFF",
+  "loaded_slot": "0x81119f00",
+  "source_matches_loaded_bytes": true,
+  "user_report": "颜色正常，能看到滤镜变化",
+  "image_sha256": "df2a5acb1c37640372fa958fdc51843fc26140f324b321edebc3e72f5e55494c",
+  "scope": "user visual feedback; no calibrated color comparison"
+}

@@ -1,0 +1,55 @@
+=== cube2lut (cube -> 19712B slot table) ===
+SPACE CrCbY (BT.601 full range)
+INPUT bytes = 133560
+GRID n = 13
+NODES parsed = 2197
+OUTPUT bytes = 19712
+first entry component0 = 128
+first entry component1 = 128
+first entry component2 = 72
+last entry  component0 = 128
+last entry  component1 = 128
+last entry  component2 = 221
+=== done ===
+=== cube2lut (cube -> 19712B slot table) ===
+INPUT bytes = 133560
+GRID n = 13
+NODES parsed = 2197
+OUTPUT bytes = 19712
+first entry R = 3
+first entry G = 3
+first entry B = 3
+last entry  R = 251
+last entry  G = 251
+last entry  B = 251
+=== done ===
+104c04b3cda837cfdbbcb38afed48987  /mnt/mmc/lcv140923/hp5_new.bin
+117bfbb9857c272388a7d05bc5bf83ef  /mnt/mmc/lcv140923/hp5_old.bin
+=== cube2lut (cube -> 19712B slot table) ===
+SPACE CrCbY (BT.601 full range)
+INPUT bytes = 134079
+GRID n = 13
+NODES parsed = 2197
+OUTPUT bytes = 19712
+first entry component0 = 68
+first entry component1 = 83
+first entry component2 = 84
+last entry  component0 = 161
+last entry  component1 = 146
+last entry  component2 = 205
+=== done ===
+=== cube2lut (cube -> 19712B slot table) ===
+INPUT bytes = 134079
+GRID n = 13
+NODES parsed = 2197
+OUTPUT bytes = 19712
+first entry R = 10
+first entry G = 12
+first entry B = 8
+last entry  R = 248
+last entry  G = 243
+last entry  B = 240
+=== done ===
+8a54c26d43ae67d22e9ac20637a49d44  /mnt/mmc/lcv140923/fuji400h_new.bin
+4983b0c68790c9d09f926425449e791c  /mnt/mmc/lcv140923/fuji400h_old.bin
+CONVERTER_ONDEVICE_PASS

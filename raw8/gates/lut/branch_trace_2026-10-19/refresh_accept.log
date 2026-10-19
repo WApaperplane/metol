@@ -1,0 +1,93 @@
+REFRESH_TEST_BEGIN
+PHASE_1 slide_astia100f
+SLOT a18 (0x81119F00), previous load=0x81101e00
+OK applied slide_astia100f
+LOADED 0x81119f00; OLED restored to 0x6c0001
+=== regtabwrite (single word, View4[3] only) ===
+VIEW4 : 0x810fd100 0x81119f00 0x81106b00 0x81119f00
+STILL6: 0x81119f00 0x81119f00 0x81119f00 0x81119f00 0x81119f00 0x81119f00
+REGS: 0x00000001 0x00000100 0x00000000 0x81119f00 0x00000000
+REGS: onoff cfg pulse load_addr save_addr
+=== done ===
+=== slotwrite (one 19712-byte LUT slot) ===
+MODE read
+ADDR 0x81119f00
+SLOT dumped to output path
+=== done ===
+922c10b02ae246527267da4f2675ed0b  /mnt/mmc/lbf134647/slot_1.bin
+922c10b02ae246527267da4f2675ed0b  /mnt/mmc/looks/slide_astia100f.bin
+PASS_PHASE_1 slide_astia100f a18
+PHASE_2 slide_provia100f
+SLOT a19 (0x8111EC00), previous load=0x81119f00
+OK applied slide_provia100f
+LOADED 0x8111ec00; OLED restored to 0x6c0001
+=== regtabwrite (single word, View4[3] only) ===
+VIEW4 : 0x810fd100 0x8111ec00 0x81106b00 0x8111ec00
+STILL6: 0x8111ec00 0x8111ec00 0x8111ec00 0x8111ec00 0x8111ec00 0x8111ec00
+REGS: 0x00000001 0x00000100 0x00000000 0x8111ec00 0x00000000
+REGS: onoff cfg pulse load_addr save_addr
+=== done ===
+=== slotwrite (one 19712-byte LUT slot) ===
+MODE read
+ADDR 0x8111ec00
+SLOT dumped to output path
+=== done ===
+bb6b1408e706b36a813c2f94bca5b6e2  /mnt/mmc/lbf134647/slot_2.bin
+bb6b1408e706b36a813c2f94bca5b6e2  /mnt/mmc/looks/slide_provia100f.bin
+PASS_PHASE_2 slide_provia100f a19
+PHASE_3 slide_astia100f
+SLOT a18 (0x81119F00), previous load=0x8111ec00
+OK applied slide_astia100f
+LOADED 0x81119f00; OLED restored to 0x6c0001
+=== regtabwrite (single word, View4[3] only) ===
+VIEW4 : 0x810fd100 0x81119f00 0x81106b00 0x81119f00
+STILL6: 0x81119f00 0x81119f00 0x81119f00 0x81119f00 0x81119f00 0x81119f00
+REGS: 0x00000001 0x00000100 0x00000000 0x81119f00 0x00000000
+REGS: onoff cfg pulse load_addr save_addr
+=== done ===
+=== slotwrite (one 19712-byte LUT slot) ===
+MODE read
+ADDR 0x81119f00
+SLOT dumped to output path
+=== done ===
+922c10b02ae246527267da4f2675ed0b  /mnt/mmc/lbf134647/slot_3.bin
+922c10b02ae246527267da4f2675ed0b  /mnt/mmc/looks/slide_astia100f.bin
+PASS_PHASE_3 slide_astia100f a18
+OFF_TEST
+OK restored (view1=A13, view3=A17, still=original, A18+A19=original)
+=== regtabwrite (single word, View4[3] only) ===
+VIEW4 : 0x810fd100 0x81101e00 0x81106b00 0x81115200
+STILL6: 0x81119f00 0x81115200 0x8111ec00 0x8110b800 0x81106b00 0x81110500
+REGS: 0x00000001 0x00000100 0x00000000 0x81101e00 0x00000000
+REGS: onoff cfg pulse load_addr save_addr
+=== done ===
+=== slotwrite (one 19712-byte LUT slot) ===
+MODE read
+ADDR 0x81119f00
+SLOT dumped to output path
+=== done ===
+=== slotwrite (one 19712-byte LUT slot) ===
+MODE read
+ADDR 0x8111ec00
+SLOT dumped to output path
+=== done ===
+PASS_OFF_RESTORED
+PHASE_4 slide_astia100f
+SLOT a18 (0x81119F00), previous load=0x81101e00
+OK applied slide_astia100f
+LOADED 0x81119f00; OLED restored to 0x6c0001
+=== regtabwrite (single word, View4[3] only) ===
+VIEW4 : 0x810fd100 0x81119f00 0x81106b00 0x81119f00
+STILL6: 0x81119f00 0x81119f00 0x81119f00 0x81119f00 0x81119f00 0x81119f00
+REGS: 0x00000001 0x00000100 0x00000000 0x81119f00 0x00000000
+REGS: onoff cfg pulse load_addr save_addr
+=== done ===
+=== slotwrite (one 19712-byte LUT slot) ===
+MODE read
+ADDR 0x81119f00
+SLOT dumped to output path
+=== done ===
+922c10b02ae246527267da4f2675ed0b  /mnt/mmc/lbf134647/slot_4.bin
+922c10b02ae246527267da4f2675ed0b  /mnt/mmc/looks/slide_astia100f.bin
+PASS_PHASE_4 slide_astia100f a18
+REFRESH_TEST_PASS_ASTIA_ACTIVE

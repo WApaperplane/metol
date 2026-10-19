@@ -6,8 +6,12 @@
  * Input : .cube with LUT_3D_SIZE N (LUT_1D_SIZE is reported as unsupported)
  *         and DOMAIN 0..1. Any other DOMAIN is rejected rather than guessed:
  *         a silent misinterpretation yields a plausible but wrong table.
- * Output: 19,712-byte slot image = 4,913 entries x {R,G,B,0} + 60 bytes pad.
- *         Index = ((B*17 + G)*17 + R) * 4; grid = {0,16,...,240,255}.
+ * Output: 19,712-byte slot image = 4,913 entries x {Cr,Cb,Y,0} + 60B tail.
+ *         Index = ((Y*17 + Cb)*17 + Cr) * 4; grid = {0,16,...,240,255}.
+ *         Input coordinates are CrCbY -> RGB -> cube -> RGB -> CrCbY.
+ *         BT.601 full-range is the visually tested working matrix; this is
+ *         not a calibrated camera profile. --legacy-rgb retains the old
+ *         RGB-grid bytes for historical comparisons only.
  *
  * All arithmetic is fixed point Q16. No libc, libm or libgcc helpers: float
  * parsing, 64-bit division and variable division are all avoided.
@@ -187,9 +191,38 @@ static unsigned to_u8(int q16)
     return (unsigned)v;
 }
 
+static int clip_q16(int v)
+{ return v < 0 ? 0 : (v > 65536 ? 65536 : v); }
+
+static int mul_q16(int a, int b)
+{ return (int)(((long long)a * (long long)b + 32768) >> 16); }
+
+/* Neutral chroma is the actual 8-bit value 128, not 127.5. */
+#define CHROMA_ZERO 32896
+
+static void crcb_y_to_rgb(unsigned cr, unsigned cb, unsigned y, unsigned *rgb)
+{
+    int vr = (int)cr - CHROMA_ZERO, vb = (int)cb - CHROMA_ZERO;
+    rgb[0] = (unsigned)clip_q16((int)y + mul_q16(91881, vr));
+    rgb[1] = (unsigned)clip_q16((int)y - mul_q16(46802, vr) - mul_q16(22554, vb));
+    rgb[2] = (unsigned)clip_q16((int)y + mul_q16(116130, vb));
+}
+
+static void rgb_to_crcb_y(const unsigned *rgb, unsigned char *out)
+{
+    int r = (int)rgb[0], g = (int)rgb[1], b = (int)rgb[2];
+    int y = mul_q16(19595, r) + mul_q16(38470, g) + mul_q16(7471, b);
+    int cr = CHROMA_ZERO + mul_q16(32768, r) - mul_q16(27439, g) - mul_q16(5329, b);
+    int cb = CHROMA_ZERO - mul_q16(11059, r) - mul_q16(21709, g) + mul_q16(32768, b);
+    out[0] = (unsigned char)to_u8(cr);
+    out[1] = (unsigned char)to_u8(cb);
+    out[2] = (unsigned char)to_u8(y);
+    out[3] = 0;
+}
+
 /* Trilinear sample of a cubical RGBA-free node grid, channels packed as RGB. */
 static void sample(const unsigned int *nodes, unsigned n,
-                   unsigned ur, unsigned ug, unsigned ub, unsigned char *out3)
+                   unsigned ur, unsigned ug, unsigned ub, unsigned *out3)
 {
     unsigned idx[3], fr[3], ch, c;
     int corner[8][3];
@@ -219,7 +252,7 @@ static void sample(const unsigned int *nodes, unsigned n,
         int c11 = lerp(corner[6][ch], corner[7][ch], fr[0]);
         int c0 = lerp(c00, c10, fr[1]);
         int c1 = lerp(c01, c11, fr[1]);
-        out3[ch] = (unsigned char)to_u8(lerp(c0, c1, fr[2]));
+        out3[ch] = (unsigned)lerp(c0, c1, fr[2]);
     }
 }
 
@@ -233,12 +266,22 @@ int nx_main(unsigned *initial_stack)
     unsigned n = 0, nodes_count, i, r, g, b, rows_seen = 0;
     unsigned int *nodes = 0;
     unsigned char *out = 0;
+    int legacy_rgb = 0;
 
     say("=== cube2lut (cube -> 19712B slot table) ===\n");
     if (argc < 3) {
-        say("usage: cube2lut.arm <input.cube> <output.bin>\n");
+        say("usage: cube2lut.arm <input.cube> <output.bin> [--legacy-rgb]\n");
         return 1;
     }
+    if (argc > 3) {
+        if (argc != 4 || slen(argv[3]) != 12 || !starts_with(argv[3], "--legacy-rgb")) {
+            fail("unknown output option");
+            return 1;
+        }
+        legacy_rgb = 1;
+    }
+    say(legacy_rgb ? "SPACE legacy RGB (historical diagnostic only)\n"
+                   : "SPACE CrCbY (BT.601 full range)\n");
 
     in_fd = sc3(__NR_open, (int)argv[1], O_RDONLY, 0);
     if (in_fd < 0) { fail("open input cube"); return 1; }
@@ -331,15 +374,24 @@ int nx_main(unsigned *initial_stack)
     for (b = 0; b < N16; ++b) {
         for (g = 0; g < N16; ++g) {
             for (r = 0; r < N16; ++r) {
-                unsigned char rgb[3];
+                unsigned rgb[3], input[3];
                 unsigned o = ((b * N16 + g) * N16 + r) * 4u;
-                sample(nodes, n, level_q16[r], level_q16[g], level_q16[b], rgb);
-                out[o + 0] = rgb[0];
-                out[o + 1] = rgb[1];
-                out[o + 2] = rgb[2];
-                out[o + 3] = 0;
+                if (legacy_rgb) {
+                    sample(nodes, n, level_q16[r], level_q16[g], level_q16[b], rgb);
+                    out[o + 0] = (unsigned char)to_u8((int)rgb[0]);
+                    out[o + 1] = (unsigned char)to_u8((int)rgb[1]);
+                    out[o + 2] = (unsigned char)to_u8((int)rgb[2]);
+                    out[o + 3] = 0;
+                } else {
+                    crcb_y_to_rgb(level_q16[r], level_q16[g], level_q16[b], input);
+                    sample(nodes, n, input[0], input[1], input[2], rgb);
+                    rgb_to_crcb_y(rgb, out + o);
+                }
             }
         }
+    }
+    if (!legacy_rgb) {
+        for (i = 0; i < 12; ++i) out[TABLE_LEN + i] = out[TABLE_LEN - 4u + (i & 3u)];
     }
 
     out_fd = sc3(__NR_open, (int)argv[2], O_WRONLY | O_CREAT | O_TRUNC, 0644);
@@ -348,12 +400,12 @@ int nx_main(unsigned *initial_stack)
     sc3(__NR_close, out_fd, 0, 0);
 
     putu("OUTPUT bytes = ", SLOT_LEN);
-    putu("first entry R = ", out[0]);
-    putu("first entry G = ", out[1]);
-    putu("first entry B = ", out[2]);
-    putu("last entry  R = ", out[TABLE_LEN - 4u]);
-    putu("last entry  G = ", out[TABLE_LEN - 3u]);
-    putu("last entry  B = ", out[TABLE_LEN - 2u]);
+    putu("first entry component0 = ", out[0]);
+    putu("first entry component1 = ", out[1]);
+    putu("first entry component2 = ", out[2]);
+    putu("last entry  component0 = ", out[TABLE_LEN - 4u]);
+    putu("last entry  component1 = ", out[TABLE_LEN - 3u]);
+    putu("last entry  component2 = ", out[TABLE_LEN - 2u]);
     say("=== done ===\n");
     return 0;
 }

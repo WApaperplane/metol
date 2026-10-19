@@ -31,7 +31,7 @@ ROOT_FILES = [
     'install.sh', 'info.tg', 'nx_cs.adj',
     'README.md', 'README_EN.md', 'VERSION', 'LICENSE', 'ATTRIBUTION.md', 'SYNC.md',
 ]
-ROOT_DIRS = ['scripts', 'uninstall_pkg']
+ROOT_DIRS = ['scripts', 'looks', 'uninstall_pkg']
 
 EXCLUDE_DIRS = {'__pycache__', '.git', '.github', '.workbuddy', 'node_modules', '.idea'}
 EXCLUDE_FILE_RE = re.compile(

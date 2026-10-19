@@ -1,0 +1,207 @@
+BASELINE_BEGIN
+3361.74 74.31
+2.11 2.24 2.28 2/134 1958
+PID   USER     TIME   COMMAND
+    1 root       0:01 {systemd} /sbin/init
+    2 root       0:00 [kthreadd]
+    3 root       0:00 [ksoftirqd/0]
+    6 root       0:00 [rcu_kthread]
+    7 root       0:00 [khelper]
+    8 root       0:00 [kdevtmpfs]
+   10 root       0:00 [kblockd]
+   15 root       0:00 [display-workque]
+   16 root       0:00 [sync_supers]
+   17 root       0:00 [bdi-default]
+   18 root       0:00 [khubd]
+   19 root       0:00 [cfinteractive]
+   20 root       0:00 [kswapd0]
+   21 root       0:00 [fsnotify_mark]
+   22 root       0:00 [crypto]
+   28 root       0:00 [drd_switch]
+   30 root       0:00 [file-storage]
+   31 root       0:00 [irq/243-mms_ts]
+   32 root       0:00 [dw-mci-card]
+   33 root       0:00 [dw-mci-card]
+   34 root       0:00 [dw-mci-card]
+   37 root       0:02 [mmcqd/0]
+   38 root       0:00 [mmcqd/0boot0]
+   39 root       0:00 [mmcqd/0boot1]
+   40 root       0:00 [krfcommd]
+   41 root       0:00 [deferwq]
+   42 root       0:00 [jbd2/mmcblk0p10]
+   43 root       0:00 [ext4-dio-unwrit]
+   55 root       0:00 /usr/lib/systemd/systemd-journald
+  106 root       0:00 [loop0]
+  118 root       0:00 /sbin/syslogd -b 5 -B 99
+  135 root       0:00 /sbin/klogd
+  141 root      11:59 /usr/bin/Xorg :0 -logfile /var/log/Xorg.0.log -ac -noreset +accessx 0 +dpmsphone -nolisten tcp -config /etc/X11/xorg.conf -configdir /etc/X11/xorg.conf.d
+  149 root       0:00 /usr/bin/dbus-daemon --system --address=systemd: --nofork --nopidfile --systemd-activation
+  150 root       0:00 /usr/bin/scim -d
+  164 root       0:00 /sbin/agetty --keep-baud ttyAMA0 115200 38400 9600
+  170 root       0:00 /usr/bin/amd
+  171 root       0:00 /usr/bin/launchpad_preloading_preinitializing_daemon                                                                                                                                                                                                          
+  183 root       0:00 /usr/bin/pulseaudio
+  189 root       0:00 /usr/bin/sound_server -S
+  190 root       0:00 /usr/bin/deviced
+  200 app        0:04 /usr/bin/enlightenment -profile samsung -i-really-know-what-i-am-doing-and-accept-full-responsibility-for-it
+  204 app        0:00 dbus-launch --exit-with-session /usr/bin/enlightenment -profile samsung -i-really-know-what-i-am-doing-and-accept-full-responsibility-for-it
+  205 app        0:00 /usr/bin/dbus-daemon --fork --print-pid 4 --print-address 6 --session
+  247 root      20:04 /usr/apps/com.samsung.di-camera-app/bin/di-camera-app
+  250 app        0:00 /usr/lib/scim-1.0/scim-launcher -d -c simple -e hangul,ise-engine-default,ise-engine-sunpinyin,table,ise-default -f socket
+  256 app        0:00 /usr/bin/isf-panel-efl -c socket -d
+  257 app        0:00 /usr/lib/scim-1.0/scim-helper-launcher --daemon --config socket --display :0 ise-default 12aa3425-f88d-45f4-a509-cee8dfe904e3
+  269 root       0:00 [irq/274-jog1]
+  270 root       0:00 [irq/275-jog1]
+  271 root       0:00 [irq/270-jog2]
+  272 root       0:00 [irq/271-jog2]
+  275 root       0:00 [jbd2/mmcblk0p11]
+  276 root       0:00 [ext4-dio-unwrit]
+  277 root       0:00 [jbd2/mmcblk0p14]
+  278 root       0:00 [ext4-dio-unwrit]
+  283 root       0:00 [mmcqd/2]
+  287 root       0:03 /usr/apps/com.samsung.ap-setting-app/bin/ap-setting-app `zaybxcwdveuftgsh` __AUL_STARTTIME__ MwAAAAEEAAASAAAAX19BVUxfU1RBUlRUSU1FX18AEQAAAC01NjE1OTg0MDUvOTQwMDAA __AUL_CALLER_PID__ JwAAAAEEAAATAAAAX19BVUxfQ0FMTEVSX1BJRF9fAAQAAAAyNDcA __AUL_CALLER_APPID__ PwAAAAEEAAAVAAAAX19BVUxfQ0FMTEVSX0FQUElEX18AGgAAAGNvbS5zYW1zdW5nLmRpLWNhbWVyYS1hcHAA
+  301 app        0:00 dbus-launch --autolaunch 51a46634149c43adafa1ef23bfb735d3 --binary-syntax --close-stderr
+  302 app        0:00 /usr/bin/dbus-daemon --fork --print-pid 5 --print-address 7 --session
+  303 root       0:00 /usr/bin/sap-server
+  334 root       0:00 /opt/usr/nx-ks/keyscan /dev/event0 /dev/event1 /opt/usr/nx-ks/
+  365 root       0:00 /usr/sbin/connmand
+  371 root       0:00 /usr/sbin/net-config
+  376 root       0:00 [kworker/0:2]
+  387 root       0:00 /opt/usr/nx-ks/busybox httpd -p 8080 -h /opt/usr/nx-ks/nx-rc/capdtm/www
+  403 root       6:38 /opt/usr/nx-ks/nx-rc/nx-remote-controller-daemon
+  417 root       0:00 nx-input-injector
+  446 root       0:00 xev-nx -p -id 14680066
+ 1082 root       0:00 [flush-179:45]
+ 1443 root       0:00 [kworker/u:3]
+ 1651 root       0:00 [flush-179:0]
+ 1778 root       0:00 /opt/usr/nx-ks/busybox tcpsvd -u root -vE 0.0.0.0 21 /opt/usr/nx-ks/busybox ftpd -w -v /opt/storage/sdcard
+ 1782 root       0:00 /opt/usr/nx-ks/telnetd
+ 1825 root       0:00 /usr/sbin/wpa_supplicant -u -t -B -d -Dnl80211 -e /opt/var/lib/wifi/entropy.bin
+ 1847 root       0:00 [cfg80211]
+ 1850 root       0:00 [MOAL_HANG_WORK_]
+ 1851 root       0:00 [MOAL_WORK_QUEUE]
+ 1852 root       0:00 [MOAL_RX_WORK_QU]
+ 1853 root       0:00 [woal_reassoc_se]
+ 1854 root       0:00 [ksdioirqd/mmc1]
+ 1943 root       0:00 -sh
+ 1957 root       0:00 xdotool getactivewindow getwindowgeometry
+ 1959 root       0:00 /opt/usr/nx-ks/busybox ps
+ 2585 root       0:00 [kworker/u:0]
+ 2592 root       0:00 [kworker/0:0]
+ 2844 root       0:00 [kworker/u:1]
+ 3208 root       0:00 [kworker/u:2]
+ 3209 root       0:00 [kworker/u:4]
+ 4013 root       0:00 [kworker/0:1]
+2f20648c79d27b452d66e20e46f6ca1b  /opt/usr/nx-ks/lut.sh
+2f20648c79d27b452d66e20e46f6ca1b  /mnt/mmc/lut/lut.sh
+813b6d22e33de436bfbb33716d3adeb2  /mnt/mmc/scripts/lut.sh
+4c14c0a5f19ded3a2d5eb69871d15fac  /opt/usr/nx-ks/filmlab.sh
+cedc8305dd5fa506ab3c978dd802d9b7  /opt/usr/nx-ks/nxui/nxui.arm
+07d9b4d206e28a6a61204bcfd35821dc  /opt/usr/nx-ks/EV_MOBILE.sh
+c0bd1f38c3cbb222690b82f5f393978d  /mnt/mmc/lut/nx_regtabwrite.arm
+ed1708306d8110ef1950bef2843e4747  /mnt/mmc/lut/nx_slotwrite.arm
+582b12f0cc9f04ca765a8989d664b580  /mnt/mmc/lut/cube2lut.arm
+=== regtabwrite (single word, View4[3] only) ===
+VIEW4 : 0x810fd100 0x81101e00 0x81106b00 0x81119f00
+STILL6: 0x81119f00 0x81119f00 0x81119f00 0x81119f00 0x81119f00 0x81119f00
+REGS: 0x00000001 0x00000100 0x00000000 0x81101e00 0x00000000
+REGS: onoff cfg pulse load_addr save_addr
+=== done ===
+CURRENT_FILES
+slide_astia100f
+a18
+slide_astia100f
+NXUI_LOG
+  [5] 0x139 <- 0x9  rc=0 OK
+  [6] 0x13a <- 0x9  rc=0 OK
+  [7] 0x13b <- 0x1  rc=0 OK
+★ 下一步：st cap capdtm varlist（或 filmlab.sh check）读回对照
+✓ superia400 -> slot9  (reload=already pw=direct not-saved)
+
+BACKEND kind=7 ok=1 elapsed_ms=2020 output=  ③ PW直推（A2 档位池直写；真发）:
+     /opt/usr/nx-ks/pwsend.arm seq 0x134 100 0x135 100 0x136 100 0x137 10 0x138 10 0x139 10 0x13A 10 0x13B 1 --sleep 150 --yes
+=== pwsend seq：8 条 真发（--yes）（条间 150ms）===
+  [0] id=0x134 cmd=0x1335 value=0x0064 (100)
+  [1] id=0x135 cmd=0x1336 value=0x0064 (100)
+  [2] id=0x136 cmd=0x1337 value=0x0064 (100)
+  [3] id=0x137 cmd=0x1338 value=0x000a (10)
+  [4] id=0x138 cmd=0x1339 value=0x000a (10)
+  [5] id=0x139 cmd=0x133a value=0x000a (10)
+  [6] id=0x13a cmd=0x133b value=0x000a (10)
+  [7] id=0x13b cmd=0x133c value=0x0001 (1)
+  [mcb] mcb_init rc=0
+  [mcb] ignore_init_checking: set (destAlive=1)
+  [mcb] destAlive=1  (t=0ms)
+  [0] 0x134 <- 0x64  rc=0 OK
+  [1] 0x135 <- 0x64  rc=0 OK
+  [2] 0x136 <- 0x64  rc=0 OK
+  [3] 0x137 <- 0xa  rc=0 OK
+  [4] 0x138 <- 0xa  rc=0 OK
+  [5] 0x139 <- 0xa  rc=0 OK
+  [6] 0x13a <- 0xa  rc=0 OK
+  [7] 0x13b <- 0x1  rc=0 OK
+★ 下一步：st cap capdtm varlist（或 filmlab.sh check）读回对照
+✓ neutral (100/100/100 10/10/10/10)
+
+EXIT renders=15 elapsed_ms=11470 wakeups=129 blits=0 max_draw_ms=195 draw_avg_ms=51.87 draw_n=15
+READY backend=nuklear-xft live=1 recipes=43 panel=720x208 nice=19 tier=1 sel=24
+INIT recipes_ms=15 display_ms=7 font_ms=306 backend_ms=18 map_ms=17 font_total_ms=346
+BAR rect=12,102 696x16 st=2
+FIRST_FRAME process_ms=548 launch_ms=877
+BACKEND kind=6 ok=1 elapsed_ms=1477 output=
+BACKEND kind=1 ok=1 elapsed_ms=419 output=SLOT a18 (0x81119F00) in-place
+OK applied kodak_e100vs_legacy
+NEXT if the viewfinder did not change, half-press once
+
+BACKEND kind=1 ok=1 elapsed_ms=348 output=SLOT a18 (0x81119F00) in-place
+OK applied kodak_k64_legacy
+NEXT if the viewfinder did not change, half-press once
+
+EXIT renders=9 elapsed_ms=5285 wakeups=41 blits=0 max_draw_ms=184 draw_avg_ms=49.11 draw_n=9
+READY backend=nuklear-xft live=1 recipes=43 panel=720x208 nice=19 tier=1 sel=25
+INIT recipes_ms=3 display_ms=6 font_ms=313 backend_ms=18 map_ms=15 font_total_ms=340
+BAR rect=12,102 696x16 st=2
+FIRST_FRAME process_ms=547 launch_ms=847
+BACKEND kind=6 ok=1 elapsed_ms=1480 output=
+BACKEND kind=1 ok=1 elapsed_ms=325 output=SLOT a18 (0x81119F00) in-place
+OK applied kodak_k64_legacy
+NEXT if the viewfinder did not change, half-press once
+
+EXIT renders=5 elapsed_ms=3164 wakeups=24 blits=0 max_draw_ms=190 draw_avg_ms=69.80 draw_n=5
+READY backend=nuklear-xft live=1 recipes=43 panel=720x208 nice=19 tier=1 sel=25
+INIT recipes_ms=3 display_ms=3 font_ms=290 backend_ms=24 map_ms=21 font_total_ms=320
+BAR rect=12,102 696x16 st=2
+FIRST_FRAME process_ms=527 launch_ms=818
+BACKEND kind=6 ok=1 elapsed_ms=1518 output=
+BACKEND kind=1 ok=1 elapsed_ms=398 output=SLOT a18 (0x81119F00) in-place
+OK applied kodak_portra400_legacy
+NEXT if the viewfinder did not change, half-press once
+
+BACKEND kind=1 ok=1 elapsed_ms=367 output=SLOT a18 (0x81119F00) in-place
+OK applied portra160
+NEXT if the viewfinder did not change, half-press once
+
+BACKEND kind=1 ok=1 elapsed_ms=484 output=SLOT a18 (0x81119F00) in-place
+OK applied portra400uc
+NEXT if the viewfinder did not change, half-press once
+
+BACKEND kind=1 ok=1 elapsed_ms=388 output=SLOT a18 (0x81119F00) in-place
+OK applied print3513
+NEXT if the viewfinder did not change, half-press once
+
+BACKEND kind=1 ok=1 elapsed_ms=481 output=SLOT a18 (0x81119F00) in-place
+OK applied samsung_a00
+NEXT if the viewfinder did not change, half-press once
+
+BACKEND kind=1 ok=1 elapsed_ms=369 output=SLOT a18 (0x81119F00) in-place
+OK applied samsung_a02
+NEXT if the viewfinder did not change, half-press once
+
+BACKEND kind=1 ok=1 elapsed_ms=404 output=SLOT a18 (0x81119F00) in-place
+OK applied slide_astia100f
+NEXT if the viewfinder did not change, half-press once
+
+EXIT renders=27 elapsed_ms=9252 wakeups=79 blits=0 max_draw_ms=185 draw_avg_ms=43.56 draw_n=27
+ST_COMMAND
+/usr/bin/st
+BASELINE_END

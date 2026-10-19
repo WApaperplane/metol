@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# 2026-10-19: the RGB table semantics below are a legacy diagnostic model.
+# Camera import must use lutpipe/cube_to_crcb_y.py or the corrected cube2lut.arm;
+# native slots use Cr,Cb,Y. Do not infer native colour correctness from this
+# module's RGB geometry/round-trip tests. See LUT_CRCBY_FIX_2026-10-19.md.
 """nx3dlut.py —— NX500 硬件 3D LUT 原生编解码 + .cube 导入/导出
 
 ★ 背景（见 docs/current/3DLUT_TABLE_FORMAT_2026-10-08.md）

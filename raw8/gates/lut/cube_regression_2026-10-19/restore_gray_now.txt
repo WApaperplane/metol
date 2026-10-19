@@ -1,0 +1,1 @@
+/bin/sh /opt/usr/nx-ks/lut.sh off

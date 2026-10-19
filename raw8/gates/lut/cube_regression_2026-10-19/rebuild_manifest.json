@@ -1,0 +1,295 @@
+{
+  "converter_md5": "2d94e76f4e917ce73d9ffad960a48c64",
+  "packing": "Cr,Cb,Y,0",
+  "matrix": "BT.601 full range, visual regression acceptance; not calibrated",
+  "files": {
+    "ektachrome100.bin": {
+      "source": "E:\\NXWA\\.tmp\\upload\\ektachrome100.cube",
+      "source_md5": "c04d6555dac0c7b447fec0e4ab931c93",
+      "old_md5": "4730aaf5afda2af60b429f7dc3bffbb5",
+      "new_md5": "ea57e3b3961390e6b5099760c471c9ad",
+      "bytes": 19712,
+      "batch": "upload"
+    },
+    "ektar100.bin": {
+      "source": "E:\\NXWA\\.tmp\\upload\\ektar100.cube",
+      "source_md5": "27e3c0bc93945446b3e12a4acf0884fb",
+      "old_md5": "0b0c0172dc832b65c891922c01410116",
+      "new_md5": "4c2127664a7d42ed5be317bbd60a3a94",
+      "bytes": 19712,
+      "batch": "upload"
+    },
+    "fp100c.bin": {
+      "source": "E:\\NXWA\\.tmp\\upload\\fp100c.cube",
+      "source_md5": "d53e8485f161de99c92a08e3db8de574",
+      "old_md5": "17b73bb92b0e861e05e086c5fa62cdd8",
+      "new_md5": "ea5e9e1b1b0732edaed92dae71b3edf6",
+      "bytes": 19712,
+      "batch": "upload"
+    },
+    "fuji400h.bin": {
+      "source": "E:\\NXWA\\.tmp\\upload\\fuji400h.cube",
+      "source_md5": "58f69ddb48ca6d2399b4795455a9b9d6",
+      "old_md5": "4983b0c68790c9d09f926425449e791c",
+      "new_md5": "8a54c26d43ae67d22e9ac20637a49d44",
+      "bytes": 19712,
+      "batch": "upload"
+    },
+    "hp5.bin": {
+      "source": "E:\\NXWA\\.tmp\\upload\\hp5.cube",
+      "source_md5": "cd1ae04bc683550f4363efa1a05dfe11",
+      "old_md5": "117bfbb9857c272388a7d05bc5bf83ef",
+      "new_md5": "104c04b3cda837cfdbbcb38afed48987",
+      "bytes": 19712,
+      "batch": "upload"
+    },
+    "kodachrome64.bin": {
+      "source": "E:\\NXWA\\.tmp\\upload\\kodachrome64.cube",
+      "source_md5": "6a8c7212a6e34afc8b8efd9af309145e",
+      "old_md5": "9717395e68bc4bd0d3e69e8f703fa70a",
+      "new_md5": "1f9070e6c77f402bf791c4ae5ac8ab75",
+      "bytes": 19712,
+      "batch": "upload"
+    },
+    "portra160vc.bin": {
+      "source": "E:\\NXWA\\.tmp\\upload\\portra160vc.cube",
+      "source_md5": "7ac1d1edb0e0bea0032d863bd93e35c9",
+      "old_md5": "dd29c1dd210e0eb886f0ae9b1c4a10bb",
+      "new_md5": "2fb8b281d8dd78e9c09f94299c6e7565",
+      "bytes": 19712,
+      "batch": "upload"
+    },
+    "portra400.bin": {
+      "source": "E:\\NXWA\\.tmp\\upload\\portra400.cube",
+      "source_md5": "c299c6e57e1830749934d7a8b154866f",
+      "old_md5": "07110473046f41708351f47ad6972c9f",
+      "new_md5": "a9f3a63adb383cb57dbedb0f223d306a",
+      "bytes": 19712,
+      "batch": "upload"
+    },
+    "portra400nc.bin": {
+      "source": "E:\\NXWA\\.tmp\\upload\\portra400nc.cube",
+      "source_md5": "8f3de0adcba01a3d47e72bfccc855a59",
+      "old_md5": "ec9fad9a448d2b782a74a241e858858d",
+      "new_md5": "863066f95108e7538be47263c28d24c2",
+      "bytes": 19712,
+      "batch": "upload"
+    },
+    "portra800.bin": {
+      "source": "E:\\NXWA\\.tmp\\upload\\portra800.cube",
+      "source_md5": "ebf040f6a5257437c99623d146dd6d18",
+      "old_md5": "18fca6aaa8773ce030ce45ccad978fa9",
+      "new_md5": "ee0674e5fe10cb9c9ebe8893ac555dec",
+      "bytes": 19712,
+      "batch": "upload"
+    },
+    "print2383.bin": {
+      "source": "E:\\NXWA\\.tmp\\upload\\print2383.cube",
+      "source_md5": "c48a14ad991f90a8de7ad6492be0cc31",
+      "old_md5": "04958ad1cc846566505ddda67ff86c5d",
+      "new_md5": "1ea9014566a73b5e2284bba456195a5b",
+      "bytes": 19712,
+      "batch": "upload"
+    },
+    "print3510.bin": {
+      "source": "E:\\NXWA\\.tmp\\upload\\print3510.cube",
+      "source_md5": "79c1f2de7998cfb319e3365de18c5e1d",
+      "old_md5": "1cb1370cf3e77ab474947fdc9fc66634",
+      "new_md5": "0bbdf25f51dd5915f2fc1b447fce32df",
+      "bytes": 19712,
+      "batch": "upload"
+    },
+    "tmax3200.bin": {
+      "source": "E:\\NXWA\\.tmp\\upload\\tmax3200.cube",
+      "source_md5": "ea26d68adde37e9f1a504511d4f53c1d",
+      "old_md5": "b16eb63543cdd469f369484bb95678ba",
+      "new_md5": "f2e530df438eee30aeea835ae1cd3fcb",
+      "bytes": 19712,
+      "batch": "upload"
+    },
+    "trix400.bin": {
+      "source": "E:\\NXWA\\.tmp\\upload\\trix400.cube",
+      "source_md5": "fbbe7e0a7cbb231ca8f954f0f4281998",
+      "old_md5": "e3d3125cbee97826a3ddea7115fd91ae",
+      "new_md5": "f0d25e00b6b73dd07273b8ca1ae52d3e",
+      "bytes": 19712,
+      "batch": "upload"
+    },
+    "velvia50.bin": {
+      "source": "E:\\NXWA\\.tmp\\upload\\velvia50.cube",
+      "source_md5": "ca26f93f69a18a132e72ee159dc385c9",
+      "old_md5": "221ca6055c66d68e924f6bb9b693c61e",
+      "new_md5": "59fc6ba4d29139da23d2e0570bc028e8",
+      "bytes": 19712,
+      "batch": "upload"
+    },
+    "xt3proneg.bin": {
+      "source": "E:\\NXWA\\.tmp\\upload\\xt3proneg.cube",
+      "source_md5": "02536947871a58f771c6e43c21987f7b",
+      "old_md5": "f5bf445a8a2e761a68212db6d6c4be2d",
+      "new_md5": "b48294d7e4352a705148b64e21c1c329",
+      "bytes": 19712,
+      "batch": "upload"
+    },
+    "xt3velvia.bin": {
+      "source": "E:\\NXWA\\.tmp\\upload\\xt3velvia.cube",
+      "source_md5": "949d7534d8dab01273a86ca9879da453",
+      "old_md5": "b4cb0556323d0a1cf5c5628ad514e530",
+      "new_md5": "cd9850b1257b5b89fc0e5b721104ed81",
+      "bytes": 19712,
+      "batch": "upload"
+    },
+    "bw_acros100.bin": {
+      "source": "E:\\NXWA\\.tmp\\add\\bw_acros100.cube",
+      "source_md5": "c93c836f75e36e605d4c40cb197e1e4e",
+      "old_md5": "18f0e34bb5b13219863ee134ed1c6231",
+      "new_md5": "10fe9dbd3b4502fd157f2da5a148a4ee",
+      "bytes": 19712,
+      "batch": "add"
+    },
+    "bw_delta3200.bin": {
+      "source": "E:\\NXWA\\.tmp\\add\\bw_delta3200.cube",
+      "source_md5": "6ef34d2f52bd5e1aa2f39e32b1fba8fa",
+      "old_md5": "330f348682efa2cdc8e4e68a476fdef6",
+      "new_md5": "1260791d47584ecd256d1eaf80a68165",
+      "bytes": 19712,
+      "batch": "add"
+    },
+    "bw_retro80s.bin": {
+      "source": "E:\\NXWA\\.tmp\\add\\bw_retro80s.cube",
+      "source_md5": "00fd9ab2bb8d99c5c116d9ee08fe9ca2",
+      "old_md5": "3cfa011afccbfe737917cf8df85f3169",
+      "new_md5": "7decb1b90be10fa3b5b3e61839e01ef3",
+      "bytes": 19712,
+      "batch": "add"
+    },
+    "elitecolor400.bin": {
+      "source": "E:\\NXWA\\.tmp\\add\\elitecolor400.cube",
+      "source_md5": "b93fe655247d9dc1f9364ae02e0fb21d",
+      "old_md5": "482273b29ade0f8af4c24474c84054ef",
+      "new_md5": "634cf813db1599067c34eb2bf05f5f2a",
+      "bytes": 19712,
+      "batch": "add"
+    },
+    "fp3000b.bin": {
+      "source": "E:\\NXWA\\.tmp\\add\\fp3000b.cube",
+      "source_md5": "8c20fa260d0ec0976b4ae1365e57f59e",
+      "old_md5": "ed0147df04db614e5d1a2beb1f449c84",
+      "new_md5": "26817ab09f718efc3ab11584e9f3abaf",
+      "bytes": 19712,
+      "batch": "add"
+    },
+    "fuji800z.bin": {
+      "source": "E:\\NXWA\\.tmp\\add\\fuji800z.cube",
+      "source_md5": "5a0b2f1be82639558f2e90b8433e4bcb",
+      "old_md5": "960b326317ab1452476951603a882eb3",
+      "new_md5": "56e3f3f1e8cff02ce6f5691ffb24eb45",
+      "bytes": 19712,
+      "batch": "add"
+    },
+    "polaroid665.bin": {
+      "source": "E:\\NXWA\\.tmp\\add\\polaroid665.cube",
+      "source_md5": "8e67014670d0fa1d93eb85490dfa0ebc",
+      "old_md5": "314374b3cb553a85e05050c040c76860",
+      "new_md5": "1c6b102abddc9f0439a56dbfc33e0dae",
+      "bytes": 19712,
+      "batch": "add"
+    },
+    "portra160.bin": {
+      "source": "E:\\NXWA\\.tmp\\add\\portra160.cube",
+      "source_md5": "c9053e72a00fb5b36d189c9e7d58d788",
+      "old_md5": "a41070fdd763f0877a0d791358622e93",
+      "new_md5": "7d3688a11db5a6e1d25892fa7ec84950",
+      "bytes": 19712,
+      "batch": "add"
+    },
+    "portra400uc.bin": {
+      "source": "E:\\NXWA\\.tmp\\add\\portra400uc.cube",
+      "source_md5": "32618d12d50c95a4d517c25c1b28599c",
+      "old_md5": "efeef21ff78379b6f2dde7ed9f5f3691",
+      "new_md5": "ed26458ccf6fc468decd89aab961e89a",
+      "bytes": 19712,
+      "batch": "add"
+    },
+    "print2393.bin": {
+      "source": "E:\\NXWA\\.tmp\\add\\print2393.cube",
+      "source_md5": "f6d8e5615eb837ec1a2c21ffcead9dec",
+      "old_md5": "2d4f39d0ee6ae1c96afacacd4b0bd7b2",
+      "new_md5": "1bfe1946567836b3cdd36363ea2937c4",
+      "bytes": 19712,
+      "batch": "add"
+    },
+    "print3513.bin": {
+      "source": "E:\\NXWA\\.tmp\\add\\print3513.cube",
+      "source_md5": "a9eeb0914a367bfdd9416ff8d97e263a",
+      "old_md5": "b044eb0ff20fd5b270fb2e10a8672da4",
+      "new_md5": "a0d14677709cfb52b02f845dadaeb09b",
+      "bytes": 19712,
+      "batch": "add"
+    },
+    "slide_astia100f.bin": {
+      "source": "E:\\NXWA\\.tmp\\add\\slide_astia100f.cube",
+      "source_md5": "496978721fc55fe9fb1518d8dc9f9ca8",
+      "old_md5": "922c10b02ae246527267da4f2675ed0b",
+      "new_md5": "bc359cedb893b06fcc0ebd5338d7bcf6",
+      "bytes": 19712,
+      "batch": "add"
+    },
+    "slide_kodachrome25.bin": {
+      "source": "E:\\NXWA\\.tmp\\add\\slide_kodachrome25.cube",
+      "source_md5": "8e3d3ca90a15d9deb943ff36db68b7c5",
+      "old_md5": "bba7ed12a7e0655cea6b504883e3f4e7",
+      "new_md5": "3ac40766db7f4ae1fcaffaa77ed90403",
+      "bytes": 19712,
+      "batch": "add"
+    },
+    "slide_precisa100.bin": {
+      "source": "E:\\NXWA\\.tmp\\add\\slide_precisa100.cube",
+      "source_md5": "d1846151acf8f056bb30f83dcd845537",
+      "old_md5": "ca026397cb37e2b26e4f206afb01e758",
+      "new_md5": "5280ca6ef5a347e19198a66b1b09c314",
+      "bytes": 19712,
+      "batch": "add"
+    },
+    "slide_provia100f.bin": {
+      "source": "E:\\NXWA\\.tmp\\add\\slide_provia100f.cube",
+      "source_md5": "0a380127769c225235ebd4a599d208da",
+      "old_md5": "bb6b1408e706b36a813c2f94bca5b6e2",
+      "new_md5": "13d4fea76038e0c5102262bb63eb89de",
+      "bytes": 19712,
+      "batch": "add"
+    },
+    "superia200.bin": {
+      "source": "E:\\NXWA\\.tmp\\add\\superia200.cube",
+      "source_md5": "84e51a429029aa87e56f8ec962ea051c",
+      "old_md5": "0b5cbb63e24af6b2929b84d291ed8080",
+      "new_md5": "129faae942c8b762b2fc217569da0564",
+      "bytes": 19712,
+      "batch": "add"
+    },
+    "superia400.bin": {
+      "source": "E:\\NXWA\\.tmp\\add\\superia400.cube",
+      "source_md5": "ff06fa554f87cff3590f71d2feae35fa",
+      "old_md5": "ee411d7f9f325b61a9aa26bf7f766e58",
+      "new_md5": "60a2215c7489fce98ccd130b3fb45e88",
+      "bytes": 19712,
+      "batch": "add"
+    },
+    "xt3classic.bin": {
+      "source": "E:\\NXWA\\.tmp\\add\\xt3classic.cube",
+      "source_md5": "d11f7c2da7eabeca738fc4ad642f00ec",
+      "old_md5": "5c96cb325ebf85c291afda6ac99bcaa8",
+      "new_md5": "f1649ef5081157420ef5a1b6b334927e",
+      "bytes": 19712,
+      "batch": "add"
+    },
+    "xt3provia.bin": {
+      "source": "E:\\NXWA\\.tmp\\add\\xt3provia.cube",
+      "source_md5": "0129368268cb62592ccb10c8980b0889",
+      "old_md5": "60245ee4afe2430230172c2169c87169",
+      "new_md5": "18b83ff6a84c6ab3f0c2a00456a42bb1",
+      "bytes": 19712,
+      "batch": "add"
+    }
+  }
+}

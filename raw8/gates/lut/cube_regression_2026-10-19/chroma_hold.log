@@ -1,0 +1,11 @@
+OK restored (view1=A13, view3=A17, still=original, A18+A19=original)
+SLOT a18 (0x81119F00), previous load=0x81101e00
+OK applied chroma_axis
+LOADED 0x81119f00; OLED restored to 0x6c0001
+=== regtabwrite (single word, View4[3] only) ===
+VIEW4 : 0x810fd100 0x81119f00 0x81106b00 0x81119f00
+STILL6: 0x81119f00 0x81119f00 0x81119f00 0x81119f00 0x81119f00 0x81119f00
+REGS: 0x00000001 0x00000100 0x00000000 0x81119f00 0x00000000
+REGS: onoff cfg pulse load_addr save_addr
+=== done ===
+CHROMA_AXIS_HOLD_ACTIVE

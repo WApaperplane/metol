@@ -1,0 +1,7 @@
+=== regtabwrite (single word, View4[3] only) ===
+STILL6 before: 0x81119f00 0x81119f00 0x81119f00 0x81119f00 0x81119f00 0x81119f00
+STILL6 after : 0x81119f00 0x81115200 0x8111ec00 0x8110b800 0x81106b00 0x81110500
+READBACK ok
+STILL6 bytes changed = 7
+stray deltas outside Still6 = 0
+=== done ===

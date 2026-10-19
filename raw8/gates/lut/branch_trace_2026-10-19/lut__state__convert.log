@@ -1,0 +1,12 @@
+=== cube2lut (cube -> 19712B slot table) ===
+INPUT bytes = 133780
+GRID n = 13
+NODES parsed = 2197
+OUTPUT bytes = 19712
+first entry R = 2
+first entry G = 2
+first entry B = 1
+last entry  R = 255
+last entry  G = 251
+last entry  B = 253
+=== done ===

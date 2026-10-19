@@ -1,0 +1,13 @@
+=== cube2lut (cube -> 19712B slot table) ===
+SPACE CrCbY (BT.601 full range)
+INPUT bytes = 133867
+GRID n = 13
+NODES parsed = 2197
+OUTPUT bytes = 19712
+first entry component0 = 75
+first entry component1 = 111
+first entry component2 = 75
+last entry  component0 = 181
+last entry  component1 = 142
+last entry  component2 = 175
+=== done ===

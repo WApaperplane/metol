@@ -1,0 +1,6 @@
+{
+  "recorded_at": "2026-10-19T13:58:34.961608+00:00",
+  "user_answer": "正常黑白，没有明显偏色",
+  "probe": "128,128,Y; C1/C2 neutral, Y follows axis2",
+  "scope": "visual confirmation of neutral chroma; no Cb/Cr order or matrix calibration yet"
+}

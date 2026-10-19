@@ -1,0 +1,1 @@
+/opt/usr/nx-ks/busybox setsid /bin/sh /mnt/mmc/lbf134647/d.sh >/mnt/mmc/lbf134647/d.log 2>&1 &

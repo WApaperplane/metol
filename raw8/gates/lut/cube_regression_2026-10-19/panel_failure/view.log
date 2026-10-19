@@ -1,0 +1,11 @@
+=== regtabwrite (single word, View4[3] only) ===
+VIEW4 before: 0x810fd100 0x8111ec00 0x81106b00 0x81119f00
+MODE patch writable-mapping ok
+WRITE 0x8111ec00
+VIEW4 after : 0x810fd100 0x8111ec00 0x81106b00 0x8111ec00
+READBACK 0x8111ec00
+WINDOW bytes changed inside target word = 1
+WINDOW stray deltas outside target word = 0
+REGS: 0x00000001 0x00000100 0x00000000 0x81119f00 0x00000000
+REGS: onoff cfg pulse load_addr save_addr
+=== done ===

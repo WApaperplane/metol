@@ -1,0 +1,7 @@
+=== slotwrite (one 19712-byte LUT slot) ===
+MODE write
+ADDR 0x8111ec00
+SOURCE differs from current slot bytes = 14505
+READBACK mismatched bytes = 0
+READBACK ok
+=== done ===

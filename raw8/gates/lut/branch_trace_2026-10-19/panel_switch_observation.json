@@ -1,0 +1,6 @@
+{
+  "recorded_at": "2026-10-19T13:51:14.822437+00:00",
+  "question": "Installed backend: select Provia then Astia from existing LUT panel, waiting about 3 seconds each. Does the picture follow the selection?",
+  "user_answer": "能连续切换，画面跟着变",
+  "scope": "User visual confirmation of continuous panel switching; no claim that Acros colour cast is fixed."
+}

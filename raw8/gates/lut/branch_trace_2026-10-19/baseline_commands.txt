@@ -1,0 +1,18 @@
+BB=/opt/usr/nx-ks/busybox
+echo BASELINE_BEGIN
+$BB cat /proc/uptime /proc/loadavg
+$BB ps
+$BB md5sum /opt/usr/nx-ks/lut.sh /mnt/mmc/lut/lut.sh /mnt/mmc/scripts/lut.sh
+$BB md5sum /opt/usr/nx-ks/filmlab.sh /opt/usr/nx-ks/nxui/nxui.arm /opt/usr/nx-ks/EV_MOBILE.sh
+$BB md5sum /mnt/mmc/lut/nx_regtabwrite.arm /mnt/mmc/lut/nx_slotwrite.arm /mnt/mmc/lut/cube2lut.arm
+R=/mnt/mmc/lut/nx_regtabwrite.arm
+set -- $($BB md5sum "$R")
+if [ "$1" = c0bd1f38c3cbb222690b82f5f393978d ]; then "$R" status; else echo UNVERIFIED_WRITER_SKIP; fi
+echo CURRENT_FILES
+$BB cat /mnt/mmc/lut/state/current /mnt/mmc/lut/state/active /mnt/mmc/nxui/last-lut
+echo NXUI_LOG
+$BB tail -n 90 /tmp/nxui.log
+echo ST_COMMAND
+command -v st
+echo BASELINE_END
+$BB sync

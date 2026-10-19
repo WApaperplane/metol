@@ -1,0 +1,1 @@
+/opt/usr/nx-ks/busybox setsid /bin/sh /mnt/mmc/lcp140225/a.sh hp5_candidate >/mnt/mmc/lcp140225/h.log 2>&1 &

@@ -257,11 +257,15 @@ static void poll_child(void) {
     read_output(); result = waitpid(child, &code, WNOHANG);
     if (result == 0) {
         long long age = now_ms() - child_started;
-        if (age > 12000 && !child_timed_out) {
+        /* LUT apply/off include synchronous camera events. Give a slow event
+         * time to finish and allow its restoration handler to run on TERM. */
+        long long limit = lut_mode && (busy_kind == 1 || busy_kind == 8) ? 30000 : 12000;
+        long long grace = lut_mode && (busy_kind == 1 || busy_kind == 8) ? 5000 : 1000;
+        if (age > limit && !child_timed_out) {
             child_timed_out = 1; kill(-child, SIGTERM);
             message("后端超时 · 正在停止，请检查相机状态");
         }
-        if (age > 13000) kill(-child, SIGKILL);
+        if (age > limit + grace) kill(-child, SIGKILL);
         return;
     }
     if (result < 0 && errno == EINTR) return;

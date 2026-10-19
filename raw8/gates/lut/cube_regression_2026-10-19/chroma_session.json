@@ -1,0 +1,13 @@
+{
+  "folder": "lcc135950",
+  "entry": [
+    85,
+    255,
+    76,
+    0
+  ],
+  "md5": "472005610d30e29ce5178d98b31901d2",
+  "expected_if_cbcrY": "red",
+  "expected_if_crcbY": "blue",
+  "hold_seconds": 120
+}

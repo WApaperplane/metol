@@ -1,0 +1,123 @@
+{
+  "captured_utc": "2026-10-19T13:22:18.795166+00:00",
+  "mode": "FTP RETR only; no camera write",
+  "files": {
+    "/lut/lut.sh": {
+      "local": "lut__lut.sh",
+      "bytes": 8949,
+      "md5": "2f20648c79d27b452d66e20e46f6ca1b",
+      "sha256": "8cf8a074f710852d03702e047274b7f9f1cb82126b82ccc7966cc330a399730b"
+    },
+    "/lut/nx_regtabwrite.arm": {
+      "local": "lut__nx_regtabwrite.arm",
+      "bytes": 10896,
+      "md5": "c0bd1f38c3cbb222690b82f5f393978d",
+      "sha256": "ac8a4953c26be7ae4e56df336311595dc19b80a6cb43673019cc2e3aa2187284"
+    },
+    "/lut/nx_regtabdump.arm": {
+      "local": "lut__nx_regtabdump.arm",
+      "bytes": 4132,
+      "md5": "253656833f6555deaf58c5a088f18e8b",
+      "sha256": "4c12443fcfad4f424936cafe1ba9e906f235ab1f6e16c9836950405b00d63809"
+    },
+    "/lut/nx_slotwrite.arm": {
+      "local": "lut__nx_slotwrite.arm",
+      "bytes": 5952,
+      "md5": "ed1708306d8110ef1950bef2843e4747",
+      "sha256": "cf7ad8c82438a477eb2d6f9568bd992ab31c99b8c3d66d330f0b9df121f96241"
+    },
+    "/lut/cube2lut.arm": {
+      "local": "lut__cube2lut.arm",
+      "bytes": 8880,
+      "md5": "582b12f0cc9f04ca765a8989d664b580",
+      "sha256": "1f8c7fbc65cbd1e204789d8003c320e686b09932ce345c379c596068a0b710be"
+    },
+    "/lut/state/current": {
+      "local": "lut__state__current",
+      "bytes": 16,
+      "md5": "da99b2e18c80b52b5c5feaf80e858f21",
+      "sha256": "02229670831badb347badb2d76bc299a271136efbdbb84675c400c01c21027e5"
+    },
+    "/lut/state/active": {
+      "local": "lut__state__active",
+      "bytes": 4,
+      "md5": "c2c559124b84c969f778aba8f7699c87",
+      "sha256": "fb752210a7f91602fd61937198c468eb9ca4678f5c4e14ed7dbb23153834f752"
+    },
+    "/lut/state/view.log": {
+      "local": "lut__state__view.log",
+      "bytes": 296,
+      "md5": "9559e9ba08ceefd98fe0a0cd52a97297",
+      "sha256": "d492964886694978ecd6034b2eb2d8ea563ae0c5ded43cdf475734e1b2ad2977"
+    },
+    "/lut/state/still.log": {
+      "local": "lut__state__still.log",
+      "bytes": 293,
+      "md5": "abc918807ab94027a742f983f2aaeb43",
+      "sha256": "c18eef0cc02b4ed16671526140cbbffdbe51afc8fd9adf3a3d55eb846b4ab6cf"
+    },
+    "/lut/state/write.log": {
+      "local": "lut__state__write.log",
+      "bytes": 173,
+      "md5": "774ff898d190f8370c2bc2ac84ca76fa",
+      "sha256": "212c72f2ad27f6e3e723155c9973be6a93ead688b2a0c82ed9b5b16333885d12"
+    },
+    "/lut/state/convert.log": {
+      "local": "lut__state__convert.log",
+      "bytes": 246,
+      "md5": "4f4cf4751d5dc1dd51b502931c309442",
+      "sha256": "0d256d2f60ec2005d67183d2580a9753e37055ab9f47eca39f749eb1d9de883f"
+    },
+    "/lut/state/off-view.log": {
+      "local": "lut__state__off-view.log",
+      "bytes": 439,
+      "md5": "24f80b8de6fa776bffa4d10c9c43e86b",
+      "sha256": "d1b0ccec7d4c435c536f8268032b59471e7ee6edde388b8044f32f30b31b178b"
+    },
+    "/lut/state/off-still.log": {
+      "local": "lut__state__off-still.log",
+      "bytes": 293,
+      "md5": "bb0fa616c124e6481d8dc2f8f14692e1",
+      "sha256": "de25546b3e545b198125f87dab0ea31ca4f1a86ed234d9454bd85d3dc77057a7"
+    },
+    "/lut/state/a18_orig.bin": {
+      "local": "lut__state__a18_orig.bin",
+      "bytes": 19712,
+      "md5": "4c0cc78cfa90ea39a78f42450829f7cb",
+      "sha256": "2632250eafccc750c23c5ae3c1aa5eaa7c3fa505a57cc5a38272110873a71b8d"
+    },
+    "/lut/state/a19_orig.bin": {
+      "local": "lut__state__a19_orig.bin",
+      "bytes": 19712,
+      "md5": "aa8c83998bbea7eba1e575153d7fd0ba",
+      "sha256": "5b592261b3e1f7e76640dc99a86549770092673ed1e4de504c01551d8d0f235e"
+    },
+    "/looks/bw_acros100.bin": {
+      "local": "looks__bw_acros100.bin",
+      "bytes": 19712,
+      "md5": "18f0e34bb5b13219863ee134ed1c6231",
+      "sha256": "281776eb97cd3bf780f6bc8e3e88525bf747c5bcb42d88f2496e50e506734c34"
+    },
+    "/scripts/filmlab.sh": {
+      "local": "scripts__filmlab.sh",
+      "bytes": 60153,
+      "md5": "4c14c0a5f19ded3a2d5eb69871d15fac",
+      "sha256": "af974a3f158daae44999087ada0d2feb70509fe09c97c47c6b03f03ec01f24d6"
+    },
+    "/scripts/lut.sh": {
+      "local": "scripts__lut.sh",
+      "bytes": 8671,
+      "md5": "813b6d22e33de436bfbb33716d3adeb2",
+      "sha256": "5ea6d38caf97c01826e77e11cf04ca556d9b943c79753b6576181321a472e603"
+    },
+    "/nxui/last-lut": {
+      "local": "nxui__last-lut",
+      "bytes": 16,
+      "md5": "da99b2e18c80b52b5c5feaf80e858f21",
+      "sha256": "02229670831badb347badb2d76bc299a271136efbdbb84675c400c01c21027e5"
+    }
+  },
+  "missing": {
+    "/looks/bw_acros100.cube": "550 Error"
+  }
+}

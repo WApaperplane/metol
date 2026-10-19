@@ -1,0 +1,6 @@
+=== regtabwrite (single word, View4[3] only) ===
+VIEW4 : 0x810fd100 0x8111ec00 0x81106b00 0x8111ec00
+STILL6: 0x8111ec00 0x8111ec00 0x8111ec00 0x8111ec00 0x8111ec00 0x8111ec00
+REGS: 0x00000001 0x00000100 0x00000000 0x8111ec00 0x00000000
+REGS: onoff cfg pulse load_addr save_addr
+=== done ===

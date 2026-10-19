@@ -1,0 +1,6 @@
+{
+  "folder": "lba132906",
+  "script_sha256": "c56a9428682d1a6def0ee74b45f18e5e156b989720039acb3b6514de2829c953",
+  "original_oled": "0x6c0001",
+  "test": "official userdata 108 ON/OFF/ON; no LUT writes"
+}

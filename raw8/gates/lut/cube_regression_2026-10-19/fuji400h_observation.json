@@ -1,0 +1,7 @@
+{
+  "recorded_at": "2026-10-19T14:05:50.424040+00:00",
+  "user_answer": "颜色恢复正常，严重偏色消失",
+  "source": "unchanged original fuji400h.cube",
+  "candidate": "fuji400h_candidate.bin",
+  "scope": "visual severe-cast regression acceptance; not a measured colour profile"
+}

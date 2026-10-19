@@ -1,0 +1,11 @@
+{
+  "recorded_at": "2026-10-19T14:02:25.107879+00:00",
+  "user_answer": "蓝色或蓝紫色",
+  "constant_bytes": [
+    85,
+    255,
+    76,
+    0
+  ],
+  "inference": "Cr is axis/channel 0, Cb is axis/channel 1, Y is axis/channel 2; matrix/range not measured"
+}

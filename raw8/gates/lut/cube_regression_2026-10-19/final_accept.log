@@ -1,0 +1,83 @@
+SLOT a18 (0x81119F00), previous load=0x81101e00
+OK applied hp5
+LOADED 0x81119f00; OLED restored to 0x6c0001
+=== regtabwrite (single word, View4[3] only) ===
+VIEW4 : 0x810fd100 0x81119f00 0x81106b00 0x81119f00
+STILL6: 0x81119f00 0x81119f00 0x81119f00 0x81119f00 0x81119f00 0x81119f00
+REGS: 0x00000001 0x00000100 0x00000000 0x81119f00 0x00000000
+REGS: onoff cfg pulse load_addr save_addr
+=== done ===
+=== slotwrite (one 19712-byte LUT slot) ===
+MODE read
+ADDR 0x81119f00
+SLOT dumped to output path
+=== done ===
+104c04b3cda837cfdbbcb38afed48987  /mnt/mmc/lcv140923/final_slot_1.bin
+PASS_APPLY hp5 a18
+SLOT a19 (0x8111EC00), previous load=0x81119f00
+OK applied fuji400h
+LOADED 0x8111ec00; OLED restored to 0x6c0001
+=== regtabwrite (single word, View4[3] only) ===
+VIEW4 : 0x810fd100 0x8111ec00 0x81106b00 0x8111ec00
+STILL6: 0x8111ec00 0x8111ec00 0x8111ec00 0x8111ec00 0x8111ec00 0x8111ec00
+REGS: 0x00000001 0x00000100 0x00000000 0x8111ec00 0x00000000
+REGS: onoff cfg pulse load_addr save_addr
+=== done ===
+=== slotwrite (one 19712-byte LUT slot) ===
+MODE read
+ADDR 0x8111ec00
+SLOT dumped to output path
+=== done ===
+8a54c26d43ae67d22e9ac20637a49d44  /mnt/mmc/lcv140923/final_slot_2.bin
+PASS_APPLY fuji400h a19
+SLOT a18 (0x81119F00), previous load=0x8111ec00
+OK applied bw_acros100
+LOADED 0x81119f00; OLED restored to 0x6c0001
+=== regtabwrite (single word, View4[3] only) ===
+VIEW4 : 0x810fd100 0x81119f00 0x81106b00 0x81119f00
+STILL6: 0x81119f00 0x81119f00 0x81119f00 0x81119f00 0x81119f00 0x81119f00
+REGS: 0x00000001 0x00000100 0x00000000 0x81119f00 0x00000000
+REGS: onoff cfg pulse load_addr save_addr
+=== done ===
+=== slotwrite (one 19712-byte LUT slot) ===
+MODE read
+ADDR 0x81119f00
+SLOT dumped to output path
+=== done ===
+10fe9dbd3b4502fd157f2da5a148a4ee  /mnt/mmc/lcv140923/final_slot_3.bin
+PASS_APPLY bw_acros100 a18
+OK restored (view1=A13, view3=A17, still=original, A18+A19=original)
+=== regtabwrite (single word, View4[3] only) ===
+VIEW4 : 0x810fd100 0x81101e00 0x81106b00 0x81115200
+STILL6: 0x81119f00 0x81115200 0x8111ec00 0x8110b800 0x81106b00 0x81110500
+REGS: 0x00000001 0x00000100 0x00000000 0x81101e00 0x00000000
+REGS: onoff cfg pulse load_addr save_addr
+=== done ===
+=== slotwrite (one 19712-byte LUT slot) ===
+MODE read
+ADDR 0x81119f00
+SLOT dumped to output path
+=== done ===
+=== slotwrite (one 19712-byte LUT slot) ===
+MODE read
+ADDR 0x8111ec00
+SLOT dumped to output path
+=== done ===
+PASS_OFF_ORIGINAL
+SLOT a18 (0x81119F00), previous load=0x81101e00
+OK applied fuji400h
+LOADED 0x81119f00; OLED restored to 0x6c0001
+=== regtabwrite (single word, View4[3] only) ===
+VIEW4 : 0x810fd100 0x81119f00 0x81106b00 0x81119f00
+STILL6: 0x81119f00 0x81119f00 0x81119f00 0x81119f00 0x81119f00 0x81119f00
+REGS: 0x00000001 0x00000100 0x00000000 0x81119f00 0x00000000
+REGS: onoff cfg pulse load_addr save_addr
+=== done ===
+=== slotwrite (one 19712-byte LUT slot) ===
+MODE read
+ADDR 0x81119f00
+SLOT dumped to output path
+=== done ===
+8a54c26d43ae67d22e9ac20637a49d44  /mnt/mmc/lcv140923/final_slot_4.bin
+PASS_APPLY fuji400h a18
+COLOURSPACE_FINAL_PASS_FUJI_ACTIVE

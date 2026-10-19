@@ -1,0 +1,13 @@
+{
+  "recorded_at": "2026-10-19T14:15:26.845912+00:00",
+  "converter_md5": "2d94e76f4e917ce73d9ffad960a48c64",
+  "original_cube_fixtures": 37,
+  "new_table_count": 36,
+  "arm_execution_test_groups": 6,
+  "real_device_output_matches_arm_emulation": [
+    "hp5",
+    "fuji400h"
+  ],
+  "batch_readback": "36 new bins + 36 old backups matched manifest; SD and mother converter matched",
+  "actual_backend_acceptance": "hp5 -> fuji400h -> bw_acros100 -> off -> fuji400h; actual slots and off restoration passed"
+}

@@ -1,6 +1,6 @@
 # Metol 文档索引（旧称 NX-KS2 / NX-WA）
 
-> 更新：**2026-10-18**（本次做过一次清理，见 §5）· 分支：`nxwa`
+> 更新：**2026-10-19**（新增 LUT 稳定基线倒查与色彩坐标审计；10-18 清理见 §5）· 分支：`nxwa`
 > 本目录按**时效**分区，避免"旧结论淹没新结论"。
 
 ## 目录结构
@@ -32,6 +32,10 @@ docs/
 
 | 文档 | 定位 |
 |---|---|
+| [`LUT_SWITCH_REFRESH_FIX_2026-10-19.md`](current/LUT_SWITCH_REFRESH_FIX_2026-10-19.md) | ★★★★★ **切换修复最新入口**：OLED/sRGB 选表已证；双登记项 + 正常事件重载；连续切换、off 恢复实机通过并已安装 |
+| [`LUT_CRCBY_FIX_2026-10-19.md`](current/LUT_CRCBY_FIX_2026-10-19.md) | ★★★★★ **导入偏色修复**：实机确认 Cr/Cb/Y；HP5、Fuji400H 目视通过；机身转换器更新及 36 张可追溯表重建 |
+| [`LUT_STABLE_BASELINE_HISTORY_2026-10-19.md`](current/LUT_STABLE_BASELINE_HISTORY_2026-10-19.md) | ★★★★★ **回归优先入口**：用户确认三批曾正常；v6/v7 与同名表哈希对比；异常前后选表/加载状态时间线 |
+| [`LUT_COLORSPACE_AUDIT_2026-10-19.md`](current/LUT_COLORSPACE_AUDIT_2026-10-19.md) | ★★★★★ **色彩坐标复核**：原厂 `(128,128,Y)` 中性轴；Acros 偏绿另查，未替换转换器；切换修复见上一份 |
 | [`LUT_RETARGET_LIVE_2026-10-18.md`](current/LUT_RETARGET_LIVE_2026-10-18.md) | ★★★★★ **运行态换表闭环**：4 字节登记表 + 写槽 + 半按；View/Still 双链路独立；双向回滚 |
 | [`LUT_REGTAB_READ_2026-10-18.md`](current/LUT_REGTAB_READ_2026-10-18.md) | ★★★★ **Cfg 位定义钉死** + 三张登记表上机回读 22/22 |
 | [`CUBE2LUT_2026-10-18.md`](current/CUBE2LUT_2026-10-18.md) | ★★★★ **机身 `.cube` 转换器**：格式契约 + 逐字节对照 + `e` 记法 bug |
