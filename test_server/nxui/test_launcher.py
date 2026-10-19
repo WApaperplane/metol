@@ -2,6 +2,7 @@
 import os
 import subprocess
 import tempfile
+import time
 import unittest
 from pathlib import Path
 
@@ -21,14 +22,15 @@ pidof) exit 1 ;;
 killall) exit 0 ;;
 setsid) exec "$@" ;;
 nice) shift 2; exec "$@" ;;
-*) exec "$cmd" "$@" ;;
+cksum) exec cksum "$@" ;;
+*) echo "$cmd: applet not found" >&2; exit 127 ;;
 esac
 ''')
             script("nxui/nxui.arm", 'echo UI >> "$CALLS"\n')
             script("filmlab.sh", f'echo EXPORT >> "$CALLS"\necho test > "{lab}/recipes.txt"\n')
             script("gen_menu.sh", 'echo MAIN >> "$CALLS"\n')
             script("br_menu.sh", 'echo UNEXPECTED_PREPARE >> "$CALLS"\n')
-            launcher = (REPO / "scripts/nxui.sh").read_text().replace("/tmp/nxui", str(root / "nxui-tmp")).replace("/opt/usr/nx-ks", str(root)).replace("/mnt/mmc/filmlab", str(lab)).replace("/etc/version.info", str(version))
+            launcher = (REPO / "scripts/nxui.sh").read_text().replace("/tmp/nxui", str(root / "nxui-tmp")).replace("/mnt/mmc/nxui", str(root / "card")).replace("/opt/usr/nx-ks", str(root)).replace("/mnt/mmc/filmlab", str(lab)).replace("/etc/version.info", str(version))
             script("nxui.sh", launcher)
             (root / "nxui/enabled").touch()
             recipe = lab / "recipes.json"; recipe.write_text("first")
@@ -39,6 +41,11 @@ esac
             run("menu"); run("menu"); run("filmlab")
             self.assertEqual(log.read_text().splitlines().count("EXPORT"), 1)
             self.assertNotIn("UNEXPECTED_PREPARE", log.read_text())
+            # ★ 启动器是 `setsid ... &` 后立即 exit 0，只看 returncode 抓不到
+            #   "busybox 把 nxui.arm 当 applet" 这类静默失败。必须断言二进制真被执行。
+            time.sleep(0.3)
+            self.assertGreaterEqual(log.read_text().splitlines().count("UI"), 1,
+                                    "launcher must actually exec nxui.arm")
             recipe.write_text("other")  # same byte count; hash must detect a content change
             run("filmlab")
             self.assertEqual(log.read_text().splitlines().count("EXPORT"), 2)
