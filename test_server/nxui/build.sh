@@ -10,7 +10,7 @@ COMMON=(-std=c99 -O0 -Wall -Wextra -Wno-unused-function -Wno-unused-parameter
     -I"$INC" -I"$INC/freetype2" -fno-stack-protector)
 if [ "$MODE" != arm ]; then
     gcc "${COMMON[@]}" nxui.c nxui_model.c nxui_services.c -o out/nxui -Lout/deps/usr/lib/x86_64-linux-gnu \
-        -l:libX11.so.6 -l:libXft.so.2
+        -l:libX11.so.6 -l:libXft.so.2 -l:libfontconfig.so.1 -l:libfreetype.so.6
     gcc -std=c99 -O0 -Wall -Wextra -Werror nxui_model.c test_model.c -o out/test_model
     out/test_model
     gcc -std=c99 -O0 -Wall -Wextra -Werror nxui_services.c test_services.c -o out/test_services
@@ -23,7 +23,7 @@ if [ "$MODE" != host ]; then
         -nostdlib -nostartfiles -Wl,-e,_start -Wl,--dynamic-linker=/lib/ld-linux.so.3 \
         -Wl,--allow-shlib-undefined -Wl,-rpath-link,"$RF/usr/lib" -Wl,-rpath-link,"$RF/lib" \
         nxui.c nxui_model.c nxui_services.c ../filmlab/src/crt0_arm.S \
-        "$RF/usr/lib/libX11.so.6" "$RF/usr/lib/libXft.so.2" \
+        "$RF/usr/lib/libX11.so.6" "$RF/usr/lib/libXft.so.2" "$RF/usr/lib/libfontconfig.so.1" \
         "$RF/lib/libc-2.13.so" "$RF/lib/librt.so.1" -lgcc -o out/nxui.arm
     arm-linux-gnueabi-readelf -d out/nxui.arm > out/needed.txt
     arm-linux-gnueabi-readelf -V out/nxui.arm > out/versions.txt

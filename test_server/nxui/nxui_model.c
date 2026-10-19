@@ -14,13 +14,18 @@
  * Three files named samsung_A00/A01/A02 were enough to blank the LUT panel.
  *
  * Now only structurally impossible keys are refused: '|' is the field
- * separator, control characters break line parsing, and the length must fit. */
+ * separator, control characters break line parsing, and the length must fit.
+ * Path separators and shell metacharacters are refused too -- lut.sh joins the
+ * key onto $LAB, so "../x" would escape the look library, and a future caller
+ * that builds a command string instead of an argv list must not be handed
+ * ';', '$' or a backtick. Uppercase, '-', '.', spaces and UTF-8 stay legal. */
 int nx_key_valid(const char *s) {
     size_t n = 0;
     if (!s || !*s) return 0;
     for (; *s; s++, n++) {
         unsigned char c = (unsigned char)*s;
-        if (c == '|' || c < 0x20 || c == 0x7f) return 0;
+        if (c == '|' || c == '/' || c == '\\' || c < 0x20 || c == 0x7f) return 0;
+        if (c == ';' || c == '$' || c == '`') return 0;
     }
     return n < sizeof(((struct nx_recipe *)0)->key);
 }

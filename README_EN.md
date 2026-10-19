@@ -23,10 +23,10 @@ An enhancement mod for the **Samsung NX500 / NX1** (Tizen / DRIMe5), built on th
 
 | Keys | Opens | Notes |
 | --- | --- | --- |
-| **EV + AEL** | **Filter strip** (NXUI, 720×192) | 68 recipes scroll horizontally; swipe/tap = **instant preview** (~1.3 s, always rendered into the Custom 1 canvas); `Save & close` commits and returns the field you started from; press again or **half-press** to close. **NX500 only** — NX1 falls back to the community script |
-| **EV + WiFi** | **LUT panel** | Opens NXUI's LUT mode (`nxui.sh lut`); leaving the panel runs `lut.sh off` and restores registry + slot. If NXUI is not enabled you just get a one-line popup |
+| **EV + AEL** | **Filter strip** (NXUI, 720×208) | 68 recipes, horizontal scroll plus a draggable/tap-to-jump scrollbar; tap = **instant preview** (~1.3 s, always rendered into the Custom 1 canvas); `Save & close` commits and returns the field you started from; press again or **half-press** to close. **NX500 only** — NX1 falls back to the community script |
+| **EV + WiFi** | **LUT panel** | Opens NXUI's LUT mode (`nxui.sh lut`); **closing the panel restores nothing** — use the panel's `Restore` button to go back to the factory tables. If NXUI is not enabled you just get a one-line popup |
 | **Double-tap EV** | Main menu (NXUI, 720×336) | Paginated screen, replaces the old mod_gui menu |
-| **Half-press** | Closes the current panel | For the LUT panel this **only hides it, no restore** — shoot with the LUT still applied |
+| **Half-press** | Closes the current panel | For the LUT panel it closes the panel and **keeps the current table**, while letting p7 reload it — shoot with the LUT still applied |
 
 > **EV + WiFi is a combo**: hold EV, then press WiFi. A single WiFi press stays the camera's native behaviour (WiFi on/off); they do not conflict.
 
@@ -64,7 +64,7 @@ The camera menu also has `IP: x.x.x.x [Telnet关]` (tap to toggle 23/21), `远�
 | Item | Status |
 | --- | --- |
 | Table format | `4913×4B {R,G,B,pad}`, index `((B*17+G)*17+R)*4`, slot 19,712 B, stride `0x4D00` |
-| Retarget | Edit one **4-byte** registry entry (`View4[3]` / `Still6`) + write 19,712 B into spare slot A18 (`0x81119F00`) + **half-press once** |
+| Retarget | Edit one **4-byte** registry entry (`View4[3]` / `Still6`) + write 19,712 B into a work slot (A18 `0x81119F00` / A19 `0x8111EC00`, **alternating on every switch**) + **half-press once** |
 | Import | `.cube → 19,712 B slot table` via on-camera `cube2lut.arm`, or host-side `test_server/isp/nx3dlut.py` |
 | Live view / stills | Two independent, separately retargetable chains: `View4` affects the viewfinder only, `Still6` affects stills only |
 | Limits | Pure memory operations — **power cycle restores stock** (boot-persistent needs an image patch) |

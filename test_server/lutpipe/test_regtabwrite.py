@@ -55,12 +55,13 @@ class RegistryWriterGuards(unittest.TestCase):
         self.assertEqual(words[2], 0x81106B00)
 
     def test_replacement_slot_exists_in_image(self):
-        """A18 must be a real slot inside the relocation window."""
-        value = define("VAL_A18")
-        file_offset = value - 0x80000000 - 0x86A240
-        self.assertEqual(file_offset, slot_offset(18))
-        self.assertLessEqual(file_offset + SLOT_LEN, len(self.image))
-        self.assertTrue(any(self.image[file_offset:file_offset + SLOT_LEN]))
+        """A18 and A19 must both be real slots inside the relocation window."""
+        for name, index in (("VAL_A18", 18), ("VAL_A19", 19)):
+            value = define(name)
+            file_offset = value - 0x80000000 - 0x86A240
+            self.assertEqual(file_offset, slot_offset(index), name)
+            self.assertLessEqual(file_offset + SLOT_LEN, len(self.image), name)
+            self.assertTrue(any(self.image[file_offset:file_offset + SLOT_LEN]), name)
 
     def test_view_path_writes_exactly_one_word(self):
         body = text()
@@ -81,8 +82,16 @@ class RegistryWriterGuards(unittest.TestCase):
 
     def test_restore_is_the_exact_inverse_of_patch(self):
         body = text()
-        self.assertIn('{ expect = 0xFFFFFFFFu; target = VAL_A18; }', body)
+        self.assertIn('{ expect = 0xFFFFFFFFu; target = slot; }', body)
         self.assertIn('{ expect = 0xFFFFFFFFu; target = VAL_A17; }', body)
+
+    def test_still_path_uses_the_requested_slot(self):
+        """Both registry paths must honour the caller's slot, not hardcode A18."""
+        body = text()
+        self.assertIn("tab[(STILL_AT >> 2) + i] = slot;", body)
+        self.assertNotIn("tab[(STILL_AT >> 2) + i] = VAL_A18;", body)
+        self.assertIn("do_write(argv[1], slot)", body)
+        self.assertIn("do_still(argv[1], slot)", body)
 
     def test_window_delta_verified(self):
         self.assertIn("window_delta", text())

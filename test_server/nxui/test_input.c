@@ -29,6 +29,32 @@ int main(int argc, char **argv) {
         e.type = ButtonPress; XSendEvent(d, w, False, ButtonPressMask, &e); XFlush(d);
         pause_ms(argc > 4 ? atol(argv[4]) : 80);
         e.type = ButtonRelease; XSendEvent(d, w, False, ButtonReleaseMask, &e);
+    } else if (!strcmp(argv[1], "drag") && argc > 5) {
+        /* drag x1 y1 x2 y2 [steps]：按住左键从起点拖到终点，中间补 motion。
+         * 滚动条必须靠 motion 才能跟随，只有 press/release 的 click 测不出来。 */
+        int x1 = atoi(argv[2]), y1 = atoi(argv[3]), x2 = atoi(argv[4]), y2 = atoi(argv[5]);
+        int steps = argc > 6 ? atoi(argv[6]) : 12;
+        memset(&e, 0, sizeof e);
+        e.xbutton.display = d; e.xbutton.window = w; e.xbutton.root = DefaultRootWindow(d);
+        e.xbutton.same_screen = True; e.xbutton.button = Button1;
+        e.xbutton.x = x1; e.xbutton.y = y1;
+        e.type = ButtonPress; XSendEvent(d, w, False, ButtonPressMask, &e); XFlush(d);
+        pause_ms(40);
+        for (i = 1; i <= steps; i++) {
+            memset(&e, 0, sizeof e);
+            e.xmotion.type = MotionNotify; e.xmotion.display = d; e.xmotion.window = w;
+            e.xmotion.root = DefaultRootWindow(d); e.xmotion.same_screen = True;
+            e.xmotion.x = x1 + (x2 - x1) * i / steps;
+            e.xmotion.y = y1 + (y2 - y1) * i / steps;
+            e.xmotion.state = Button1Mask;
+            XSendEvent(d, w, False, Button1MotionMask, &e); XFlush(d);
+            pause_ms(20);
+        }
+        memset(&e, 0, sizeof e);
+        e.xbutton.display = d; e.xbutton.window = w; e.xbutton.root = DefaultRootWindow(d);
+        e.xbutton.same_screen = True; e.xbutton.button = Button1;
+        e.xbutton.x = x2; e.xbutton.y = y2;
+        e.type = ButtonRelease; XSendEvent(d, w, False, ButtonReleaseMask, &e);
     } else if (!strcmp(argv[1], "motion") || !strcmp(argv[1], "expose")) {
         count = atoi(argv[2]);
         for (i = 0; i < count; i++) {

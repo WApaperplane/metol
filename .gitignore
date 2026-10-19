@@ -8,6 +8,13 @@ telnetd
 *.woff2
 *.ttf
 *.eot
+# NXUI 的 GB2312 子集字体（1.9 MB）：由 test_server/nxui/make_font_subset.py
+# 从相机原厂 SDIC_GP_US 生成。入库理由同 raw8 的窄例外——它是首帧预算的
+# 判据件（147 ms -> 22 ms），重新生成需要相机固件里的原字体。
+!scripts/nxui/fonts/*.ttf
+
+# 一次性探针与草稿（ppm2png 之类），不进库
+.tmp/
 
 # ===== 媒体资源（非源码） =====
 *.jpg

@@ -8,7 +8,7 @@ import json
 import os
 import subprocess
 import time
-from test_interaction import run_interaction
+from test_interaction import run_interaction, run_lut_interaction
 from test_performance import run_performance
 from test_service_interaction import run_service_interaction
 
@@ -28,6 +28,10 @@ data = json.loads((REPO / "scripts/filmlab/recipes.json").read_text())
 recipes = OUT / "recipes.txt"
 fields = ("R_COLOR", "G_COLOR", "B_COLOR", "HUE", "SATURATION", "SHARPNESS", "CONTRAST")
 recipes.write_text("".join("|".join([k, v["label"]] + [str(v[f]) for f in fields]) + "\n" for k, v in data["recipes"].items()))
+# LUT 面板的条目来自 /mnt/mmc/looks，名字是英文（Film-Luts 的命名风格）。
+# 用固定 8 条替身：形状与真实列表一致（key 与 label 相同、7 个占位值）。
+looks = OUT / "looks.txt"
+looks.write_text("".join(f"look{i:02d}|Look {i:02d}|0|0|0|0|0|0|0\n" for i in range(8)))
 serverlog = (OUT / "xvfb.log").open("w")
 serverenv = env.copy()
 serverenv.update(LD_PRELOAD=str(OUT / "xvfb_local_paths.so"), NXUI_XKB_BINDIR=str(OUT / "deps/usr/bin"))
@@ -38,15 +42,17 @@ try:
     records = []
     for name, prefix, runenv in [("host", [str(OUT / "nxui")], env), ("arm", ["qemu-arm-static", "-L", str(RF), str(OUT / "nxui.arm")], armenv)]:
         if os.environ.get("NXUI_VERIFY_TARGET") and name != os.environ["NXUI_VERIFY_TARGET"]: continue
-        for mode in ("filmlab", "menu"):
+        for mode in ("filmlab", "lut", "menu"):
             shot = OUT / f"{name}-{mode}.ppm"
-            args = prefix + ["--root", str(REPO / "scripts"), "--recipes", str(recipes), "--snapshot", str(shot)]
+            table = looks if mode == "lut" else recipes
+            args = prefix + ["--root", str(REPO / "scripts"), "--recipes", str(table), "--snapshot", str(shot)]
+            if mode == "lut": args += ["--lut"]
             if mode == "menu": args += ["--menu", "gui_ini.NX500"]
             result = subprocess.run(args, env=runenv, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=20)
             (OUT / f"{name}-{mode}.log").write_bytes(result.stdout)
             if result.returncode: raise RuntimeError(result.stdout.decode(errors="replace"))
             header, shape, depth, pixels = shot.read_bytes().split(b"\n", 3)
-            assert header == b"P6" and shape == (b"720 192" if mode == "filmlab" else b"720 336")
+            assert header == b"P6" and shape == (b"720 336" if mode == "menu" else b"720 208")
             assert len(set(pixels)) > 12, f"Empty render: {name}/{mode}"
             records.append({"target": name, "mode": mode, "shape": shape.decode(), "result": "PASS"})
         # Idle verification: elapsed time must not cause a continuous redraw loop.
@@ -60,6 +66,8 @@ try:
         records.append({"target": name, "mode": "idle", "renders_in_1500ms": rendered, "result": "PASS"})
         run_interaction(prefix, runenv, name)
         records.append({"target": name, "mode": "interaction", "result": "PASS"})
+        run_lut_interaction(prefix, runenv, name)
+        records.append({"target": name, "mode": "lut-interaction", "result": "PASS"})
         run_service_interaction(prefix, runenv, name)
         records.append({"target": name, "mode": "service-interaction", "result": "PASS"})
         perf = run_performance(prefix, runenv, name)

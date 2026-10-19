@@ -22,6 +22,7 @@
 #   sh filmlab-apply.sh preset                 把 preset 段写进 3 个可见槽
 #   sh filmlab-apply.sh slots                  列出槽位占用
 #   sh filmlab-apply.sh mkgui                  ★ 从 SD 卡配方库生成 mod_gui 菜单页
+#   sh filmlab-apply.sh neutral                面板「还原」：直推中性值（不写槽、不落盘）
 #=====================================================================
 # ★ mod_gui 集成（2026-10-04 定案）
 #   mod_gui 菜单格式 = 纯文本 `button|标签|命令`，`@` 前缀开子菜单，
@@ -597,6 +598,32 @@ show)
   echo "  R=$(jval $REC R_COLOR)  G=$(jval $REC G_COLOR)  B=$(jval $REC B_COLOR)"
   echo "  HUE=$(jval $REC HUE)  SAT=$(jval $REC SATURATION)  SHARP=$(jval $REC SHARPNESS)  CONTRAST=$(jval $REC CONTRAST)"
   echo "  K=$(jval $REC K)  tintA=$(jval $REC tint_a)  tintB=$(jval $REC tint_b)"
+  ;;
+
+#---------------------------------------------------------------
+# 面板「还原」：中性值（R/G/B=100，HUE/SAT/SHARP/CON=0）直推给 ISP。
+#
+# 与 preview 同语义 —— 只改运行时，不写槽、不落盘。所以：
+#   · 立刻生效，画面回中性；
+#   · 相机切档或重启就回原厂/配方值，"还原"不是持久设置；
+#   · 面板随后的"保存并关闭"仍会 apply 当前选中的配方（这是有意的：
+#     还原是临时态，不是把配方改成中性）。
+# 要做到"切档也保持中性"必须写用户正在用的档位槽，那会破坏真实风格，
+# 与 apply 的 UI 快路径（固定 slot 9）同一个理由，所以不做。
+# ★ 不叫 reset：`reset` 已是「14 个槽全部恢复出厂并逐槽核对」的重量级维护
+#   命令（见下方 reset 分支），两者语义差得远，不能共用一个词。
+neutral)
+  if [ "$FILMLAB_PW" != 1 ] || [ ! -x "$PWSEND" ]; then
+    echo "REJECT: neutral requires FILMLAB_PW=1, pwsend.arm and verified A2 firmware"
+    exit 1
+  fi
+  if pw_direct 100 100 100 0 0 0 0 --yes; then
+    log "$(date '+%H:%M:%S') neutral -> 100/100/100 0/0/0/0"
+    echo "✓ neutral (100/100/100 0/0/0/0)"
+    exit 0
+  fi
+  echo "REJECT: PW backend failed"
+  exit 1
   ;;
 
 #---------------------------------------------------------------

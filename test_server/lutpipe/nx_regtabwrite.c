@@ -14,11 +14,16 @@
  * Modes:
  *   status  read-only: registry words + the five EP 3DLUT registers
  *   probe   write the current value back (no-op) and verify it stayed
- *   patch   View4[3]: 0x81115200 (A17) -> 0x81119F00 (A18, nearly identical
- *           table: 4.1% of bytes differ, max delta 8 -- visually invisible)
+ *   patch   View4[3]: -> <slot>, default A18 (0x81119F00)
  *   patch12 View4[3]: -> 0x810FD100 (A12 standard: 70% of bytes differ,
  *           max delta 97 -- this is the one that should be visible)
  *   restore View4[3]: -> 0x81115200 (A17)
+ *
+ * <slot> is optional and must be one of A17/A18/A19. A19 (0x8111EC00) was
+ * added for the two-slot rotation: alternating the target on every switch
+ * makes the registry word change every time, so P7 cannot mistake a content
+ * swap for "same source as before", and the slot being written is never the
+ * one the registry currently points at.
  *
  * No ioctl, no private d5 device, no firmware change, no persistence:
  * a power cycle restores the image copy of this page.
@@ -39,6 +44,7 @@
 #define REG_SIZE    0x1000u
 #define VAL_A17     0x81115200u
 #define VAL_A18     0x81119F00u
+#define VAL_A19     0x8111EC00u
 #define VAL_A12     0x810FD100u
 
 static unsigned char snap[TAB_SIZE];
@@ -137,9 +143,9 @@ static int save_file(const char *path, const unsigned char *src, unsigned n)
     return rc;
 }
 
-/* Only these three slot addresses may ever appear in View4[3] under our hand. */
+/* Only these four slot addresses may ever appear in View4[3] under our hand. */
 static int known_slot(unsigned int v)
-{ return v == VAL_A17 || v == VAL_A18 || v == VAL_A12; }
+{ return v == VAL_A17 || v == VAL_A18 || v == VAL_A19 || v == VAL_A12; }
 
 /* Count bytes changed outside the target region (must stay zero), and
  * report how many bytes inside it actually differ. A word rewrite can change
@@ -211,7 +217,7 @@ static void show_registers(void)
     sc3(__NR_close, fd, 0, 0);
 }
 
-static int do_write(const char *mode)
+static int do_write(const char *mode, unsigned int slot)
 {
     void *base = 0;
     int fd = 0, rc = 1;
@@ -221,7 +227,7 @@ static int do_write(const char *mode)
     unsigned i;
 
     if (equal(mode, "probe"))        { expect = 0xFFFFFFFFu; target = 0xFFFFFFFFu; }
-    else if (equal(mode, "patch"))   { expect = 0xFFFFFFFFu; target = VAL_A18; }
+    else if (equal(mode, "patch"))   { expect = 0xFFFFFFFFu; target = slot; }
     else if (equal(mode, "patch12")) { expect = 0xFFFFFFFFu; target = VAL_A12; }
     else if (equal(mode, "restore")) { expect = 0xFFFFFFFFu; target = VAL_A17; }
     else { say("unknown mode\n"); return 1; }
@@ -284,7 +290,7 @@ out:
  * logic at 0x80382B30. Pointing all six at one slot makes any Still branch
  * read the same table, so a single capture answers "does Still consume it".
  * The six original words are backed up before any write. */
-static int do_still(const char *mode)
+static int do_still(const char *mode, unsigned int slot)
 {
     void *base = 0;
     int fd = 0, rc = 1;
@@ -311,8 +317,8 @@ static int do_still(const char *mode)
         if (save_file(STILL_BAK, (const unsigned char *)before, sizeof before) < 0) goto out;
         say("BACKUP written\n");
         }
-        for (i = 0; i < STILL_N; ++i) tab[(STILL_AT >> 2) + i] = VAL_A18;
-        for (i = 0; i < STILL_N; ++i) vals[i] = VAL_A18;
+        for (i = 0; i < STILL_N; ++i) tab[(STILL_AT >> 2) + i] = slot;
+        for (i = 0; i < STILL_N; ++i) vals[i] = slot;
     } else {
         if (read_file(STILL_BAK, (unsigned char *)vals, sizeof vals) < 0) goto out;
         for (i = 0; i < STILL_N; ++i) tab[(STILL_AT >> 2) + i] = vals[i];
@@ -398,11 +404,20 @@ int nx_main(unsigned *initial_stack)
 {
     unsigned argc = initial_stack[0];
     char **argv = (char **)(initial_stack + 1);
+    unsigned int slot = VAL_A18;   /* A18 unless the caller names A17/A19 */
 
     say("=== regtabwrite (single word, View4[3] only) ===\n");
     if (argc < 2) {
         say("usage: nx_regtabwrite.arm status|probe|patch|patch12|restore\n");
+        say("       nx_regtabwrite.arm patch|still-set|still-write <hexslot>\n");
         return 1;
+    }
+    if (argc >= 3) {
+        slot = parse_hex(argv[2]);
+        if (!known_slot(slot)) {
+            say("REFUSE: target slot is not A17/A18/A19\n");
+            return 1;
+        }
     }
     if (equal(argv[1], "status")) {
         void *base = 0; int fd = 0;
@@ -425,12 +440,12 @@ int nx_main(unsigned *initial_stack)
     }
     if (equal(argv[1], "still-status") || equal(argv[1], "still-set")
         || equal(argv[1], "still-write") || equal(argv[1], "still-restore")) {
-        int rc = do_still(argv[1]);
+        int rc = do_still(argv[1], slot);
         say(rc == 0 ? "=== done ===\n" : "=== FAILED ===\n");
         return rc;
     }
     {
-        int rc = do_write(argv[1]);
+        int rc = do_write(argv[1], slot);
         show_registers();
         say(rc == 0 ? "=== done ===\n" : "=== FAILED ===\n");
         return rc;
