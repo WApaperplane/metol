@@ -64,10 +64,11 @@ The camera menu also has `IP: x.x.x.x [Telnet关]` (tap to toggle 23/21), `远�
 | Item | Status |
 | --- | --- |
 | Table format | `4913×4B {R,G,B,pad}`, index `((B*17+G)*17+R)*4`, slot 19,712 B, stride `0x4D00` |
-| Retarget | Edit one **4-byte** registry entry (`View4[3]` / `Still6`) + write 19,712 B into a work slot (A18 `0x81119F00` / A19 `0x8111EC00`, **alternating on every switch**) + **half-press once** |
+| Retarget | Write 19,712 B into the work slot (A18 `0x81119F00`) + point **all four** registry tables at it + **half-press once** |
+| Registry tables | `View4` (4 entries, colour space × screen colour) + `Still6` (6) + `BV12` (12) — **none may be skipped**, or you get "viewfinder filtered, photo not" |
 | Import | `.cube → 19,712 B slot table` via on-camera `cube2lut.arm`, or host-side `test_server/isp/nx3dlut.py` |
-| Live view / stills | Two independent, separately retargetable chains: `View4` affects the viewfinder only, `Still6` affects stills only |
-| Limits | Pure memory operations — **power cycle restores stock** (boot-persistent needs an image patch) |
+| Live view / stills | Live view reads only `View4`; stills have **two mutually exclusive branches** (screen colour on → `BV12`, off → `Still6`) and both must be retargeted |
+| Limits | Pure memory operations — **power cycle restores stock** (boot-persistent needs an image patch). Colour is trustworthy in sRGB; AdobeRGB only guarantees "it applies" |
 | No-go | ⛔ Writing `+0x00C` yourself and pulsing the config register makes the ISP read out-of-sequence addresses ⇒ **severe colour corruption**. The only safe reload is **half-press** |
 
 ```sh
@@ -100,7 +101,24 @@ Details: [`docs/current/LUT_RETARGET_LIVE_2026-10-18.md`](docs/current/LUT_RETAR
 > Old conclusions in historical docs (e.g. "View/Still cannot be separated", "user space cannot write LUT data") have been overturned — see
 > [`ERROR_CORRECTIONS_2026-10-07.md`](docs/current/ERROR_CORRECTIONS_2026-10-07.md).
 
-## Known ceilings
+## Boundaries
+
+Stated plainly — every row below maps to an on-camera or static verification, not to "should work".
+
+| Dimension | ✅ Works | ❌ Does not / unverified |
+|---|---|---|
+| Platform | NX500 firmware **1.12** (everything verified on device) | NX1 1.41 installs, but LUT / FilmLab are **not verified on NX1**; other firmware versions are rejected by the installer |
+| Colour | Colour is trustworthy in **sRGB** for both live view and JPEG (baseline of the 45 bundled tables) | **AdobeRGB applies but is not colour-calibrated** (tables are built in sRGB coordinates); the camera's Smart Filter enum 14–18 takes a separate 24-slot dynamic path that this mod does not cover |
+| Carrier | **JPEG stills + viewfinder** | **RAW (`.SRW`) is not promised to be baked**; video is out of scope |
+| Taking effect | Memory write takes effect immediately (half-press once to load) | **No boot persistence** — a power cycle restores stock; that needs a firmware image patch |
+| Trigger | **Half-press** is the only reliable reload | No software trigger found for making p7 re-read the table (`st cap iq af afsta/afsto` is a no-op) |
+| Shape | No reflash, no partition writes, fully reversible | Requires the NX-KS2 base mod (`/opt/usr/nx-ks/`) — this project extends it |
+
+> It is **not** a colour-management system (no input/output profile conversion), **not** a WYSIWYG promise
+> (live view and stills run different pipelines), and **not** a jailbreak (no region unlock, no recording-limit bypass).
+> What it edits is one 3D lookup table inside the ISP.
+
+## Known ceilings (p7 / firmware level, not script bugs)
 
 - **The full 7-dimension one-tap needs the A2 firmware**; on stock firmware values outside the normaliser domain are rejected.
 - **p7 has no UI** (Font/DrawText/Dialog/Widget all zero hits) ⇒ the UI can only live on the Linux side.
