@@ -5,7 +5,8 @@
 #=====================================================================
 # 设计（2026-10-18 实机定案）：
 #   · 表放 A18（0x81119F00，A17 的邻居槽），原地写入，重启即复原
-#   · View4[3] 与 Still6[6] 同时指向 A18 ⇒ 取景器与成片都生效
+#   · View4[1]/[3] + Still6[6] + BV12[12] 全部指向 A18 ⇒ 取景器与成片都生效
+#     （Still 有两条互斥分支，见 apply 段注释；两条都要改）
 #   · 与 filmlab 互不干扰：filmlab 走 PW 7 维标量（档位池 0xdc..0xe2），
 #     本脚本走 3D LUT 槽 + 登记表；两者可叠加
 #   · begin 备份、off 还原；apply 不覆盖首次备份
@@ -25,7 +26,9 @@ TD=$D/lut                       # 工具目录（随包安装：scripts/lut -> /
 LAB=/mnt/mmc/looks              # 滤镜库：*.cube / *.bin
 ST=/mnt/mmc/lut/state           # 备份与状态（放 SD，随卡走）
 SLOT=0x81119F00                 # A18
-STILLBAK=/mnt/mmc/nxwa_regtab_20261018/still6_orig.bin
+BAKDIR=/mnt/mmc/nxwa_regtab_20261018   # 原厂登记表备份（Still6 / BV12）
+STILLBAK=$BAKDIR/still6_orig.bin
+BVBAK=$BAKDIR/bv12_orig.bin
 
 # 工具查找：优先随包安装的 $TD，其次手工部署的 /mnt/mmc/lut
 pick_tool() {
@@ -116,12 +119,23 @@ apply)
     if [ -n "$REGT1" ]; then
         "$REGT1" patch1 "$SLOT" > "$ST/view1.log" 2>&1 || { cat "$ST/view1.log"; die "view4[1] write failed"; }
     fi
+    # Still（成片）有两条互斥的选表分支（p7 0x80382B30）：
+    #   +0x21 == 1（屏幕色彩开启）→ BV12 十二项
+    #   否则                        → Still6 六项
+    # 只改 Still6 会出现「取景有滤镜、照片没有」，所以两条都指向工作槽。
+    $BB mkdir -p "$BAKDIR" || die "cannot create $BAKDIR"
     if [ -f "$STILLBAK" ]; then
-        "$REGT" still-write > "$ST/still.log" 2>&1
+        "$REGT" still-write "$SLOT" > "$ST/still.log" 2>&1
     else
-        "$REGT" still-set  > "$ST/still.log" 2>&1
+        "$REGT" still-set  "$SLOT" > "$ST/still.log" 2>&1
     fi
-    $BB grep -q 'READBACK ok' "$ST/still.log" || { cat "$ST/still.log"; die "still registry write failed"; }
+    $BB grep -q 'READBACK ok' "$ST/still.log" || { cat "$ST/still.log"; die "still6 registry write failed"; }
+    if [ -f "$BVBAK" ]; then
+        "$REGT" bv-write "$SLOT" > "$ST/bv.log" 2>&1
+    else
+        "$REGT" bv-set  "$SLOT" > "$ST/bv.log" 2>&1
+    fi
+    $BB grep -q 'READBACK ok' "$ST/bv.log" || { cat "$ST/bv.log"; die "bv12 registry write failed (stale nx_regtabwrite.arm?)"; }
 
     # ★ 不自动触发硬件 Load。
     #   从 ARM 侧裸写 +0x00c + 脉冲会让 ISP 读到它"口袋体系"外的地址组合，
@@ -148,6 +162,9 @@ off)
     if [ -f "$STILLBAK" ]; then
         "$REGT" still-restore > "$ST/off-still.log" 2>&1 || rc=1
     fi
+    if [ -f "$BVBAK" ]; then
+        "$REGT" bv-restore > "$ST/off-bv.log" 2>&1 || rc=1
+    fi
     "$SLOTW" restore "$SLOT" "$ST/a18_orig.bin" > "$ST/off-slot.log" 2>&1 || rc=1
     if [ $rc -ne 0 ]; then
         echo "ERR restore incomplete; see $ST/off-*.log"
@@ -157,7 +174,7 @@ off)
     #   登记表已回原厂，下一次 p7 自己的 Load（半按/切档/拍照）就会取到原厂表。
     #   若此刻画面仍停在上一张表上，半按一次即可。
     $BB rm -f "$ST/ready" "$ST/current" "$ST/keep"
-    echo "OK restored (view=A17, still=original, A18=original)"
+    echo "OK restored (view=A17, still=BV12+Still6 original, A18=original)"
     ;;
 
 status)
@@ -168,7 +185,7 @@ status)
         echo "IDLE"
     fi
     echo "BACKUP $([ -f "$ST/a18_orig.bin" ] && echo present || echo absent)"
-    "$REGT" status 2>/dev/null | $BB sed -n '2,3p'
+    "$REGT" status 2>/dev/null | $BB sed -n '2,4p'
     ;;
 
 *)

@@ -65,19 +65,33 @@ class RegistryWriterGuards(unittest.TestCase):
 
     def test_view_path_writes_exactly_one_word(self):
         body = text()
-        self.assertEqual(body.count("tab[VIEW3_OFF >> 2] = target;"), 1,
+        self.assertEqual(body.count("tab[off >> 2] = target;"), 1,
                          "the View path must write a single word")
-        # The Still path may only write through its loop index.
+        # Registry tables may only be written through their loop index.
         self.assertNotIn("tab[(STILL_AT >> 2)] = ", body)
+        self.assertNotIn("tab[(BV_AT >> 2)] = ", body)
 
     def test_refuses_unexpected_current_value(self):
         body = text()
         self.assertIn("REFUSE", body)
         self.assertIn("before != expect", body)
 
+    def test_bv12_offset_and_entries(self):
+        """BV12 is the other Still branch: 0x80382B00, twelve entries."""
+        self.assertEqual(define("TAB_ADDR") + define("BV_AT"), 0x80382B00)
+        self.assertEqual(define("BV_N"), 12)
+        offset = define("TAB_ADDR") + define("BV_AT") - 0x80000000
+        words = [int.from_bytes(self.image[offset + 4 * i:offset + 4 * i + 4], "little")
+                 for i in range(12)]
+        self.assertEqual(words[0], 0x8116C000)
+        self.assertEqual(words[5], 0x810FD100)
+        self.assertEqual(words[7], 0x81101E00)
+        self.assertEqual(words[11], 0x8117F400)
+
     def test_all_modes_present(self):
         body = text()
-        for mode in ('"status"', '"probe"', '"patch"', '"patch12"', '"restore"', '"still-set"', '"still-restore"'):
+        for mode in ('"status"', '"probe"', '"patch"', '"patch12"', '"restore"',
+                     '"still-"', '"bv-"', '"set"', '"write"', '"restore"'):
             self.assertIn(mode, body)
 
     def test_restore_is_the_exact_inverse_of_patch(self):
@@ -85,13 +99,21 @@ class RegistryWriterGuards(unittest.TestCase):
         self.assertIn('{ expect = 0xFFFFFFFFu; target = slot; }', body)
         self.assertIn('{ expect = 0xFFFFFFFFu; target = VAL_A17; }', body)
 
+    def test_both_still_tables_share_one_writer(self):
+        """Still6 and BV12 must go through the same guarded loop, so neither can
+        drift into a hardcoded slot or a hand-rolled offset."""
+        body = text()
+        self.assertIn("tab[(off >> 2) + i] = slot;", body)
+        self.assertNotIn("tab[(STILL_AT >> 2) + i] = slot;", body)
+        self.assertNotIn("tab[(BV_AT >> 2) + i] = slot;", body)
+        self.assertIn("do_table(action, STILL_AT, STILL_N, STILL_BAK", body)
+        self.assertIn("do_table(action, BV_AT, BV_N, BV_BAK", body)
+
     def test_still_path_uses_the_requested_slot(self):
         """Both registry paths must honour the caller's slot, not hardcode A18."""
         body = text()
-        self.assertIn("tab[(STILL_AT >> 2) + i] = slot;", body)
-        self.assertNotIn("tab[(STILL_AT >> 2) + i] = VAL_A18;", body)
+        self.assertNotIn("= VAL_A18;", body.replace("slot = VAL_A18;", ""))
         self.assertIn("do_write(argv[1], slot)", body)
-        self.assertIn("do_still(argv[1], slot)", body)
 
     def test_window_delta_verified(self):
         self.assertIn("window_delta", text())
@@ -101,9 +123,12 @@ class RegistryWriterGuards(unittest.TestCase):
         self.assertNotIn("mmcblk", body)
         # "No ioctl" appears in the header comment; only a call would matter.
         self.assertNotIn("ioctl(", body)
-        # The only SD path allowed is the Still6 backup file.
+        # The only SD paths allowed are the two registry backups, same directory.
         paths = set(re.findall(r'"(/mnt/mmc[^"]*)"', body))
-        self.assertEqual(paths, {"/mnt/mmc/nxwa_regtab_20261018/still6_orig.bin"})
+        self.assertEqual(paths, {
+            "/mnt/mmc/nxwa_regtab_20261018/still6_orig.bin",
+            "/mnt/mmc/nxwa_regtab_20261018/bv12_orig.bin",
+        })
 
 
 if __name__ == "__main__":

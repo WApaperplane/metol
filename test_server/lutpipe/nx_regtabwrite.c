@@ -41,6 +41,14 @@
 #define STILL_AT    0x2C5Cu
 #define STILL_N     6u
 #define STILL_BAK   "/mnt/mmc/nxwa_regtab_20261018/still6_orig.bin"
+/* Still (JPEG) has TWO mutually exclusive registry branches in 0x80382B30:
+ *   +0x21 (the "screen colour / OLED" bit) == 1 -> BV12  (this table, 12 entries)
+ *   otherwise                                   -> Still6 (6 entries, above)
+ * Retargeting only Still6 leaves Still on the factory table whenever OLED is
+ * on, which shows up as "viewfinder filtered, photo not filtered". */
+#define BV_AT       0x2B00u
+#define BV_N        12u
+#define BV_BAK      "/mnt/mmc/nxwa_regtab_20261018/bv12_orig.bin"
 #define REG_ADDR    0x2082B000u
 #define REG_SIZE    0x1000u
 #define VAL_A17     0x81115200u
@@ -290,54 +298,60 @@ out:
     return rc;
 }
 
-/* Still6 holds six independent entry points used by the Still (JPEG) select
- * logic at 0x80382B30. Pointing all six at one slot makes any Still branch
- * read the same table, so a single capture answers "does Still consume it".
- * The six original words are backed up before any write. */
-static int do_still(const char *mode, unsigned int slot)
+/* A registry table is a run of u32 slot addresses. TWO of them feed Still:
+ * Still6 (6 entries) and BV12 (12 entries), selected in 0x80382B30 by the
+ * +0x21 "screen colour" bit. Pointing every entry of a table at one slot
+ * makes any branch of that table read the same content, so one capture
+ * answers "does Still consume it" without guessing which index is live.
+ * The original words are backed up before the first write. */
+static void cat(char *dst, const char *a, const char *b)
+{ while (*a) *dst++ = *a++; while (*b) *dst++ = *b++; *dst = 0; }
+
+static int do_table(const char *action, unsigned off, unsigned n,
+                    const char *bak, const char *name, unsigned int slot)
 {
     void *base = 0;
     int fd = 0, rc = 1;
     volatile unsigned int *tab;
     volatile unsigned char *live;
-    unsigned int vals[STILL_N], before[STILL_N];
+    unsigned int vals[BV_N], before[BV_N];
     unsigned i, inside = 0, stray;
-    int writing = equal(mode, "still-set") || equal(mode, "still-write");
-    int backup = equal(mode, "still-set");
-    /* Only still-status is read-only; every other still mode writes. */
-    int readonly = equal(mode, "still-status");
+    int writing = equal(action, "set") || equal(action, "write");
+    int backup = equal(action, "set");
+    int readonly = equal(action, "status");
+    char lab[48];
 
     if (map(&base, TAB_ADDR, TAB_SIZE, readonly ? 0 : 1, &fd) < 0) return 1;
     tab = (volatile unsigned int *)base;
     live = (volatile unsigned char *)base;
     for (i = 0; i < TAB_SIZE; ++i) snap[i] = live[i];
-    for (i = 0; i < STILL_N; ++i) before[i] = tab[(STILL_AT >> 2) + i];
+    for (i = 0; i < n; ++i) before[i] = tab[(off >> 2) + i];
 
-    line_registry("STILL6 before", tab + (STILL_AT >> 2), STILL_N);
-    if (equal(mode, "still-status")) { rc = 0; goto out; }
+    cat(lab, name, " before"); line_registry(lab, tab + (off >> 2), n);
+    if (readonly) { rc = 0; goto out; }
 
     if (writing) {
         if (backup) {
-        if (save_file(STILL_BAK, (const unsigned char *)before, sizeof before) < 0) goto out;
-        say("BACKUP written\n");
+            if (save_file(bak, (const unsigned char *)before, n * 4) < 0) goto out;
+            say("BACKUP written\n");
         }
-        for (i = 0; i < STILL_N; ++i) tab[(STILL_AT >> 2) + i] = slot;
-        for (i = 0; i < STILL_N; ++i) vals[i] = slot;
+        for (i = 0; i < n; ++i) tab[(off >> 2) + i] = slot;
+        for (i = 0; i < n; ++i) vals[i] = slot;
     } else {
-        if (read_file(STILL_BAK, (unsigned char *)vals, sizeof vals) < 0) goto out;
-        for (i = 0; i < STILL_N; ++i) tab[(STILL_AT >> 2) + i] = vals[i];
+        if (read_file(bak, (unsigned char *)vals, n * 4) < 0) goto out;
+        for (i = 0; i < n; ++i) tab[(off >> 2) + i] = vals[i];
     }
     barrier();
-    line_registry("STILL6 after ", tab + (STILL_AT >> 2), STILL_N);
+    cat(lab, name, " after "); line_registry(lab, tab + (off >> 2), n);
 
-    for (i = 0; i < STILL_N; ++i) {
-        if (tab[(STILL_AT >> 2) + i] != vals[i]) { say("FAIL readback mismatch\n"); goto out; }
+    for (i = 0; i < n; ++i) {
+        if (tab[(off >> 2) + i] != vals[i]) { say("FAIL readback mismatch\n"); goto out; }
     }
     say("READBACK ok\n");
 
-    stray = window_delta(live, STILL_AT, STILL_N * 4, &inside);
-    putu("STILL6 bytes changed = ", inside);
-    putu("stray deltas outside Still6 = ", stray);
+    stray = window_delta(live, off, n * 4, &inside);
+    cat(lab, name, " bytes changed = "); putu(lab, inside);
+    putu("stray deltas outside table = ", stray);
     if (stray != 0) { say("FAIL collateral change in window\n"); goto out; }
     rc = 0;
 
@@ -345,6 +359,27 @@ out:
     sc3(__NR_munmap, (int)base, (int)TAB_SIZE, 0);
     sc3(__NR_close, fd, 0, 0);
     return rc;
+}
+
+static int do_still(const char *action, unsigned int slot)
+{ return do_table(action, STILL_AT, STILL_N, STILL_BAK, "STILL6", slot); }
+
+static int do_bv(const char *action, unsigned int slot)
+{ return do_table(action, BV_AT, BV_N, BV_BAK, "BV12", slot); }
+
+/* "still-set" / "bv-restore" ... -> action after the dash, plus which table. */
+static int prefix(const char *s, const char *p)
+{ while (*p) { if (*s++ != *p++) return 0; } return 1; }
+
+static int table_mode(const char *cmd, unsigned int slot)
+{
+    const char *p = cmd;
+    while (*p && *p != '-') ++p;
+    if (*p != '-') { say("unknown mode\n"); return 1; }
+    if (prefix(cmd, "still-")) return do_still(p + 1, slot);
+    if (prefix(cmd, "bv-"))    return do_bv(p + 1, slot);
+    say("unknown mode\n");
+    return 1;
 }
 
 /* Force one hardware reload from <addr>, using the same store order P7 emits
@@ -410,12 +445,14 @@ int nx_main(unsigned *initial_stack)
     char **argv = (char **)(initial_stack + 1);
     unsigned int slot = VAL_A18;   /* A18 unless the caller names A17/A19 */
 
-    say("=== regtabwrite (single word, View4[3] only) ===\n");
+    say("=== regtabwrite (registry entries, two Still tables) ===\n");
     if (argc < 2) {
         say("usage: nx_regtabwrite.arm status|probe|patch|patch1|patch12|restore\n");
         say("       patch  -> View4[3] (0x803837FC)\n");
         say("       patch1 -> View4[1] (0x803837F4), the entry P7 loads today\n");
-        say("       nx_regtabwrite.arm patch|patch1|still-set|still-write <hexslot>\n");
+        say("       still-status|still-set|still-write|still-restore <hexslot>\n");
+        say("       bv-status|bv-set|bv-write|bv-restore <hexslot>\n");
+        say("       still-* = Still6 (6 entries), bv-* = BV12 (12 entries)\n");
         return 1;
     }
     if (argc >= 3) {
@@ -430,6 +467,7 @@ int nx_main(unsigned *initial_stack)
         if (map(&base, TAB_ADDR, TAB_SIZE, 0, &fd) < 0) return 1;
         line_registry("VIEW4 ", (volatile unsigned int *)base + (VIEW_AT >> 2), 4);
         line_registry("STILL6", (volatile unsigned int *)base + (STILL_AT >> 2), STILL_N);
+        line_registry("BV12  ", (volatile unsigned int *)base + (BV_AT >> 2), BV_N);
         sc3(__NR_munmap, (int)base, (int)TAB_SIZE, 0);
         sc3(__NR_close, fd, 0, 0);
         show_registers();
@@ -444,9 +482,8 @@ int nx_main(unsigned *initial_stack)
         say(rc == 0 ? "=== done ===\n" : "=== FAILED ===\n");
         return rc;
     }
-    if (equal(argv[1], "still-status") || equal(argv[1], "still-set")
-        || equal(argv[1], "still-write") || equal(argv[1], "still-restore")) {
-        int rc = do_still(argv[1], slot);
+    if (prefix(argv[1], "still-") || prefix(argv[1], "bv-")) {
+        int rc = table_mode(argv[1], slot);
         say(rc == 0 ? "=== done ===\n" : "=== FAILED ===\n");
         return rc;
     }
