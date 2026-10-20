@@ -76,6 +76,20 @@ class RegistryWriterGuards(unittest.TestCase):
         self.assertIn("REFUSE", body)
         self.assertIn("before != expect", body)
 
+    def test_view4_four_offsets(self):
+        """All four View4 entries must be addressable: colour space x screen colour."""
+        self.assertEqual(define("VIEW0_OFF"), define("VIEW_AT"))
+        for i, name in enumerate(("VIEW1_OFF", "VIEW2_OFF", "VIEW3_OFF"), start=1):
+            self.assertEqual(define(name), define("VIEW_AT") + 4 * i, name)
+        self.assertEqual(define("TAB_ADDR") + define("VIEW0_OFF"), 0x803837F0)
+        self.assertEqual(define("TAB_ADDR") + define("VIEW2_OFF"), 0x803837F8)
+
+    def test_view_all_writes_the_whole_table(self):
+        body = text()
+        self.assertIn('equal(action, "set") ? slot : view_factory[i]', body)
+        self.assertIn("do_view_all(argv[1] + 5, slot)", body)
+        self.assertIn("{ VAL_A12, VAL_A13, VAL_A14, VAL_A17 }", body)
+
     def test_bv12_offset_and_entries(self):
         """BV12 is the other Still branch: 0x80382B00, twelve entries."""
         self.assertEqual(define("TAB_ADDR") + define("BV_AT"), 0x80382B00)

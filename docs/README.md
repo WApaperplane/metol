@@ -32,6 +32,7 @@ docs/
 
 | 文档 | 定位 |
 |---|---|
+| [`ADOBERGB_VIEW_PATH_2026-10-20.md`](current/ADOBERGB_VIEW_PATH_2026-10-20.md) | ★★★★ **AdobeRGB 取景不生效**：View4 四项与「色彩空间 × 屏幕色彩」的映射；`view-set` 一次写全四项；含「生效 ≠ 颜色正确」的边界 |
 | [`STILL_PATH_AUDIT_2026-10-20.md`](current/STILL_PATH_AUDIT_2026-10-20.md) | ★★★★★ **成片无 LUT 的根因**：Still 有 Still6/BV12 两条互斥分支，屏幕色彩开启走 BV12；v8 只改了 Still6。含 `still_probe.sh` 只读判别与修复 |
 | [`LUT_SWITCH_REFRESH_FIX_2026-10-19.md`](current/LUT_SWITCH_REFRESH_FIX_2026-10-19.md) | ★★★★★ **切换修复最新入口**：OLED/sRGB 选表已证；双登记项 + 正常事件重载；连续切换、off 恢复实机通过并已安装 |
 | [`LUT_CRCBY_FIX_2026-10-19.md`](current/LUT_CRCBY_FIX_2026-10-19.md) | ★★★★★ **导入偏色修复**：实机确认 Cr/Cb/Y；HP5、Fuji400H 目视通过；机身转换器更新及 36 张可追溯表重建 |

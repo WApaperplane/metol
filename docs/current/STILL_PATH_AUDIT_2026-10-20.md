@@ -121,7 +121,7 @@ md5sum /mnt/mmc/lut/nx_regtabwrite.arm   # 期望 01e7362dc739eb960ff2b1e2376082
 2. `BV12` 的 `FUN_003829a4` 按 BV 档（`(100·S−8000)/16` + 阈值）选 index；全指后 index 无意义，但**未验**硬件是否对非原厂地址组合有额外约束。
 3. 备份目录 `/mnt/mmc/nxwa_regtab_20261018/` 若被清理，`bv-set` 会重新抓一份「当前值」当原厂 —— 与 Still6 原有局限相同，未变坏。
 4. 全部写入仍是 RAM-only，重启回镜像原厂。
-5. AdobeRGB（`+0x22 == 1`）分支同样读 BV12，本次一并覆盖；但 AdobeRGB 下 View 侧走 `View4[2]`/`[0]`，v8 未改，**AdobeRGB 的取景仍不生效**（未修，属另一项）。
+5. AdobeRGB（`+0x22 == 1`）分支同样读 BV12，本次一并覆盖；但 View 侧 AdobeRGB 走 `View4[2]`/`[0]`，v8 未改 —— **已单独处理**，见 [`ADOBERGB_VIEW_PATH_2026-10-20.md`](ADOBERGB_VIEW_PATH_2026-10-20.md)（`view-set` 一次写全四项）。
 6. **v8 遗留的失效测试**：`test_server/lutpipe/test_lut_sh_rotation.py` 11 项全红，`setUp` 仍在断言 v7 双槽脚本（`CAP=/usr/bin/st`、`active`/`a18`/`a19`、OLED 事件重载）。v8 已退回单槽，被测实现不存在 —— 与本次改动无关，需单独决定删除还是重写为单槽断言。
 
 ---

@@ -62,15 +62,23 @@ v18=$(count "$V" '81119f00')
 echo "VIEW4  -> A18 : $v18 / 4"
 echo "STILL6 -> A18 : $s18 / 6"
 echo "BV12   -> A18 : $b18 / 12"
+if [ "$v18" -eq 4 ]; then
+    echo "VIEW: 四项全指向工作槽 —— sRGB / AdobeRGB × 屏幕色彩 开/关 都会生效。"
+elif [ "$v18" -eq 2 ]; then
+    echo "VIEW: 只有两项被改 —— AdobeRGB（View4[0]/[2]）仍是原厂表，"
+    echo "      切到 AdobeRGB 后取景不会变。需 view-set（本版 lut.sh 才会写四项）。"
+else
+    echo "VIEW: $v18/4 —— 看 view.log。"
+fi
 if [ "$s18" -eq 6 ] && [ "$b18" -eq 12 ]; then
-    echo "RESULT: 两张 Still 表都指向工作槽 —— 登记表不是原因。"
+    echo "STILL: 两张 Still 表都指向工作槽 —— 登记表不是原因。"
     echo "        下一层：槽内容是否与 View 用的同一份表 / 拍照期是否重走选表。"
 elif [ "$s18" -eq 6 ]; then
-    echo "RESULT: 只有 Still6 被改，BV12 仍是原厂 ——"
+    echo "STILL: 只有 Still6 被改，BV12 仍是原厂 ——"
     echo "        屏幕色彩开启时 Still 走 BV12，成片必然无效果（v8 缺陷）。"
     echo "        修复：更新 lut.sh + nx_regtabwrite.arm，再 apply 一次。"
 elif [ "$s18" -eq 0 ]; then
-    echo "RESULT: Still6 也没落地 —— apply 的 still 段失败，看上面 still.log。"
+    echo "STILL: Still6 也没落地 —— apply 的 still 段失败，看上面 still.log。"
 else
-    echo "RESULT: 部分落地 —— 看 still.log 的 READBACK 与 stray 行。"
+    echo "STILL: 部分落地 —— 看 still.log 的 READBACK 与 stray 行。"
 fi

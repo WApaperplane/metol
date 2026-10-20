@@ -39,7 +39,6 @@ pick_tool() {
 }
 SLOTW=$(pick_tool nx_slotwrite.arm)
 REGT=$(pick_tool nx_regtabwrite.arm)
-REGT1=$(pick_tool nx_regtabwrite1.arm) || REGT1=
 CUBE=$(pick_tool cube2lut.arm)
 
 die() { echo "ERR $*"; exit 1; }
@@ -112,13 +111,12 @@ apply)
         || { cat "$ST/write.log"; die "slot write failed"; }
     $BB grep -q 'READBACK ok' "$ST/write.log" || { cat "$ST/write.log"; die "slot write not verified"; }
 
-    # 两条登记表都指向 A18；still 首次用 still-set（会备份），之后 still-write
-    "$REGT" patch > "$ST/view.log" 2>&1 || { cat "$ST/view.log"; die "view registry write failed"; }
-    # sRGB 下 OLED 开启时取景器读 View4[1]（原厂 A13），关闭时读 [3]。
-    # 本版只改 [3]，会漏掉开启状态，所以补写 [1]（工具缺失时跳过）。
-    if [ -n "$REGT1" ]; then
-        "$REGT1" patch1 "$SLOT" > "$ST/view1.log" 2>&1 || { cat "$ST/view1.log"; die "view4[1] write failed"; }
-    fi
+    # View4 四项一次写全（色彩空间 × 屏幕色彩 四种组合都会命中）：
+    #   [0] A12 AdobeRGB+开   [1] A13 sRGB+开
+    #   [2] A14 AdobeRGB+关   [3] A17 sRGB+关
+    # 只写 [1]/[3] 会让 AdobeRGB 下取景仍是原厂表。
+    "$REGT" view-set "$SLOT" > "$ST/view.log" 2>&1 || { cat "$ST/view.log"; die "view registry write failed (stale nx_regtabwrite.arm?)"; }
+    $BB grep -q 'READBACK ok' "$ST/view.log" || { cat "$ST/view.log"; die "view registry write not verified"; }
     # Still（成片）有两条互斥的选表分支（p7 0x80382B30）：
     #   +0x21 == 1（屏幕色彩开启）→ BV12 十二项
     #   否则                        → Still6 六项
@@ -155,10 +153,8 @@ off)
         exit 0
     fi
     rc=0
-    "$REGT" restore > "$ST/off-view.log" 2>&1 || rc=1
-    if [ -n "$REGT1" ]; then
-        "$REGT1" patch1 0x81101E00 > "$ST/off-view1.log" 2>&1 || rc=1
-    fi
+    # View4 四项写回原厂（[0]A12 [1]A13 [2]A14 [3]A17）
+    "$REGT" view-restore > "$ST/off-view.log" 2>&1 || rc=1
     if [ -f "$STILLBAK" ]; then
         "$REGT" still-restore > "$ST/off-still.log" 2>&1 || rc=1
     fi
@@ -174,7 +170,7 @@ off)
     #   登记表已回原厂，下一次 p7 自己的 Load（半按/切档/拍照）就会取到原厂表。
     #   若此刻画面仍停在上一张表上，半按一次即可。
     $BB rm -f "$ST/ready" "$ST/current" "$ST/keep"
-    echo "OK restored (view=A17, still=BV12+Still6 original, A18=original)"
+    echo "OK restored (view=4 factory, still=BV12+Still6 factory, A18=original)"
     ;;
 
 status)

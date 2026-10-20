@@ -36,8 +36,10 @@
 #define TAB_ADDR    0x80380000u
 #define TAB_SIZE    0x4000u
 #define VIEW_AT     0x37F0u
-#define VIEW1_OFF   0x37F4u   /* View4[1] -- the slot P7 actually loads today */
-#define VIEW3_OFF   0x37FCu
+#define VIEW0_OFF   0x37F0u   /* View4[0] -- AdobeRGB + screen colour on (A12) */
+#define VIEW1_OFF   0x37F4u   /* View4[1] -- sRGB + screen colour on (A13) */
+#define VIEW2_OFF   0x37F8u   /* View4[2] -- AdobeRGB + screen colour off (A14) */
+#define VIEW3_OFF   0x37FCu   /* View4[3] -- sRGB + screen colour off (A17) */
 #define STILL_AT    0x2C5Cu
 #define STILL_N     6u
 #define STILL_BAK   "/mnt/mmc/nxwa_regtab_20261018/still6_orig.bin"
@@ -56,6 +58,7 @@
 #define VAL_A19     0x8111EC00u
 #define VAL_A12     0x810FD100u
 #define VAL_A13     0x81101E00u
+#define VAL_A14     0x81106B00u
 
 static unsigned char snap[TAB_SIZE];
 
@@ -298,6 +301,57 @@ out:
     return rc;
 }
 
+/* View4 is one four-entry table for all output profiles: P7 picks the entry
+ * from the OrderSheet value (colour space + screen colour), so covering only
+ * [1]/[3] leaves AdobeRGB looking at the factory table.
+ *   [0] A12  AdobeRGB + screen colour on      [1] A13  sRGB + on
+ *   [2] A14  AdobeRGB + screen colour off     [3] A17  sRGB + off
+ * This writes or restores all four in one mapping, with the same "only the
+ * target region may change" check as the single-word path. Restoring writes
+ * the factory words unconditionally, so it is idempotent. */
+static const unsigned int view_factory[4] = { VAL_A12, VAL_A13, VAL_A14, VAL_A17 };
+
+static int do_view_all(const char *action, unsigned int slot)
+{
+    void *base = 0;
+    int fd = 0, rc = 1;
+    volatile unsigned int *tab;
+    volatile unsigned char *live;
+    unsigned int vals[4];
+    unsigned i, inside = 0, stray;
+    int readonly = equal(action, "status");
+
+    if (map(&base, TAB_ADDR, TAB_SIZE, readonly ? 0 : 1, &fd) < 0) return 1;
+    tab = (volatile unsigned int *)base;
+    live = (volatile unsigned char *)base;
+    for (i = 0; i < TAB_SIZE; ++i) snap[i] = live[i];
+    line_registry("VIEW4 before", tab + (VIEW0_OFF >> 2), 4);
+    if (readonly) { rc = 0; goto out; }
+
+    for (i = 0; i < 4; ++i) {
+        vals[i] = equal(action, "set") ? slot : view_factory[i];
+        tab[(VIEW0_OFF >> 2) + i] = vals[i];
+    }
+    barrier();
+    line_registry("VIEW4 after ", tab + (VIEW0_OFF >> 2), 4);
+
+    for (i = 0; i < 4; ++i) {
+        if (tab[(VIEW0_OFF >> 2) + i] != vals[i]) { say("FAIL readback mismatch\n"); goto out; }
+    }
+    say("READBACK ok\n");
+
+    stray = window_delta(live, VIEW0_OFF, 16, &inside);
+    putu("VIEW4 bytes changed = ", inside);
+    putu("stray deltas outside View4 = ", stray);
+    if (stray != 0) { say("FAIL collateral change in window\n"); goto out; }
+    rc = 0;
+
+out:
+    sc3(__NR_munmap, (int)base, (int)TAB_SIZE, 0);
+    sc3(__NR_close, fd, 0, 0);
+    return rc;
+}
+
 /* A registry table is a run of u32 slot addresses. TWO of them feed Still:
  * Still6 (6 entries) and BV12 (12 entries), selected in 0x80382B30 by the
  * +0x21 "screen colour" bit. Pointing every entry of a table at one slot
@@ -452,6 +506,7 @@ int nx_main(unsigned *initial_stack)
         say("       patch1 -> View4[1] (0x803837F4), the entry P7 loads today\n");
         say("       still-status|still-set|still-write|still-restore <hexslot>\n");
         say("       bv-status|bv-set|bv-write|bv-restore <hexslot>\n");
+        say("       view-set|view-restore|view-status [hexslot]  (all four View4)\n");
         say("       still-* = Still6 (6 entries), bv-* = BV12 (12 entries)\n");
         return 1;
     }
@@ -479,6 +534,11 @@ int nx_main(unsigned *initial_stack)
         if (argc < 3) { say("usage: nx_regtabwrite.arm reload <hexaddr>\n"); return 1; }
         rc = do_reload(parse_hex(argv[2]));
         show_registers();
+        say(rc == 0 ? "=== done ===\n" : "=== FAILED ===\n");
+        return rc;
+    }
+    if (prefix(argv[1], "view-")) {
+        int rc = do_view_all(argv[1] + 5, slot);
         say(rc == 0 ? "=== done ===\n" : "=== FAILED ===\n");
         return rc;
     }
