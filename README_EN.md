@@ -112,7 +112,7 @@ Stated plainly — every row below maps to an on-camera or static verification, 
 | Carrier | **JPEG stills + viewfinder** | **RAW (`.SRW`) is not promised to be baked**; video is out of scope |
 | Taking effect | Memory write takes effect immediately (half-press once to load) | **No boot persistence** — a power cycle restores stock; that needs a firmware image patch |
 | Trigger | **Half-press** is the only reliable reload | No software trigger found for making p7 re-read the table (`st cap iq af afsta/afsto` is a no-op) |
-| Shape | No reflash, no partition writes, fully reversible | Requires the NX-KS2 base mod (`/opt/usr/nx-ks/`) — this project extends it |
+| Shape | No reflash, no partition writes, fully reversible | No firmware-partition change means a reboot restores stock (LUT writes are RAM-only) |
 
 > It is **not** a colour-management system (no input/output profile conversion), **not** a WYSIWYG promise
 > (live view and stills run different pipelines), and **not** a jailbreak (no region unlock, no recording-limit bypass).
