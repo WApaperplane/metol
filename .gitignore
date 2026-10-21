@@ -207,3 +207,6 @@ test_server/slp/a1_qemu/logs/*.elf
 
 # ===== A2 QEMU 载具构建产物（可由 build_a2_qemu.sh 重生成）=====
 test_server/slp/a2_qemu/logs/*.elf
+
+# LUT 生成中间产物（.cube 可由 gen_luts.py 重新生成）
+tools/lutgen/cube/
