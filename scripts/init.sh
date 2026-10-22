@@ -37,6 +37,30 @@ export USER="root"
 export LOGNAME="root"
 export MULTISENSE_SND_PLAYER="tizen_snd_player"
 nice -n +15 /opt/usr/nx-ks/keyscan /dev/event0 /dev/event1 /opt/usr/nx-ks/ &
+# ---- dropbear ssh：加密远程登录（端口 22，root 公钥认证）----
+# 构建见 test_server/dropbear/README.md（glibc 2.13 sysroot + 直链机身 libc，-O0）
+# --disable-syslog ⇒ 没有 -E/-l 开关，日志只能走 stderr，故 -F + setsid + 重定向落盘
+DB=/opt/usr/nx-ks/dropbear
+BB=/opt/usr/nx-ks/busybox
+if [ -f "$DB/dropbear" ]; then
+	# SD 卡 FAT 丢可执行位，cp -ar 后必须是 0644 ⇒ 这里兜底（不能只信 [ -x ]）
+	chmod +x "$DB/dropbear" "$DB/dropbearkey" "$DB/sftp-server" "$DB/run.sh" 2>/dev/null
+	# host key：p14 刷机保留，但首次装包要现生成
+	if [ ! -f "$DB/dropbear_ed25519_host_key" ]; then
+		"$DB/dropbearkey" -t ed25519 -f "$DB/dropbear_ed25519_host_key" >/dev/null 2>&1
+	fi
+	# authorized_keys：/root -> /opt/home/root 在 p11，刷机被重写 ⇒ 每次开机从 p14 恢复
+	if [ -f "$DB/authorized_keys" ]; then
+		mkdir -p /root/.ssh 2>/dev/null
+		cp -f "$DB/authorized_keys" /root/.ssh/authorized_keys 2>/dev/null
+		chmod 700 /root/.ssh 2>/dev/null
+		chmod 600 /root/.ssh/authorized_keys 2>/dev/null
+	fi
+	if [ -z "$($BB pidof dropbear 2>/dev/null)" ]; then
+		$BB setsid "$DB/run.sh" -F -B -p 22 \
+			-r "$DB/dropbear_ed25519_host_key" >>/tmp/db.log 2>&1 </dev/null &
+	fi
+fi
 sync
 sync
 sync

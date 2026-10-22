@@ -210,3 +210,13 @@ test_server/slp/a2_qemu/logs/*.elf
 
 # LUT 生成中间产物（.cube 可由 gen_luts.py 重新生成）
 tools/lutgen/cube/
+
+# ===== dropbear ssh（2026-10-22）=====
+# dl/ 是 deb 下载 + 解包的 glibc 2.13 sysroot，README 有重建步骤（curl + dpkg-deb）
+test_server/dropbear/dl/
+# ★ 私钥绝不入库（公钥已随 scripts/dropbear/authorized_keys 下发）
+test_server/dropbear/ssh/
+
+# dropbear 源码树与对比产物（tar 在 dl/ 里，build_*.sh 可重建）
+test_server/dropbear/dropbear-2024.86/
+test_server/dropbear/out-*/
