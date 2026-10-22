@@ -68,7 +68,7 @@ echo \"pid=\$P (daemon) sessions=\$((\$(echo \$ALL | wc -w) - 1)) nice=\$(awk '{
 echo uptime=\$(cut -d' ' -f1 /proc/uptime)s"
     ;;
 *)
-    sed -n '2,14p' "$0"
+    sed -n '2,12p' "$0"
     exit 2
     ;;
 esac
