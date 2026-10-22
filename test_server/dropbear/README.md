@@ -138,6 +138,8 @@ wsl -d NXKS2 bash build_sftpserver.sh   # → out/sftp-server.arm
 - **传输速度约 1.4–1.6 MB/s**（`-O2` + `nice 0`）。历史配置（`-O0` + 继承 telnet 的 nice 19）只有 0.5–0.8 MB/s。
   **瓶颈不是网络**（WiFi 协商 150 Mb/s，只用了不到 10%），而是**单核 A9 的 CPU 抢占** —— 详见 `OPT_ANALYSIS.md` 第 9 节。
 - **必须经 `run.sh` 启动**：Tizen 的 telnetd/shell 是 `nice=19`，直接启动 dropbear 会继承它，速度腰斩。`run.sh` 用 `renice 0` 强制拉回（不能用 `nice -n`，那是相对值）。
+- **~2 MB/s 是物理天花板**（详见 `OPT_ANALYSIS.md` 第 10 节）：换 cipher 无收益（散布 > 差异）、绕开加密走 FTP 在真实 JPG 上同样重叠（瓶颈是 SD 读 + CPU 抢占），单命令延迟 ~350 ms 也用不上连接复用。
+- **自启已做字节级等价演练**（第 11 节）：直接 source 机身 `init.sh` 的 dropbear 段（1263 字节原样），杀干净后能拉起、`nice=0`、22 在听。真机冷启一次即可闭环。
 - **相机休眠断网**：休眠时 21/22/23 全部 CLOSED，属机型行为。
 - 无守护进程：dropbear 崩了不会自动重启（只在 `init.sh` 触发时拉起）。
 - 客户端会提示 post-quantum KEX 警告（dropbear 2024.86 尚无 PQ KEX），可忽略。
@@ -157,6 +159,9 @@ wsl -d NXKS2 bash build_sftpserver.sh   # → out/sftp-server.arm
 | `ssh/nx500_ed25519` | 客户端私钥（勿外传） |
 | `install_key.sh` | 装机端公钥安装（权限修正） |
 | `deploy_dropbear.sh` | 二进制落位 + host key 生成 |
-| `start_dropbear.sh` / `test_autostart.sh` | 手动起停 / 自启段落演练 |
+| `start_dropbear.sh` / `test_autostart.sh` | 手动起停 / 自启段落演练（旧版） |
+| `drill_autostart.sh` | **自启等价演练**：源机身 init.sh 的 dropbear 段（字节级），杀净后重拉 |
+| `bench_cipher.sh` | cipher 吞吐横评（换算法是否有收益） |
+| `scan_bins.sh` / `analyze_opt.sh` / `test_link.sh` | 三版本横评 / 热点指令对比 / 链接验证 |
 
 机端 `scripts/dropbear/` 母本含：`dropbear` `dropbearkey` `sftp-server` `authorized_keys` `restart.sh`。
