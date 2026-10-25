@@ -70,7 +70,39 @@ TRIM = {
     'polaroid_itype':   ('polaroid_600', 2.09, '两代整幅拍立得，色调差 2.09'),
 }
 
-# v2_canon_landscape 保留：品牌风光风格，库里没有别的表覆盖它。
+# --- 第三批：用户要求取消"设计对立"豁免，统一按项目门槛 3.112 归并 ---
+# 完整链接聚类给出 14 组、29 个成员，每组只留一张。保留判据按"来源是否可追溯 >
+# 片种知名度 > 名字规范"，不再接受"它们本来就是一冷一暖"这类理由。
+TRIM_BATCH3 = {
+    'fuji_3510':          ('kodak_2383', 2.06, '同为院线印片，留柯达 2383'),
+    'fuji_400h':          ('kodak_portra160', 2.22, '同期彩色负片，留 Portra'),
+    'fuji_astia100f':     ('fuji_provia100f', 2.33, '富士反转片兄弟，留 Provia'),
+    'pentax_satobi':      ('fuji_eterna500', 2.25, '同一冷调区间，留电影负片'),
+    'fuji_pro_neg_hi':    ('fuji_pro_neg_std', 2.12, 'Pro Neg 高低反差两档，留标准版'),
+    'hasselblad_nature':  ('hasselblad_std', 2.46, 'Nature 只在饱和上更进一点，留 Standard'),
+    'warm_honey':         ('kodak_gold200', 3.04, '自建暖调贴到 Gold 200 上，留胶片'),
+    'kodak_kchrome200':   ('kodak_kchrome64', 2.25, '克罗姆 200/64 同族，留 64'),
+    'lomo_xpro_slide200': ('slide_precisa100', 2.69, '交叉冲洗近 Agfa 正片，留后者'),
+    'mono_delta100':      ('mono_trix400', 2.37, '细颗粒黑白，留 Tri-X'),
+    'mono_panf50':        ('mono_hp5', 2.13, '黑白中速，留 HP5'),
+    'pentax_reversal':    ('pentax_vibrant', 2.71, '宾得品牌系内三张只差一档'),
+    'ricoh_xpro':         ('pentax_vibrant', 2.14, '同上'),
+    'polaroid_expired':   ('polaroid_600', 2.94, '过期版只差在抬黑'),
+    'warm_rust':          ('warm_gold', 2.30, '暖调系列三张合并成一张'),
+}
+TRIM.update(TRIM_BATCH3)
+
+# --- 3.112 完整链接归并之后仍在 2.6 附近的残留对 ---
+# 完整链接不放它们进来是对的（避免 A~B、B~C 但 A≁C 的链式误合并），
+# 但这三张单独看确实没有新东西：
+TRIM_RESIDUAL = {
+    'v2_canon_landscape': ('pentax_vibrant', 2.63, 'v2_ 品牌系，与 pentax_vibrant 同区间'),
+    'mono_infra':         ('mono_hp5', 2.62, '与 HP5 差 2.62 ⇒ 这张"红外"其实没红'),
+    'kodak_elitecolor200':('slide_precisa100', 2.73, '冷门民用负片，与 Precisa 同区间'),
+}
+TRIM.update(TRIM_RESIDUAL)
+
+# v2_canon_landscape 已归档（见 TRIM_RESIDUAL）。
 
 
 def main() -> int:
