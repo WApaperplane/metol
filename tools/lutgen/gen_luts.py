@@ -18,6 +18,7 @@ import json
 import math
 import os
 import struct
+import sys
 
 N = 17
 GRID = [16 * i for i in range(16)] + [255]
@@ -194,12 +195,33 @@ def apply_film(rgb8, p):
     #    动机（2026-10-25 实机排查）：老批次 LUT 在室内暖光/人像上"偏红"，
     #    根因是高饱和表把暖色整体推向红端（灰轴反而是中性甚至偏蓝）。
     #    只削"红超出绿"的那部分，不改色相中心，风格与饱和度保留。
+    #
+    #    下面是"加强模式"的可选参数，默认全部关闭 ⇒ 输出与旧版逐字节一致
+    #    （已用 md5 全量回归验证）。要调强修正时再打开，别默认改：
+    #      warm_huew  色相窗口半宽（度）。0 = 旧版硬判 h≤50 或 h≥330；
+    #                 >0 改用余弦淡出（边界处 R 不突变，但 30-50° 的权重会下降）
+    #      warm_vsoft v 门槛软化。True 时权重乘 min(1,v/0.14)，消除
+    #                 (32,0,0) 不削而 (48,0,0) 削造成的红轴亮度倒挂
+    #      warm_excap 单点最大削幅（归一化单位）。1.0 = 不封顶；0.22 可防纯红被整块削暗
     wg = p.get('warm_guard', WARM_GUARD)
+    wsm = p.get('warm_smin', 0.30)          # 起削饱和度门槛；肤色 s 常在 0.25-0.45
+    wpw = p.get('warm_pow', 0.7)            # 权重曲线指数
+    whw = p.get('warm_huew', 0.0)           # 0 = 旧版硬边界
+    wcap = p.get('warm_excap', 1.0)         # 1.0 = 不封顶
+    vsoft = p.get('warm_vsoft', False)
     if wg > 0.0:
         h, s, v = rgb_to_hsv(r, g, b)
-        if s > 0.30 and v > 0.14 and (h <= 50.0 or h >= 330.0):
-            w = ((s - 0.30) / 0.70) ** 0.7
-            ex = r - g
+        hard = (h <= 50.0 or h >= 330.0)
+        if whw > 0.0:
+            hh = h if h <= 180.0 else h - 360.0
+            hwv = math.cos(math.pi * hh / (2.0 * whw)) ** 2 if abs(hh) < whw else 0.0
+        else:
+            hwv = 1.0 if hard else 0.0
+        if hwv > 0.0 and s > wsm and v > 0.14:
+            w = hwv * ((s - wsm) / (1.0 - wsm)) ** wpw
+            if vsoft:
+                w *= min(1.0, v / 0.14)
+            ex = (r - g) if wcap >= 1.0 else min(r - g, wcap)
             if ex > 0.0 and w > 0.0:
                 r -= ex * wg * w
 
@@ -452,7 +474,21 @@ def load_films():
 
 
 def main():
+    global OUT_BIN, OUT_CUBE, WARM_GUARD
+    argv = sys.argv[1:]
+    if '--out' in argv:
+        d = argv[argv.index('--out') + 1]
+        OUT_BIN = os.path.join(d, 'bin')
+        OUT_CUBE = os.path.join(d, 'cube')
+    if '--warm-guard' in argv:
+        WARM_GUARD = float(argv[argv.index('--warm-guard') + 1])
+    only = None
+    if '--only' in argv:
+        only = {s.strip() for s in argv[argv.index('--only') + 1].split(',')}
+
     films = load_films()
+    if only:
+        films = {k: v for k, v in films.items() if k in only}
     os.makedirs(OUT_BIN, exist_ok=True)
     os.makedirs(OUT_CUBE, exist_ok=True)
     rows = []

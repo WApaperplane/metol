@@ -12,6 +12,10 @@ gen_luts 产出的表不动（它们由参数源控制，改参数即可）。
 用法：
   python retune_legacy.py --dry          只报告，不写文件
   python retune_legacy.py --apply        写回 looks/（原表备份到 looks_legacy_backup/）
+
+★ 幂等性：本脚本是"就地叠加"，对同一张表跑两次会削两次。要重做/加强修正，
+  必须从基线重来：--src=looks_legacy_backup --warm=0.45 --out=/tmp/x
+  （looks_legacy_backup/ 存的是 retune 之前的原始批）。直接 --apply 两次 = 错误用法。
 """
 import json
 import os
@@ -99,16 +103,23 @@ def process(t):
 
 
 def main():
+    global WARM
     apply = '--apply' in sys.argv
     outdir = None
+    src = LOOKS
     for a in sys.argv[1:]:
         if a.startswith('--out='):
             outdir = a.split('=', 1)[1]
+        elif a.startswith('--src='):
+            src = a.split('=', 1)[1]
+        elif a.startswith('--warm='):
+            WARM = float(a.split('=', 1)[1])
     protected = set(json.load(open(FILMS, encoding='utf-8')).keys())
-    names = sorted(f[:-4] for f in os.listdir(LOOKS) if f.endswith('.bin'))
+    names = sorted(f[:-4] for f in os.listdir(src) if f.endswith('.bin'))
     legacy = [n for n in names if n not in protected and not any(k in n for k in SKIP_SUBSTR)]
     skipped = [n for n in names if n not in protected and any(k in n for k in SKIP_SUBSTR)]
 
+    print('源目录: %s   warm=%.2f' % (src, WARM))
     print('受保护(gen_luts): %d  跳过(设计暖调/mono): %d  待处理: %d'
           % (len(protected), len(skipped), len(legacy)))
     if apply:
@@ -118,7 +129,7 @@ def main():
 
     print('%-24s %14s %14s' % ('LUT', '灰轴偏差 R-G/B-G', '校正后'))
     for n in legacy:
-        p = os.path.join(LOOKS, n + '.bin')
+        p = os.path.join(src, n + '.bin')
         t = load_table(p)
         diag0 = np.array([t[i, i, i] for i in range(N)])
         d0 = (diag0 - diag0.mean(1)[:, None])
@@ -131,8 +142,11 @@ def main():
         print('%s%-23s %6.1f/%6.1f %10.1f' % (flag, n, d0[:, 0].mean() - d0[:, 1].mean(),
                                               d0[:, 2].mean() - d0[:, 1].mean(), worst1))
         if apply:
-            shutil.copy2(p, os.path.join(BACKUP, n + '.bin'))
-            save_table(p, t2)
+            # 目标恒为 looks/；backup 存的是 looks/ 的旧版（不是 src）
+            dst = os.path.join(LOOKS, n + '.bin')
+            if os.path.isfile(dst):
+                shutil.copy2(dst, os.path.join(BACKUP, n + '.bin'))
+            save_table(dst, t2)
         elif outdir:
             save_table(os.path.join(outdir, n + '.bin'), t2)
 
