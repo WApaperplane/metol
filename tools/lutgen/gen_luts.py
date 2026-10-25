@@ -180,7 +180,12 @@ def apply_film(rgb8, p):
         h, s, v = rgb_to_hsv(r, g, b)
         if s > 1e-4:
             m = sat_m * (hue_lookup(h, sat_h) if sat_h else 1.0)
-            s = min(1.0, max(0.0, s * m))
+            # 暗部保护：v 小时把 m 拉回 1，否则 s*m 打满 1.0 会让最小通道直接归零，
+            # 暗部变成死黑、色阶断裂（2026-10-25 体检：velvia50 有 2253 个
+            # 输入全非零的格点被压成 0）。只削暗部的额外饱和，中间调不动。
+            if v < 0.25:
+                m = 1.0 + (m - 1.0) * (v / 0.25)
+            s = min(0.98, max(0.0, s * m))
             if rot_h:
                 h = h + hue_lookup(h, rot_h)
             r, g, b = hsv_to_rgb(h, s, v)
