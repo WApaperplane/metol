@@ -25,6 +25,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(HERE))          # tools/lutgen → 仓库根
 OUT_BIN = os.path.join(REPO, 'looks')                  # 直接写发布物目录
 OUT_CUBE = os.path.join(HERE, 'cube')                  # .cube 中间产物（不入库）
+WARM_GUARD = 0.30     # 默认暖色保护强度；配方可用 warm_guard 覆盖（0 = 关闭）
 
 
 # ---------- 色彩基础 ----------
@@ -184,7 +185,20 @@ def apply_film(rgb8, p):
                 h = h + hue_lookup(h, rot_h)
             r, g, b = hsv_to_rgb(h, s, v)
 
-    # 8) 输出
+    # 8) 暖色保护：红橙高饱和区把 R 往 G 收一点。
+    #    动机（2026-10-25 实机排查）：老批次 LUT 在室内暖光/人像上"偏红"，
+    #    根因是高饱和表把暖色整体推向红端（灰轴反而是中性甚至偏蓝）。
+    #    只削"红超出绿"的那部分，不改色相中心，风格与饱和度保留。
+    wg = p.get('warm_guard', WARM_GUARD)
+    if wg > 0.0:
+        h, s, v = rgb_to_hsv(r, g, b)
+        if s > 0.30 and v > 0.14 and (h <= 50.0 or h >= 330.0):
+            w = ((s - 0.30) / 0.70) ** 0.7
+            ex = r - g
+            if ex > 0.0 and w > 0.0:
+                r -= ex * wg * w
+
+    # 9) 输出
     out = []
     for v in (r, g, b):
         q = int(v * 255.0 + 0.5)
