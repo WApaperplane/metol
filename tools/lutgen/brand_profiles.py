@@ -137,6 +137,7 @@ PROFILES = {
 
 # ---------------------------------------------------------------- metrics
 BLUE = (40.0, 90.0, 200.0)
+BLUE_SKY = (95.0, 155.0, 235.0)   # mid-bright sky blue, L*~62
 RED = (200.0, 45.0, 40.0)
 SKIN = (198.0, 148.0, 118.0)     # mid-tone skin, not a highlight
 

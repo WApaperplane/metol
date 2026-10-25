@@ -328,6 +328,26 @@
     "fuji_pro_neg_std.bin": {
       "space": "CrCbY-BT601-full-v1",
       "sha256": "ce8d857f5152e5256d9018160e2ae03f743955bdeeb935c3505214b6007e8993"
+    },
+    "leica_m8.bin": {
+      "space": "CrCbY-BT601-full-v1",
+      "sha256": "157439d137e3e268c374a464157f43a31d4982abbbd8ee78463d5ef9f2e65d7d"
+    },
+    "hasselblad_std.bin": {
+      "space": "CrCbY-BT601-full-v1",
+      "sha256": "e8aa5efbdae69bb53fd5d218c527bab74d80f3b4f57af7f2d6b6b864cee6e72e"
+    },
+    "hasselblad_nature.bin": {
+      "space": "CrCbY-BT601-full-v1",
+      "sha256": "954924b07408922404832c70a71494da2f401b8319dde94d156a3c0e9196deb7"
+    },
+    "sony_fl.bin": {
+      "space": "CrCbY-BT601-full-v1",
+      "sha256": "9fbad0c9ff2e8c0259667a42e9ef6b5f4321da4eda68367848800965962f08a5"
+    },
+    "sony_fl2.bin": {
+      "space": "CrCbY-BT601-full-v1",
+      "sha256": "93d3277993e03b564bc2c81bdfba78f845b46191d63022bdb56133afb53bdbcf"
     }
   }
 }
