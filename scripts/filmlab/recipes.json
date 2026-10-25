@@ -679,6 +679,116 @@
         "SATURATION": 7,
         "SHARPNESS": 7,
         "CONTRAST": 8
+    },
+    "ricoh_positive": {
+        "label": "理光 正片",
+        "R_COLOR": 100,
+        "G_COLOR": 100,
+        "B_COLOR": 102,
+        "HUE": 10,
+        "SATURATION": 13,
+        "SHARPNESS": 11,
+        "CONTRAST": 12
+    },
+    "ricoh_negative": {
+        "label": "理光 负片",
+        "R_COLOR": 106,
+        "G_COLOR": 101,
+        "B_COLOR": 96,
+        "HUE": 12,
+        "SATURATION": 7,
+        "SHARPNESS": 8,
+        "CONTRAST": 6
+    },
+    "ricoh_retro": {
+        "label": "理光 怀旧",
+        "R_COLOR": 110,
+        "G_COLOR": 101,
+        "B_COLOR": 88,
+        "HUE": 12,
+        "SATURATION": 8,
+        "SHARPNESS": 8,
+        "CONTRAST": 8
+    },
+    "ricoh_bleach": {
+        "label": "理光 漂白",
+        "R_COLOR": 100,
+        "G_COLOR": 100,
+        "B_COLOR": 101,
+        "HUE": 10,
+        "SATURATION": 2,
+        "SHARPNESS": 13,
+        "CONTRAST": 16
+    },
+    "ricoh_xpro": {
+        "label": "理光 交叉冲洗",
+        "R_COLOR": 108,
+        "G_COLOR": 100,
+        "B_COLOR": 94,
+        "HUE": 15,
+        "SATURATION": 14,
+        "SHARPNESS": 10,
+        "CONTRAST": 13
+    },
+    "pentax_vibrant": {
+        "label": "宾得 鮮やか",
+        "R_COLOR": 101,
+        "G_COLOR": 100,
+        "B_COLOR": 101,
+        "HUE": 10,
+        "SATURATION": 15,
+        "SHARPNESS": 11,
+        "CONTRAST": 12
+    },
+    "pentax_reversal": {
+        "label": "宾得 反转片",
+        "R_COLOR": 101,
+        "G_COLOR": 102,
+        "B_COLOR": 100,
+        "HUE": 10,
+        "SATURATION": 12,
+        "SHARPNESS": 12,
+        "CONTRAST": 14
+    },
+    "pentax_bleach": {
+        "label": "宾得 銀残し",
+        "R_COLOR": 99,
+        "G_COLOR": 100,
+        "B_COLOR": 102,
+        "HUE": 10,
+        "SATURATION": 2,
+        "SHARPNESS": 14,
+        "CONTRAST": 17
+    },
+    "pentax_muted": {
+        "label": "宾得 ほのか",
+        "R_COLOR": 100,
+        "G_COLOR": 100,
+        "B_COLOR": 101,
+        "HUE": 10,
+        "SATURATION": 8,
+        "SHARPNESS": 9,
+        "CONTRAST": 6
+    },
+    "pentax_satobi": {
+        "label": "宾得 里び",
+        "R_COLOR": 99,
+        "G_COLOR": 100,
+        "B_COLOR": 103,
+        "HUE": 11,
+        "SATURATION": 6,
+        "SHARPNESS": 8,
+        "CONTRAST": 9
+    },
+    "pentax_gold": {
+        "label": "宾得 Gold",
+        "R_COLOR": 104,
+        "G_COLOR": 100,
+        "B_COLOR": 96,
+        "HUE": 12,
+        "SATURATION": 11,
+        "SHARPNESS": 10,
+        "CONTRAST": 11
     }
   }
 }
