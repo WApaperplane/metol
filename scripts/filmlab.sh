@@ -450,37 +450,51 @@ auto_slot() {
 # ---- JSON 极简解析（只取 recipes 段下的 key 和数值，够用即可）----
 # 用法: jval <recipe_name> <field>   例: jval portra400 R_COLOR
 jval() {
-  /opt/usr/nx-ks/busybox awk -v r="\"$1\": " -v f="\"$2\":" '
+  # ★ 2026-10-25 加固：key 匹配不再要求冒号后跟空格（json.dump 写的是 `"k": {`，
+  #   但也可能被压成 `"k":{`）；配方结束判定改为缩进无关的 `^[ \t]*}`，
+  #   否则 indent=4 时找不到本级闭括号 ⇒ 继续吃掉下一个配方的字段（静默串味）。
+  /opt/usr/nx-ks/busybox awk -v r="\"$1\":" -v f="\"$2\":" '
+    function strip(s) { sub(/\r$/, "", s); return s }
+    { $0 = strip($0) }
     index($0, r) { inr=1; next }
     inr && index($0, f) {
       s = substr($0, index($0, f) + length(f))
       gsub(/[^0-9-]/, "", s)
       if (s != "") { print s; exit }
     }
-    inr && $0 ~ /^    \}/ { exit }
+    inr && /^[ \t]*\}/ { exit }
   ' $RECIPE 2>/dev/null
 }
 # ★ jtable —— 一次性导出全部配方表（单 awk 进程）
 #   供 export/mkgui 使用：35 配方从"280 次 awk 进程风暴（~90s）"降到 <1s（2026-10-09 优化）
 #   输出：key|label|R|G|B|HUE|SAT|SHARP|CON（每行一个配方；与 recipes.txt 同格式）
 jtable() {
+  # ★ 2026-10-25 加固：原版硬编码 4/8 空格缩进（`/^    "/`、`/^        "label":/`）。
+  #   一旦 recipes.json 被外部工具按 json.dump(indent=2) 重排成 2/6 空格（或用
+  #   Windows 文本模式写出 CRLF），key 仍能抓到、label 与 7 维全部抓空 ⇒ 生成
+  #   `key||||||||` ⇒ nxui 报 "empty label" 且 all-or-nothing ⇒ 配方面板空（实测故障）。
+  #   现在改为「缩进宽度无关 + 剥 CR」，任何合法 JSON 排版都能解析。
   /opt/usr/nx-ks/busybox awk '
+    function strip(s) { sub(/\r$/, "", s); return s }
     BEGIN { inr=0; key=""; label="" }
-    /"recipes"/ { inr=1; next }
-    /"presets"/ { inr=0; next }
+    { $0 = strip($0) }
+    /"recipes"[ \t]*:/ { inr=1; next }
+    /"presets"[ \t]*:/ { inr=0; next }
     !inr { next }
-    /^    "/ {
-      key=$0; sub(/^    "/,"",key); sub(/": *\{.*$/,"",key); sub(/",? *$/,"",key)
-      label=""; delete F; next
+    /^[ \t]*"[^"]*"[ \t]*:[ \t]*\{[ \t]*$/ {
+      k=$0; sub(/^[ \t]*"/,"",k); sub(/".*$/,"",k)
+      key=k; label=""; delete F; next
     }
-    /^        "label":/ { s=$0; sub(/.*"label": *"/,"",s); sub(/".*$/,"",s); label=s; next }
-    /^        "/ {
-      name=$0; sub(/^ *"/,"",name); sub(/":.*$/,"",name)
+    key != "" && /^[ \t]*"label"[ \t]*:/ {
+      s=$0; sub(/^[ \t]*"label"[ \t]*:[ \t]*"/,"",s); sub(/".*$/,"",s); label=s; next
+    }
+    key != "" && /^[ \t]*"[^"]*"[ \t]*:/ {
+      name=$0; sub(/^[ \t]*"/,"",name); sub(/".*$/,"",name)
       val=$0; gsub(/[^0-9-]/,"",val)
       F[name]=val; next
     }
-    /^    \}/ {
-      if (key != "") printf "%s|%s|%s|%s|%s|%s|%s|%s|%s\n", key,label,F["R_COLOR"],F["G_COLOR"],F["B_COLOR"],F["HUE"],F["SATURATION"],F["SHARPNESS"],F["CONTRAST"]
+    key != "" && /^[ \t]*\}[ \t]*,?[ \t]*$/ {
+      printf "%s|%s|%s|%s|%s|%s|%s|%s|%s\n", key,label,F["R_COLOR"],F["G_COLOR"],F["B_COLOR"],F["HUE"],F["SATURATION"],F["SHARPNESS"],F["CONTRAST"]
       key=""; next
     }
   ' $RECIPE 2>/dev/null
@@ -488,36 +502,44 @@ jtable() {
 # ★ jline —— 单配方一次提取（单 awk 进程，2026-10-10 apply 提速）
 #   输出: R|G|B|HUE|SAT|SHARP|CON（7 值一行）；替代 7 次 jval（7 进程 → 1 进程）
 jline() {
+  # ★ 缩进宽度无关（同 jtable，2026-10-25 加固）
   /opt/usr/nx-ks/busybox awk -v want="$1" '
+    function strip(s) { sub(/\r$/, "", s); return s }
     BEGIN { inr=0; key="" }
-    /"recipes"/ { inr=1; next }
-    /"presets"/ { inr=0; next }
+    { $0 = strip($0) }
+    /"recipes"[ \t]*:/ { inr=1; next }
+    /"presets"[ \t]*:/ { inr=0; next }
     !inr { next }
-    /^    "/ {
-      key=$0; sub(/^    "/,"",key); sub(/": *\{.*$/,"",key); sub(/",? *$/,"",key)
-      delete F; next
+    /^[ \t]*"[^"]*"[ \t]*:[ \t]*\{[ \t]*$/ {
+      k=$0; sub(/^[ \t]*"/,"",k); sub(/".*$/,"",k)
+      key=k; delete F; next
     }
-    /^        "/ && key == want {
-      name=$0; sub(/^ *"/,"",name); sub(/":.*$/,"",name)
+    /^[ \t]*"[^"]*"[ \t]*:/ && key == want {
+      name=$0; sub(/^[ \t]*"/,"",name); sub(/".*$/,"",name)
       val=$0; gsub(/[^0-9-]/,"",val)
       F[name]=val; next
     }
-    /^    \}/ {
+    /^[ \t]*\}[ \t]*,?[ \t]*$/ {
       if (key == want) {
         printf "%s|%s|%s|%s|%s|%s|%s\n", F["R_COLOR"],F["G_COLOR"],F["B_COLOR"],F["HUE"],F["SATURATION"],F["SHARPNESS"],F["CONTRAST"]
         exit
       }
+      key=""; next
     }
   ' $RECIPE 2>/dev/null
 }
 # 列出所有配方名
 jlist() {
+  # ★ 缩进宽度无关（2026-10-25 加固）
   /opt/usr/nx-ks/busybox awk '
-    /"recipes"/ { inr=1; next }
-    /"presets"/ { inr=0; next }
-    index($0, "\"") && inr && /^    "/ {
+    function strip(s) { sub(/\r$/, "", s); return s }
+    /"recipes"[ \t]*:/ { inr=1; next }
+    /"presets"[ \t]*:/ { inr=0; next }
+    !inr { next }
+    { $0 = strip($0) }
+    /^[ \t]*"[^"]*"[ \t]*:[ \t]*\{[ \t]*$/ {
       k = $0
-      gsub(/^ +"/,"", k); gsub(/".*/,"", k)
+      sub(/^[ \t]*"/, "", k); sub(/".*$/, "", k)
       if (k != "" && substr(k,1,1) != "_") print k
     }
   ' $RECIPE 2>/dev/null
@@ -1136,17 +1158,30 @@ export)
   #   nxfilmui 不解析 JSON（相机上也没有 jq），只读纯文本：
   #     key|label|R|G|B|HUE|SAT|SHARP|CON
   #   ★ 2026-10-09 优化：改用 jtable（单 awk 进程）——35 配方从 ~90s 降到 <1s。
+  #   ★ 2026-10-25 守卫：label 空 ⇒ 直接判失败、保留原表不动。
+  #     踩坑：recipes.json 被外部工具重排成 json.dump(indent=2)+CRLF 后，旧 jtable
+  #     只能抓到 key，生成全 `key||||||||` 的表；nxui 的 nx_load_recipes 见空 label
+  #     就 all-or-nothing 拒载（日志 "empty label"、READY recipes=0）⇒ 面板配方全空。
+  #     坏表写盘比不写盘更糟，所以这里宁可失败也不落地。
   OUT=$LAB/recipes.txt
   TMP=$OUT.tmp
   jtable > $TMP
   N=$(grep -c . $TMP 2>/dev/null)
   case "$N" in ""|*[!0-9]*) N=0 ;; esac
-  if [ "$N" -gt 0 ]; then
+  EMPTY=0
+  [ "$N" -gt 0 ] && EMPTY=$($BB awk -F'|' '$2 == "" { n++ } END { print n + 0 }' "$TMP" 2>/dev/null)
+  case "$EMPTY" in ""|*[!0-9]*) EMPTY=0 ;; esac
+  if [ "$N" -gt 0 ] && [ "$EMPTY" -eq 0 ]; then
     mv -f $TMP $OUT
     echo "export: 已生成 $OUT — $N 个配方"
   else
     rm -f $TMP
-    echo "export: 生成失败（配方库空或格式异常），保持原$OUT 不变"
+    if [ "$EMPTY" -gt 0 ]; then
+      echo "export: 拒绝写入 —— $EMPTY/$N 行 label 为空，配方库排版可疑（应为 LF、key 4 空格 / 字段 8 空格）"
+      echo "        recipes.json 若被 json.dump(indent=2) 或 Windows CRLF 重写过，请用 test_server/filmlab/flab.py 重新保存"
+    else
+      echo "export: 生成失败（配方库空或格式异常），保持原$OUT 不变"
+    fi
     exit 1
   fi
   ;;
