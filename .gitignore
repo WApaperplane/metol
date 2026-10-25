@@ -228,3 +228,7 @@ test_server/dropbear/out-*/
 
 # LUT 审计运行产物（脚本可重新生成）
 tools/lutgen/audit_out/
+
+# ===== G'MIC 外部 LUT 暂存（web_import.py --stage 可重建，不入库）=====
+tools/lutgen/webstage/
+tools/lutgen/webcache/

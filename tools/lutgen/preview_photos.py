@@ -77,10 +77,16 @@ def main():
     if len(sys.argv) < 3:
         print(__doc__)
         return 1
-    src, dst = sys.argv[1], sys.argv[2]
-    names = sys.argv[3:]
+    argv = sys.argv[1:]
+    table_dir = LOOKS
+    if '--dir' in argv:
+        i = argv.index('--dir')
+        table_dir = argv[i + 1]
+        argv = argv[:i] + argv[i + 2:]
+    src, dst = argv[0], argv[1]
+    names = argv[2:]
     if not names:
-        names = sorted(f[:-4] for f in os.listdir(LOOKS) if f.endswith('.bin')
+        names = sorted(f[:-4] for f in os.listdir(table_dir) if f.endswith('.bin')
                        and f != 'identity17.bin')
 
     im = Image.open(src).convert('RGB')
@@ -91,7 +97,7 @@ def main():
 
     cells = [('原图 ORIGINAL', np.asarray(im, dtype=np.uint8))]
     for n in names:
-        p = os.path.join(LOOKS, n + '.bin')
+        p = os.path.join(table_dir, n + '.bin')
         if not os.path.isfile(p):
             print('skip (missing):', n)
             continue

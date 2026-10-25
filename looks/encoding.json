@@ -1,53 +1,33 @@
 {
   "version": 1,
   "tables": {
-    "agfa_rsx200.bin": {
-      "space": "CrCbY-BT601-full-v1",
-      "sha256": "bdd90e8b3728fb200699d78fde8ce5a3a69d7249eac1d5a38b8d746849aff07f"
-    },
     "agfa_ultra100.bin": {
       "space": "CrCbY-BT601-full-v1",
-      "sha256": "c6f652bfd5cfc1a5f94276ee53406bdd51a0a6deef5b2ce5f3e81dae29f39c8f"
+      "sha256": "4ee9b3bd2e9d01f2d9d4e17d2993d1c6b2c25e00f4dc690444c3b442393b9985"
     },
     "cool_arctic.bin": {
       "space": "CrCbY-BT601-full-v1",
       "sha256": "872311fccbf135834325e8163c0c8911bde5b3bd9b5a51250ec448a2879515eb"
     },
-    "ektar100.bin": {
-      "space": "CrCbY-BT601-full-v1",
-      "sha256": "6752ad738c3d7037e124594b3ff6777ae30932f65e17a43bf1b60ebe14b11f9d"
-    },
     "film_cinestill.bin": {
       "space": "CrCbY-BT601-full-v1",
       "sha256": "2b57c96ca3a7a619ad6fd41c6fe8eec5eff930bcf2b52d983e6ff24674c9409f"
-    },
-    "film_expired.bin": {
-      "space": "CrCbY-BT601-full-v1",
-      "sha256": "400b25a9f3e999d7e7966b28943c3be9b8ff00f3708da52b666cc3075a5d067a"
     },
     "film_faded.bin": {
       "space": "CrCbY-BT601-full-v1",
       "sha256": "7e6a57d3e4fa3fc641543ad5aff652b9bbe9caa1807f727dbed64dd050cb0acf"
     },
-    "film_portra.bin": {
-      "space": "CrCbY-BT601-full-v1",
-      "sha256": "0ea260160e9a61fb4b6bc5029f99ddd1a281cac11322d7332e69d3fabfa8cd06"
-    },
-    "film_superia.bin": {
-      "space": "CrCbY-BT601-full-v1",
-      "sha256": "1048281561b00a1502af09282232d766579e6b1e3397debe0aa37c7a00f579a2"
-    },
     "fuji_400h.bin": {
       "space": "CrCbY-BT601-full-v1",
-      "sha256": "49efed363f7f8a374893a9b331effa10d43335ad7652d2afafec4531be260f5f"
+      "sha256": "0c3078a8e54a0e40a6fe11374f189b11ed25476bc6f3543142004d523fcdfc5b"
     },
     "fuji_astia100f.bin": {
       "space": "CrCbY-BT601-full-v1",
-      "sha256": "c0206e4ec6d55cba98d6a6d0aa83c0c55e73bde62a7c7205badb5ab48790de05"
+      "sha256": "1fef3abd349c5a6a888d89a4f7b4e7fd6702341c945b3d8c0ce2965ab75e8d13"
     },
     "fuji_classicchrome.bin": {
       "space": "CrCbY-BT601-full-v1",
-      "sha256": "b16becfc5e33a8aa2afc05470ebdd840a585df5bb3c28450914401db389b5141"
+      "sha256": "1479d5ee88b633fcdcb7737bac0419a36216cdb9f021e66133939de2434ac272"
     },
     "fuji_eterna500.bin": {
       "space": "CrCbY-BT601-full-v1",
@@ -55,15 +35,15 @@
     },
     "fuji_provia100f.bin": {
       "space": "CrCbY-BT601-full-v1",
-      "sha256": "acb1accf19fbc52abcf2bd31c82a7974986e5f8a8db46f2fcf02a7647a161c05"
+      "sha256": "efa7b4a4620b7f11371e585871ec99d5406b850996285d0ffc2cea3644a1e928"
     },
     "fuji_superia400.bin": {
       "space": "CrCbY-BT601-full-v1",
-      "sha256": "a99adb065ca7abbfdbe2ac52e6d9b5c43f00f4a8252cf7dfaf8c106a237c9be3"
+      "sha256": "927951f9ba4489b71b002201e2a786e45e44bd7799c88c48998e88364f84328b"
     },
     "fuji_velvia50.bin": {
       "space": "CrCbY-BT601-full-v1",
-      "sha256": "34b7f353abd753e74bc2bcb275977fdffd9b4f5d48b727ec4b401d4f841fb82f"
+      "sha256": "b4b903134434fe4f3fbe8c9b608ea2f31f750316a82c4c014df88d8cb78b489e"
     },
     "identity17.bin": {
       "space": "CrCbY-BT601-full-v1",
@@ -71,7 +51,7 @@
     },
     "kodak_ektar100.bin": {
       "space": "CrCbY-BT601-full-v1",
-      "sha256": "28c2429a4e84e98eac4292543dbd6e24f8b894479ba74d68c45338b0ed145bd2"
+      "sha256": "1f443d285ebe29ac7fc777f7a8cbbc6b993bd6cecfda92baf8b44af318e98352"
     },
     "kodak_gold200.bin": {
       "space": "CrCbY-BT601-full-v1",
@@ -79,15 +59,15 @@
     },
     "kodak_kchrome25.bin": {
       "space": "CrCbY-BT601-full-v1",
-      "sha256": "ccc1f6ab6a36df5d429a4e7a2a951830ed70bcf6bcabf82af3d515c08d61a6d8"
+      "sha256": "477500af6400bd73c5002589c2e45cd4a2069ecd403267216972778d0501a871"
     },
     "kodak_kchrome64.bin": {
       "space": "CrCbY-BT601-full-v1",
-      "sha256": "df486b5910f6df80ffbf4d27d24e5efea29bffb4fdb8ce44fb388a75d70c3b69"
+      "sha256": "9180da85f0482060355387b5b0f94576aa5bb7c659edaa7ea386420837271ace"
     },
     "kodak_portra400.bin": {
       "space": "CrCbY-BT601-full-v1",
-      "sha256": "0b91476b57d6d2baec68c3032e13651039b740aa185e7de95122bf3213ae15d9"
+      "sha256": "5ea7bfd6367ce4830ab9104e976040ab6ff163fe07bd38aa8620bf252b34d7db"
     },
     "kodak_ultramax400.bin": {
       "space": "CrCbY-BT601-full-v1",
@@ -95,7 +75,7 @@
     },
     "mono_acros.bin": {
       "space": "CrCbY-BT601-full-v1",
-      "sha256": "b706df6283519f79f6fe7c30eaa4956342d54c3b7b16613183b3a7bf7d75aaec"
+      "sha256": "452ddb806fb8a5d7d297f603189a422e7b2187a1adef517b8b57514a69e32536"
     },
     "mono_hard.bin": {
       "space": "CrCbY-BT601-full-v1",
@@ -167,19 +147,11 @@
     },
     "slide_precisa100.bin": {
       "space": "CrCbY-BT601-full-v1",
-      "sha256": "5167a79bb373ceb68a44b737289dbc28e9c883e2ee22325c23858fea1f70d252"
-    },
-    "style_bleach.bin": {
-      "space": "CrCbY-BT601-full-v1",
-      "sha256": "edc529e1370f2bdccdbeef3729ed198ee453fb08f320172b2d64311f73d3bf1b"
+      "sha256": "1d8d21925a5f03ed087d06be151650603ae7f02d64628141348afda0e921b321"
     },
     "style_matte.bin": {
       "space": "CrCbY-BT601-full-v1",
       "sha256": "75d9fa52b0fc76f6c0dbd7f06e9311ece84d4aefc349cdc8fbd40f6e3c687098"
-    },
-    "style_noir.bin": {
-      "space": "CrCbY-BT601-full-v1",
-      "sha256": "a656d840f0ec2515bf41c89dd7605a2faebf81948d1fa7934500c47de588471e"
     },
     "warm_candle.bin": {
       "space": "CrCbY-BT601-full-v1",
@@ -205,53 +177,9 @@
       "space": "CrCbY-BT601-full-v1",
       "sha256": "00fc1f37c07eaeeb06cece015ff06094e60ada736c7409a5579404f2f32b4401"
     },
-    "v2_pentax_gold.bin": {
-      "space": "CrCbY-BT601-full-v1",
-      "sha256": "28d3d5803fdacc0a0b6a42ac3bde36701f6753f0f4042aa98a0f7f8ff3450179"
-    },
-    "v2_pentax_satobi.bin": {
-      "space": "CrCbY-BT601-full-v1",
-      "sha256": "72697a42cb12e72fd1893a55085f1d5b2ac349f550c6cee90cecdcaa9b80ea31"
-    },
-    "v2_fuji_classicchrome.bin": {
-      "space": "CrCbY-BT601-full-v1",
-      "sha256": "3582bf633436b35ae9187087d7d2d4ce38b9e5ad547f21b39e6b3638c77f15b2"
-    },
-    "v2_fuji_velvia50.bin": {
-      "space": "CrCbY-BT601-full-v1",
-      "sha256": "fe05f14e43be08d540e273fdfec2c1ac121c8457557807aad7a3880312a4b1b4"
-    },
-    "v2_fuji_eterna.bin": {
-      "space": "CrCbY-BT601-full-v1",
-      "sha256": "8a548aa64ee09c4e463230919ca5c474207a2fdfb454cce8acb81c1b2d5ffa2f"
-    },
-    "v2_kodak_portra400.bin": {
-      "space": "CrCbY-BT601-full-v1",
-      "sha256": "aa7a5f2a017f67d2890e80dcedfcf46ef8addf1159c2d077d9dcbc8ef73565b0"
-    },
-    "v2_kodak_gold200.bin": {
-      "space": "CrCbY-BT601-full-v1",
-      "sha256": "fcd4e1b75653d856b17d38c7fa420120a32507e9147fd830e56637ecde32ea57"
-    },
-    "v2_kodak_kchrome64.bin": {
-      "space": "CrCbY-BT601-full-v1",
-      "sha256": "e3e715f491a39b567283584129ec3baed908747ee4257ea7915bbe33b76327aa"
-    },
-    "v2_ricoh_bleach.bin": {
-      "space": "CrCbY-BT601-full-v1",
-      "sha256": "fe9671eb563ecb7f6a97d6492168a1bda023474b4d9291af3a8f3bda1f35b6cc"
-    },
     "v2_canon_landscape.bin": {
       "space": "CrCbY-BT601-full-v1",
       "sha256": "19baae5e3336d6c95858b7c53db256669fdfdbcd0e345f8e89c56917f59d76f5"
-    },
-    "v2_polaroid600.bin": {
-      "space": "CrCbY-BT601-full-v1",
-      "sha256": "9d245f359f3eb184237ff98084aca525015c51fe48b6ba120c236bd8e23c8a3f"
-    },
-    "v2_ilford_hp5.bin": {
-      "space": "CrCbY-BT601-full-v1",
-      "sha256": "c3fd4c5b00b388db33537b8b9b29f8304c062234ce11a28295404ccf61953787"
     },
     "gap_low_key_warm.bin": {
       "space": "CrCbY-BT601-full-v1",
@@ -328,6 +256,110 @@
     "brand_cool_vivid.bin": {
       "space": "CrCbY-BT601-full-v1",
       "sha256": "5a472a8e03c879b72b61ae4ad8736e8a1188e2f9d06d5801545fd92cfe1d10f3"
+    },
+    "kodak_2383.bin": {
+      "space": "CrCbY-BT601-full-v1",
+      "sha256": "639aaa9525c4228d8735124b9fae1c8aa0f38a39944b0f5cb75661f20f64a2b5"
+    },
+    "fuji_3510.bin": {
+      "space": "CrCbY-BT601-full-v1",
+      "sha256": "3cebe0853f53ee90af1aa44398e0080e702d09f0e5df895de63105b4cb50ea8b"
+    },
+    "kodak_portra160.bin": {
+      "space": "CrCbY-BT601-full-v1",
+      "sha256": "f691bbcb1276a2aee8c5de3f75c0af7b3139b2825acbe4028702b27507a21883"
+    },
+    "kodak_portra800.bin": {
+      "space": "CrCbY-BT601-full-v1",
+      "sha256": "d0f629d207e6b9e94db12054c49964ded4362eb05cf57680941c809fd5a0cee3"
+    },
+    "fuji_160c.bin": {
+      "space": "CrCbY-BT601-full-v1",
+      "sha256": "402581b75893458e0a06a2b28a8e2cec4ca9fc836fd38ad7e6ad2137098f69c9"
+    },
+    "fuji_800z.bin": {
+      "space": "CrCbY-BT601-full-v1",
+      "sha256": "1daed71c87bdd1c65c937e4e0fd754ea0f767a68d3118cbddf929b49c330de5c"
+    },
+    "fuji_superia100.bin": {
+      "space": "CrCbY-BT601-full-v1",
+      "sha256": "5099d55b27e386f2f01cdb2998885af1e4e40bce57dd12b850f7fa217250d289"
+    },
+    "agfa_vista200.bin": {
+      "space": "CrCbY-BT601-full-v1",
+      "sha256": "f12afe7b91d3df7ec9600250a838986dffa8b862d0e8a6e5be7875653b352a45"
+    },
+    "kodak_elitecolor200.bin": {
+      "space": "CrCbY-BT601-full-v1",
+      "sha256": "fa8bb0ca7f8052d9078a10958c8cacff780f15c7ad00b9d15db041a84e94ecbb"
+    },
+    "fuji_velvia100.bin": {
+      "space": "CrCbY-BT601-full-v1",
+      "sha256": "dd5adaa9bab86c9bd14f358526aa8c1a22bd86b3326712450f2e499f2888ca90"
+    },
+    "kodak_kchrome200.bin": {
+      "space": "CrCbY-BT601-full-v1",
+      "sha256": "87880fa9f3a44e553748445386873fc947366f22ead68f5be731d3c4cd6a3029"
+    },
+    "kodak_ektachrome100.bin": {
+      "space": "CrCbY-BT601-full-v1",
+      "sha256": "71c5eeefac55000d48163fd0043e22c2cfa2be74625b597cfd42e621c03e5e95"
+    },
+    "lomo_xpro_slide200.bin": {
+      "space": "CrCbY-BT601-full-v1",
+      "sha256": "066c188da3c3166c237f3d348d1af37d201be65be5b05d0c56ac32dacf2a412d"
+    },
+    "mono_trix400.bin": {
+      "space": "CrCbY-BT601-full-v1",
+      "sha256": "27aa68a5538cc0378dafdcc780b70f2000f386a8154ef0610ef880946ed08f59"
+    },
+    "mono_tmax100.bin": {
+      "space": "CrCbY-BT601-full-v1",
+      "sha256": "60623b718c870a7cebc51750ee3dcd3e023146ac2f993fafa17121e8b65b1ebc"
+    },
+    "mono_hp5.bin": {
+      "space": "CrCbY-BT601-full-v1",
+      "sha256": "f773afdf8f5e22329df2a3ac29ceddd7ae41b831f87457de03a1ff923920b874"
+    },
+    "mono_delta100.bin": {
+      "space": "CrCbY-BT601-full-v1",
+      "sha256": "8479cff0da807c60373dd688e823e09e64ffd75b3d7c7bc43bc58aabfa82ef49"
+    },
+    "mono_panf50.bin": {
+      "space": "CrCbY-BT601-full-v1",
+      "sha256": "bbe4103caf61ca1d67f130b51a0beaa72d74f60923aef19c62c54503825507b7"
+    },
+    "mono_hie_infra.bin": {
+      "space": "CrCbY-BT601-full-v1",
+      "sha256": "3a7c7d861fd85dee8fda8166119e0109045d08e203e0b3628c9ae33f39716bbe"
+    },
+    "polaroid_669.bin": {
+      "space": "CrCbY-BT601-full-v1",
+      "sha256": "a5c15d2a019a8a682e8337cc65590e6558ce817190fa64ed85781192d74d0922"
+    },
+    "polaroid_690.bin": {
+      "space": "CrCbY-BT601-full-v1",
+      "sha256": "8d944081ca598f98e136437961acfbab8bc381870683f9d477f635909e8923ff"
+    },
+    "fuji_fp100c.bin": {
+      "space": "CrCbY-BT601-full-v1",
+      "sha256": "32691a99cc74249a2f3adace195d8d2deba1df50869c1afc25dafcfb0e19e21c"
+    },
+    "fuji_fp3000b.bin": {
+      "space": "CrCbY-BT601-full-v1",
+      "sha256": "9d83105dc155794d242bdf7449a9b482c7d645785fd299a76cfe01c80cd33a99"
+    },
+    "fuji_pro_neg_hi.bin": {
+      "space": "CrCbY-BT601-full-v1",
+      "sha256": "a5620796c1870d061e095ba599452b48c53047aad7bfa7b6a441773722e3e538"
+    },
+    "fuji_pro_neg_std.bin": {
+      "space": "CrCbY-BT601-full-v1",
+      "sha256": "ce8d857f5152e5256d9018160e2ae03f743955bdeeb935c3505214b6007e8993"
+    },
+    "fuji_xtrans_provia.bin": {
+      "space": "CrCbY-BT601-full-v1",
+      "sha256": "2b88b53ba3724905411018c2645cfae3e3bc183751b18fba6145c9112f39a87e"
     }
   }
 }

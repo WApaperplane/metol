@@ -175,12 +175,6 @@ static unsigned atou(const char **pp)
     return v;
 }
 
-static int lerp(int a, int b, unsigned f)
-{
-    long long d = (long long)(b - a) * (long long)f;
-    return a + (int)(d >> 16);
-}
-
 static unsigned to_u8(int q16)
 {
     int v;
@@ -191,24 +185,33 @@ static unsigned to_u8(int q16)
     return (unsigned)v;
 }
 
-static int clip_q16(int v)
-{ return v < 0 ? 0 : (v > 65536 ? 65536 : v); }
-
 static int mul_q16(int a, int b)
 { return (int)(((long long)a * (long long)b + 32768) >> 16); }
+
+/* Interpolation weight may leave [0,1]: see the note on sample(). */
+static int lerp_s(int a, int b, int f)
+{
+    long long d = (long long)(b - a) * (long long)f;
+    return a + (int)(d / 65536);
+}
 
 /* Neutral chroma is the actual 8-bit value 128, not 127.5. */
 #define CHROMA_ZERO 32896
 
-static void crcb_y_to_rgb(unsigned cr, unsigned cb, unsigned y, unsigned *rgb)
+/* No clipping here. About 80% of the 17^3 CrCbY grid lands outside sRGB
+ * (release 10 measured 80.5%), and clamping those points to 0..255 destroys
+ * the transform: an identity .cube comes back as (71,83,80)...(184,173,176)
+ * instead of identity. Out-of-range values are carried into sample(), which
+ * extrapolates linearly -- the same boundary rule native_codec uses. */
+static void crcb_y_to_rgb(int cr, int cb, int y, int *rgb)
 {
-    int vr = (int)cr - CHROMA_ZERO, vb = (int)cb - CHROMA_ZERO;
-    rgb[0] = (unsigned)clip_q16((int)y + mul_q16(91881, vr));
-    rgb[1] = (unsigned)clip_q16((int)y - mul_q16(46802, vr) - mul_q16(22554, vb));
-    rgb[2] = (unsigned)clip_q16((int)y + mul_q16(116130, vb));
+    int vr = cr - CHROMA_ZERO, vb = cb - CHROMA_ZERO;
+    rgb[0] = y + mul_q16(91881, vr);
+    rgb[1] = y - mul_q16(46802, vr) - mul_q16(22554, vb);
+    rgb[2] = y + mul_q16(116130, vb);
 }
 
-static void rgb_to_crcb_y(const unsigned *rgb, unsigned char *out)
+static void rgb_to_crcb_y(const int *rgb, unsigned char *out)
 {
     int r = (int)rgb[0], g = (int)rgb[1], b = (int)rgb[2];
     int y = mul_q16(19595, r) + mul_q16(38470, g) + mul_q16(7471, b);
@@ -220,39 +223,58 @@ static void rgb_to_crcb_y(const unsigned *rgb, unsigned char *out)
     out[3] = 0;
 }
 
-/* Trilinear sample of a cubical RGBA-free node grid, channels packed as RGB. */
+/* Trilinear sample of a cubical node grid, channels packed as RGB.
+ *
+ * The three positions are signed Q16 and may fall outside [0,1]. The corner
+ * index is clamped to the last cell while the weight keeps its true offset, so
+ * a position past the edge continues along the same straight line the last
+ * cell describes. Clamping the weight instead would flatten every out-of-range
+ * grid point onto the boundary plane, which is exactly what broke the identity
+ * transform. Linear extrapolation also keeps affine transforms (identity,
+ * monochrome) exact, so it is the only boundary rule worth having. */
 static void sample(const unsigned int *nodes, unsigned n,
-                   unsigned ur, unsigned ug, unsigned ub, unsigned *out3)
+                   int pr, int pg, int pb, int *out3)
 {
-    unsigned idx[3], fr[3], ch, c;
-    int corner[8][3];
+    int idx[3], fr[3], ch, c;
+    int box[8][3];
+    int pos[3];
+    int ip, i, j, k;
+    unsigned n1 = n - 1u;
 
-    idx[0] = (ur * (n - 1u)) >> 16; fr[0] = (ur * (n - 1u)) & 0xFFFFu;
-    idx[1] = (ug * (n - 1u)) >> 16; fr[1] = (ug * (n - 1u)) & 0xFFFFu;
-    idx[2] = (ub * (n - 1u)) >> 16; fr[2] = (ub * (n - 1u)) & 0xFFFFu;
+    pos[0] = pr; pos[1] = pg; pos[2] = pb;
+    for (c = 0; c < 3; ++c) {
+        long long p = (long long)pos[c] * (long long)n1;
+        ip = (int)(p / 65536);
+        if (p < 0 && (long long)ip * 65536 != p) ip -= 1;   /* floor, not trunc */
+        if (ip < 0) ip = 0;
+        if (ip > (int)n - 2) ip = (int)n - 2;
+        idx[c] = ip;
+        fr[c] = (int)(p - (long long)ip * 65536);
+    }
 
     for (c = 0; c < 8; ++c) {
-        unsigned i = idx[0] + (c & 1u);
-        unsigned j = idx[1] + ((c >> 1) & 1u);
-        unsigned k = idx[2] + ((c >> 2) & 1u);
-        const unsigned int *nn;
-        if (i >= n) i = n - 1u;
-        if (j >= n) j = n - 1u;
-        if (k >= n) k = n - 1u;
-        nn = nodes + ((k * n + j) * n + i) * 3u;
-        corner[c][0] = nn[0];
-        corner[c][1] = nn[1];
-        corner[c][2] = nn[2];
+        i = idx[0] + (c & 1);
+        j = idx[1] + ((c >> 1) & 1u);
+        k = idx[2] + ((c >> 2) & 1u);
+        if (i > (int)n1) i = (int)n1;
+        if (j > (int)n1) j = (int)n1;
+        if (k > (int)n1) k = (int)n1;
+        {
+            const unsigned int *nn = nodes + ((k * (int)n + j) * (int)n + i) * 3u;
+            box[c][0] = (int)nn[0];
+            box[c][1] = (int)nn[1];
+            box[c][2] = (int)nn[2];
+        }
     }
 
     for (ch = 0; ch < 3; ++ch) {
-        int c00 = lerp(corner[0][ch], corner[1][ch], fr[0]);
-        int c10 = lerp(corner[2][ch], corner[3][ch], fr[0]);
-        int c01 = lerp(corner[4][ch], corner[5][ch], fr[0]);
-        int c11 = lerp(corner[6][ch], corner[7][ch], fr[0]);
-        int c0 = lerp(c00, c10, fr[1]);
-        int c1 = lerp(c01, c11, fr[1]);
-        out3[ch] = (unsigned)lerp(c0, c1, fr[2]);
+        int c00 = lerp_s(box[0][ch], box[1][ch], fr[0]);
+        int c10 = lerp_s(box[2][ch], box[3][ch], fr[0]);
+        int c01 = lerp_s(box[4][ch], box[5][ch], fr[0]);
+        int c11 = lerp_s(box[6][ch], box[7][ch], fr[0]);
+        int c0 = lerp_s(c00, c10, fr[1]);
+        int c1 = lerp_s(c01, c11, fr[1]);
+        out3[ch] = lerp_s(c0, c1, fr[2]);
     }
 }
 
@@ -374,16 +396,16 @@ int nx_main(unsigned *initial_stack)
     for (b = 0; b < N16; ++b) {
         for (g = 0; g < N16; ++g) {
             for (r = 0; r < N16; ++r) {
-                unsigned rgb[3], input[3];
+                int rgb[3], input[3];
                 unsigned o = ((b * N16 + g) * N16 + r) * 4u;
                 if (legacy_rgb) {
-                    sample(nodes, n, level_q16[r], level_q16[g], level_q16[b], rgb);
-                    out[o + 0] = (unsigned char)to_u8((int)rgb[0]);
-                    out[o + 1] = (unsigned char)to_u8((int)rgb[1]);
-                    out[o + 2] = (unsigned char)to_u8((int)rgb[2]);
+                    sample(nodes, n, (int)level_q16[r], (int)level_q16[g], (int)level_q16[b], rgb);
+                    out[o + 0] = (unsigned char)to_u8(rgb[0]);
+                    out[o + 1] = (unsigned char)to_u8(rgb[1]);
+                    out[o + 2] = (unsigned char)to_u8(rgb[2]);
                     out[o + 3] = 0;
                 } else {
-                    crcb_y_to_rgb(level_q16[r], level_q16[g], level_q16[b], input);
+                    crcb_y_to_rgb((int)level_q16[r], (int)level_q16[g], (int)level_q16[b], input);
                     sample(nodes, n, input[0], input[1], input[2], rgb);
                     rgb_to_crcb_y(rgb, out + o);
                 }

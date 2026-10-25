@@ -1,7 +1,7 @@
 Metol（米吐尔）— Samsung NX (DRIMe5 / Tizen) enhancement & research project
 （旧称 NX-WA / NX-KS2；仓库 2026-10-18 由 NXWA-nx500_modding 改名为 metol）
 
-version        2.88.0-nxwa.10       （版本段沿用 nxwa，历史发布不改号）
+version        2.88.0-nxwa.11       （版本段沿用 nxwa，历史发布不改号）
 repo           https://github.com/WApaperplane/metol   ★ 规范地址（2026-10-18 改名后）
                ↑ 旧名 WApaperplane/NXWA-nx500_modding、更早的 WApaperplane/nx500_nx1_modding 仍可重定向
 branch         nxwa（仓库默认分支）
