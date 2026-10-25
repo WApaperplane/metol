@@ -32,6 +32,9 @@ backup_original/
 .workbuddy/
 # 删除文档前的本地留档（保留在本地，不入库）
 .local_archive/
+# LUT 批量重建前后的本地基线快照（用于 A/B 对比，仓里已有 git 历史，不入库）
+looks_before_*/
+looks_removed_*/
 
 # ===== 胶片仿真(独立仓库 nx500-filmsim)=====
 # ★ 只排除编译产物，源码入库（cube2nxks.py 是本次格式定案的产物）

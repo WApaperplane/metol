@@ -26,7 +26,11 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(HERE))          # tools/lutgen → 仓库根
 OUT_BIN = os.path.join(REPO, 'looks')                  # 直接写发布物目录
 OUT_CUBE = os.path.join(HERE, 'cube')                  # .cube 中间产物（不入库）
-WARM_GUARD = 0.30     # 默认暖色保护强度；配方可用 warm_guard 覆盖（0 = 关闭）
+WARM_GUARD = 0.45     # 默认暖色保护强度；配方可用 warm_guard 覆盖（0 = 关闭）
+WARM_HUEW = 60.0      # 色相窗口半宽（度）。>0 用余弦淡出，边界处 R 不突变
+WARM_VSOFT = True     # v 门槛软化，避免红轴低端亮度倒挂
+WARM_CUT = 0.15       # 单点最大削幅，占该点 R 的比例（1.0 = 不限制）
+WARM_LIFT = 0.0       # 削幅还给 G 的比例；0.51 ≈ 亮度守恒。默认 0：实测会过冲（见文档）
 
 
 # ---------- 色彩基础 ----------
@@ -196,19 +200,23 @@ def apply_film(rgb8, p):
     #    根因是高饱和表把暖色整体推向红端（灰轴反而是中性甚至偏蓝）。
     #    只削"红超出绿"的那部分，不改色相中心，风格与饱和度保留。
     #
-    #    下面是"加强模式"的可选参数，默认全部关闭 ⇒ 输出与旧版逐字节一致
-    #    （已用 md5 全量回归验证）。要调强修正时再打开，别默认改：
+    #    参数（配方级可覆盖）：
+    #      warm_guard 强度。0 = 关闭；旧批次 0.30，2026-10-25 提到 0.45
+    #      warm_smin  起削饱和度门槛（肤色 s 常在 0.25-0.45，0.15 = 覆盖到肤色）
+    #      warm_pow   权重曲线指数（0.45 = 门槛附近也给足权重）
     #      warm_huew  色相窗口半宽（度）。0 = 旧版硬判 h≤50 或 h≥330；
     #                 >0 改用余弦淡出（边界处 R 不突变，但 30-50° 的权重会下降）
-    #      warm_vsoft v 门槛软化。True 时权重乘 min(1,v/0.14)，消除
-    #                 (32,0,0) 不削而 (48,0,0) 削造成的红轴亮度倒挂
-    #      warm_excap 单点最大削幅（归一化单位）。1.0 = 不封顶；0.22 可防纯红被整块削暗
+    #      warm_cut   单点最大削幅占该点 R 的比例（1.0 = 不封顶）
+    #      warm_lift  削掉的 R 有多少比例还给 G（0 = 纯削暗，0.5 ≈ 亮度守恒）。
+    #                 ★ 纯削 R 会把肤色整体压暗 10-12%（dLum -0.19 → -0.30），
+    #                 还一半给 G 后色相照样回正而亮度基本不变。
     wg = p.get('warm_guard', WARM_GUARD)
     wsm = p.get('warm_smin', 0.30)          # 起削饱和度门槛；肤色 s 常在 0.25-0.45
     wpw = p.get('warm_pow', 0.7)            # 权重曲线指数
-    whw = p.get('warm_huew', 0.0)           # 0 = 旧版硬边界
-    wcap = p.get('warm_excap', 1.0)         # 1.0 = 不封顶
-    vsoft = p.get('warm_vsoft', False)
+    whw = p.get('warm_huew', WARM_HUEW)     # 0 = 旧版硬边界
+    wcap = p.get('warm_cut', WARM_CUT)      # 最大削幅占 R 的比例，1.0 = 不限制
+    wlift = p.get('warm_lift', WARM_LIFT)   # 削幅还给 G 的比例，0 = 纯削暗
+    vsoft = p.get('warm_vsoft', WARM_VSOFT)
     if wg > 0.0:
         h, s, v = rgb_to_hsv(r, g, b)
         hard = (h <= 50.0 or h >= 330.0)
@@ -221,9 +229,21 @@ def apply_film(rgb8, p):
             w = hwv * ((s - wsm) / (1.0 - wsm)) ** wpw
             if vsoft:
                 w *= min(1.0, v / 0.14)
-            ex = (r - g) if wcap >= 1.0 else min(r - g, wcap)
-            if ex > 0.0 and w > 0.0:
-                r -= ex * wg * w
+            ex = r - g
+            cut = ex * wg * w
+            # 按 R 的比例封顶，不能按绝对量 —— 绝对量在低亮度处会压平红轴（曾致非单调）
+            if wcap < 1.0:
+                cut = min(cut, r * wcap)
+            # 削幅上限必须连带 lift 一起算：还 G 之后 R 不能反被 G 追上，
+            # 否则色相越过中性变黄绿（wg=0.9 + lift=0.51 时必然发生）。
+            if wlift > 0.0:
+                cut = min(cut, (r - g) / (1.0 + wlift))
+            if cut > 0.0:
+                r -= cut
+                if wlift > 0.0:
+                    # 亮度守恒：luma = .299R + .587G，Δluma ≈ -.299·cut + .587·(wlift·cut)
+                    # ⇒ wlift = 0.51 时 Δluma ≈ 0。色相仍向黄侧移动（R 降 G 升）。
+                    g += cut * wlift
 
     # 9) 输出
     out = []
@@ -277,161 +297,8 @@ def write_cube(p, path):
         f.write('\n'.join(lines) + '\n')
 
 
-# ---------- 参数库 ----------
-W = 30
-R_, O_, Y_, G_, C_, B_, P_, M_ = 0, 30, 60, 120, 180, 240, 285, 330
-
-FILMS = {
-    # ===== 富士 =====
-    'fuji_velvia50': dict(contrast=0.30, shoulder=0.18, sat=1.34,
-                          sat_hues={G_: 1.18, B_: 1.14, R_: 1.10, O_: 1.05},
-                          hue_rot={G_: -5, C_: -4, B_: 3}, gamma=(0.99, 1.0, 1.02),
-                          crosstalk=0.02, max_gray=12),
-    'fuji_velvia100': dict(contrast=0.26, shoulder=0.16, sat=1.28,
-                           sat_hues={G_: 1.15, B_: 1.12, R_: 1.08},
-                           hue_rot={G_: -4, C_: -3}, crosstalk=0.02, max_gray=12),
-    'fuji_provia100f': dict(contrast=0.20, shoulder=0.14, sat=1.14,
-                            sat_hues={G_: 1.05, B_: 1.08}, hue_rot={B_: 2},
-                            crosstalk=0.02, max_gray=12),
-    'fuji_astia100f': dict(contrast=0.10, shoulder=0.20, sat=1.02, lift=0.008,
-                           sat_hues={R_: 0.95, O_: 0.96, G_: 0.96},
-                           fog=(0.004, 0.002, 0.004), crosstalk=0.02, max_gray=12),
-    'fuji_proneg_std': dict(contrast=-0.06, shoulder=0.22, sat=0.92, lift=0.014,
-                            sat_hues={G_: 0.95, B_: 0.97}, gamma=(1.0, 1.0, 1.03),
-                            crosstalk=0.03, max_gray=12),
-    'fuji_proneg_hi': dict(contrast=0.10, shoulder=0.16, sat=1.04, lift=0.008,
-                           sat_hues={G_: 1.0, B_: 1.02}, crosstalk=0.025, max_gray=12),
-    'fuji_superia400': dict(contrast=0.12, shoulder=0.16, sat=1.06, lift=0.012,
-                            sat_hues={G_: 1.16, C_: 1.12, B_: 1.04, R_: 0.97},
-                            hue_rot={G_: -6, C_: -3}, fog=(0.0, 0.006, 0.002),
-                            crosstalk=0.03, max_gray=12),
-    'fuji_superia400p': dict(contrast=0.14, shoulder=0.15, sat=1.10, lift=0.010,
-                             sat_hues={G_: 1.12, C_: 1.06, R_: 1.02},
-                             hue_rot={G_: -4}, fog=(0.006, 0.006, 0.0),
-                             crosstalk=0.03, max_gray=12),
-    'fuji_eterna500': dict(contrast=-0.10, shoulder=0.26, sat=0.80, lift=0.020,
-                           sat_hues={G_: 1.0, C_: 1.10, B_: 1.05, R_: 0.85},
-                           hue_rot={C_: -6, B_: 6}, fog=(0.0, 0.010, 0.014),
-                           crosstalk=0.035, max_gray=12),
-    'fuji_classicchrome': dict(contrast=0.16, shoulder=0.14, sat=0.86, lift=0.010,
-                               sat_hues={R_: 0.92, O_: 0.92, G_: 1.0, B_: 0.94},
-                               hue_rot={C_: -4, B_: -3}, fog=(0.0, 0.004, 0.012),
-                               crosstalk=0.03, max_gray=12),
-    'fuji_400h': dict(contrast=0.04, shoulder=0.22, sat=0.94, lift=0.016,
-                      sat_hues={G_: 1.06, C_: 1.08, R_: 0.94},
-                      hue_rot={C_: -4}, fog=(0.002, 0.008, 0.006),
-                      crosstalk=0.03, max_gray=12),
-
-    # ===== 柯达：Portra / 负片 =====
-    'kodak_portra160': dict(contrast=0.02, shoulder=0.22, sat=0.94, lift=0.014,
-                            sat_hues={O_: 1.02, R_: 1.0, G_: 0.97, B_: 0.98},
-                            fog=(0.008, 0.004, 0.004), gamma=(1.0, 1.0, 1.015),
-                            crosstalk=0.03, max_gray=12),
-    'kodak_portra400': dict(contrast=0.04, shoulder=0.22, sat=0.96, lift=0.014,
-                            sat_hues={O_: 1.06, R_: 1.02, G_: 0.96, B_: 0.98},
-                            hue_rot={G_: -3}, fog=(0.010, 0.004, 0.002),
-                            gamma=(1.0, 0.995, 1.015), crosstalk=0.03, max_gray=12),
-    'kodak_portra800': dict(contrast=0.06, shoulder=0.24, sat=0.90, lift=0.018,
-                            sat_hues={O_: 1.06, G_: 0.94, B_: 0.96},
-                            fog=(0.012, 0.005, 0.002), crosstalk=0.035, max_gray=12),
-    'kodak_portra400vc': dict(contrast=0.10, shoulder=0.18, sat=1.12, lift=0.010,
-                              sat_hues={O_: 1.08, R_: 1.06, G_: 0.98, B_: 1.02},
-                              fog=(0.010, 0.004, 0.002), crosstalk=0.03, max_gray=12),
-    'kodak_portra400nc': dict(contrast=0.02, shoulder=0.22, sat=0.88, lift=0.016,
-                              sat_hues={G_: 0.96, B_: 0.98},
-                              fog=(0.006, 0.004, 0.006), crosstalk=0.03, max_gray=12),
-    'kodak_gold200': dict(contrast=0.10, shoulder=0.18, sat=1.04, lift=0.012,
-                          sat_hues={Y_: 1.14, O_: 1.10, G_: 1.06, B_: 0.92},
-                          hue_rot={Y_: -3, G_: -3}, fog=(0.010, 0.008, 0.0),
-                          crosstalk=0.03, max_gray=12),
-    'kodak_ultramax400': dict(contrast=0.14, shoulder=0.16, sat=1.14, lift=0.010,
-                              sat_hues={B_: 1.12, M_: 1.08, R_: 1.04, Y_: 1.0},
-                              hue_rot={B_: 4}, fog=(0.008, 0.004, 0.006),
-                              crosstalk=0.03, max_gray=12),
-    # ===== 柯达：反转 / 经典 =====
-    'kodak_ektar100': dict(contrast=0.24, shoulder=0.14, sat=1.26, lift=0.006,
-                           sat_hues={R_: 1.14, B_: 1.16, C_: 1.06, G_: 1.0},
-                           hue_rot={B_: -3, R_: -2}, fog=(0.004, 0.002, 0.004),
-                           crosstalk=0.025, max_gray=12),
-    'kodak_e100': dict(contrast=0.22, shoulder=0.14, sat=1.10, lift=0.006,
-                       sat_hues={B_: 1.10, C_: 1.06, R_: 1.02},
-                       fog=(0.002, 0.002, 0.006), crosstalk=0.025, max_gray=12),
-    'kodak_kchrome64': dict(contrast=0.26, shoulder=0.12, sat=1.16, lift=0.006,
-                            sat_hues={R_: 1.18, B_: 1.12, O_: 1.08, G_: 0.96},
-                            hue_rot={R_: -4, B_: -4, G_: 3},
-                            fog=(0.006, 0.002, 0.008), crosstalk=0.035, max_gray=12),
-    'kodak_kchrome25': dict(contrast=0.32, shoulder=0.10, sat=1.22, lift=0.004,
-                            sat_hues={R_: 1.22, B_: 1.14, G_: 0.94},
-                            hue_rot={R_: -5, B_: -5}, fog=(0.006, 0.002, 0.009),
-                            crosstalk=0.04, max_gray=12),
-
-    # ===== AGFA =====
-    'agfa_vista200': dict(contrast=0.08, shoulder=0.18, sat=1.08, lift=0.012,
-                          sat_hues={R_: 1.14, M_: 1.10, G_: 1.02, B_: 0.94},
-                          hue_rot={R_: 4, G_: -3, Y_: -4}, fog=(0.014, 0.004, 0.006),
-                          crosstalk=0.035, max_gray=12),
-    'agfa_ultra100': dict(contrast=0.16, shoulder=0.14, sat=1.24, lift=0.008,
-                          sat_hues={R_: 1.20, M_: 1.14, G_: 1.04, B_: 0.92},
-                          hue_rot={R_: 5, Y_: -5}, fog=(0.012, 0.004, 0.006),
-                          crosstalk=0.03, max_gray=12),
-    'agfa_rsx200': dict(contrast=0.20, shoulder=0.14, sat=1.10, lift=0.008,
-                        sat_hues={B_: 1.14, C_: 1.08, R_: 0.96, O_: 0.94},
-                        hue_rot={B_: -3}, fog=(0.0, 0.004, 0.012),
-                        crosstalk=0.03, max_gray=12),
-
-    # ===== 佳能 Picture Style =====
-    'canon_standard': dict(contrast=0.14, shoulder=0.14, sat=1.12, lift=0.008,
-                           sat_hues={R_: 1.08, O_: 1.06, G_: 1.02, B_: 1.0},
-                           fog=(0.004, 0.002, 0.002), crosstalk=0.02, max_gray=12),
-    'canon_faithful': dict(contrast=0.04, shoulder=0.16, sat=0.96, lift=0.006,
-                           crosstalk=0.015, max_gray=12),
-    'canon_landscape': dict(contrast=0.18, shoulder=0.14, sat=1.20, lift=0.006,
-                            sat_hues={B_: 1.20, C_: 1.18, G_: 1.14, R_: 0.96, O_: 0.94},
-                            hue_rot={B_: -3, G_: -3}, fog=(0.0, 0.004, 0.008),
-                            crosstalk=0.02, max_gray=12),
-    'canon_portrait': dict(contrast=0.06, shoulder=0.20, sat=1.02, lift=0.012,
-                           sat_hues={O_: 1.10, R_: 1.06, G_: 0.94, B_: 0.96},
-                           fog=(0.008, 0.004, 0.004), crosstalk=0.025, max_gray=12),
-    'canon_5dclassic': dict(contrast=0.12, shoulder=0.18, sat=1.06, lift=0.010,
-                            sat_hues={R_: 1.10, O_: 1.08, G_: 0.98, B_: 0.98},
-                            hue_rot={R_: 2, C_: -4}, fog=(0.010, 0.004, 0.004),
-                            gamma=(1.0, 1.0, 1.02), crosstalk=0.03, max_gray=12),
-
-    # ===== 徕卡 =====
-    'leica_m9': dict(contrast=0.18, shoulder=0.16, sat=1.10, lift=0.008,
-                     sat_hues={R_: 1.14, O_: 1.10, G_: 1.04, B_: 0.96},
-                     hue_rot={R_: 3, C_: -5}, fog=(0.010, 0.004, 0.006),
-                     crosstalk=0.03, max_gray=12),
-    'leica_m240': dict(contrast=0.10, shoulder=0.18, sat=1.02, lift=0.008,
-                       sat_hues={B_: 1.06, G_: 0.98},
-                       hue_rot={C_: -3}, fog=(0.002, 0.004, 0.008),
-                       crosstalk=0.025, max_gray=12),
-    'leica_m10': dict(contrast=0.20, shoulder=0.14, sat=1.08, lift=0.006,
-                      sat_hues={R_: 1.06, B_: 1.04},
-                      fog=(0.004, 0.002, 0.004), crosstalk=0.02, max_gray=12),
-
-    # ===== 宝丽来 / instax =====
-    'polaroid_600': dict(contrast=-0.08, shoulder=0.30, sat=0.82, lift=0.030,
-                         sat_hues={C_: 1.14, B_: 1.08, R_: 0.92, O_: 0.92},
-                         hue_rot={C_: -8, B_: 6}, fog=(0.0, 0.016, 0.020),
-                         crosstalk=0.04, max_gray=16),
-    'polaroid_sx70': dict(contrast=-0.12, shoulder=0.32, sat=0.76, lift=0.034,
-                          sat_hues={C_: 1.10, R_: 0.90, O_: 0.94},
-                          hue_rot={C_: -6, Y_: -5}, fog=(0.020, 0.014, 0.004),
-                          crosstalk=0.045, max_gray=16),
-    'polaroid_itype': dict(contrast=-0.02, shoulder=0.26, sat=0.88, lift=0.024,
-                           sat_hues={C_: 1.10, B_: 1.06, O_: 0.94},
-                           hue_rot={C_: -5}, fog=(0.004, 0.012, 0.014),
-                           crosstalk=0.035, max_gray=14),
-    'polaroid_expired': dict(contrast=-0.14, shoulder=0.34, sat=0.70, lift=0.040,
-                             sat_hues={Y_: 1.18, G_: 1.14, B_: 0.80, M_: 0.84},
-                             hue_rot={Y_: -6, B_: 8}, fog=(0.022, 0.020, 0.0),
-                             crosstalk=0.05, max_gray=22),
-    'instax_mini': dict(contrast=0.02, shoulder=0.22, sat=0.96, lift=0.018,
-                        sat_hues={O_: 1.10, R_: 1.06, C_: 1.04, B_: 0.94},
-                        hue_rot={C_: -4}, fog=(0.012, 0.006, 0.004),
-                        crosstalk=0.03, max_gray=12),
-}
+# 参数库已全部迁到 films.json（唯一源，可调参）；旧的内置 FILMS 兜底字典已删除，
+# 因为它会和 films.json 漂移 —— 曾残留下架表的参数，误用会把已下架的表重新生成回来。
 
 
 def fit_gray(p, limit):
@@ -450,10 +317,10 @@ def fit_gray(p, limit):
 
 
 def load_films():
-    """优先读 films.json（可调参），否则用内置 FILMS。"""
+    """读 films.json（唯一参数源）。缺文件直接报错 —— 不再有内置兜底。"""
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'films.json')
     if not os.path.isfile(path):
-        return FILMS
+        raise SystemExit('缺 tools/lutgen/films.json：参数库是唯一源，请从仓库恢复后重跑')
     raw = json.load(open(path, encoding='utf-8'))
     out = {}
     for name, v in raw.items():

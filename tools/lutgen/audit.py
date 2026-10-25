@@ -59,6 +59,9 @@ TH = {
 # 豁免：这些名字的某些指标不判
 WARM_NAMES = ('warm_', 'style_sepia', 'zz_')
 INVERT_NAMES = ('zz_invert',)
+# 机身原厂 LUT 槽的镜像 dump（md5 与 A00/A01/A02 槽完全一致）。用途是"对照原厂风格"，
+# 不是日常拍摄的 look —— 冷调、低反差、灰轴微非单调都是原厂设计，不按 look 口径判。
+FACTORY = ('samsung_a00', 'samsung_a01', 'samsung_a02')
 
 
 def luma(c):
@@ -97,8 +100,10 @@ def audit_one(name, lut):
     is_warm = name.startswith('warm_') or name.startswith('sepia')
 
     # --- 1. 单调性（灰轴 + 纯红轴）
+    # 1.5 → 3.0：8 位量化 + 三线性插值在低亮度处会有 1-3 级抖动，那不是非单调。
+    # 真坏表的下降幅度是 7-12 级（samsung_a00 灰轴 -12.1、a01 -7.4）。
     def drops(vals):
-        return sum(1 for a, b in zip(vals, vals[1:]) if b < a - 1.5)
+        return sum(1 for a, b in zip(vals, vals[1:]) if b < a - 3.0)
 
     mono = drops([luma(lut[idx(i, i, i)]) for i in range(N)]) + \
         drops([luma(lut[idx(i, 0, 0)]) for i in range(N)])
@@ -193,10 +198,29 @@ def audit_one(name, lut):
               ('white_pct', white_pct, False), ('jump_ratio', jump / 16.0, False),
               ('gray_gap', gray_gap, False),
               ('dr', dr, True), ('hue_err', hue_err, False)]
+    # 原厂参考表只做"是否与机身槽一致"的核对，不按 look 好坏判 —— 低反差/灰轴微非单调
+    # 是原厂冷调设计（见 LUT_UI_2026-10-18 §8.5）。
+    if name in FACTORY:
+        flags.append('REF:原厂参考表（md5 同机身槽）')
+        for key, val, inv in checks:
+            if key in ('black_luma', 'crush_pct', 'jump_ratio'):
+                mark(key, val, inv)
+        return {
+            'name': name, 'mono': mono,
+            'black': list(black), 'black_luma': round(luma(black), 1),
+            'white_luma': round(luma(white), 1),
+            'crush_pct': round(crush_pct, 2), 'white_pct': round(white_pct, 2),
+            'jump_ratio': round(jump / 16.0, 2), 'gray_gap': gray_gap,
+            'warm_red': round(warm_red, 4), 'dr': round(dr, 1),
+            'hue_err': round(hue_err, 1), 'invert': False,
+            'flags': flags, 'verdict': 'REF',
+        }
     if mono > 0:
         flags.append('BAD:非单调')
     for key, val, inv in checks:
-        if is_warm and key in ('gray_gap', 'white_pct'):
+        if is_warm and key in ('gray_gap', 'white_pct', 'hue_err'):
+            # 暖调/棕调表本来就把色相压到一条窄带上（warm_sepia 的六主色位移 168°），
+            # 那不是缺陷，是它就是棕的。
             continue
         if name.startswith('mono_') and key == 'hue_err':
             continue
@@ -324,12 +348,12 @@ def main():
            ('name', 'mono', 'blk', 'crush%', 'wht%', 'jump', 'gray', 'warm_r', 'dr', 'hue'))
     print(hdr)
     print('  ' + '-' * (len(hdr) - 2))
-    cnt = {'OK': 0, 'WARN': 0, 'BAD': 0, 'INVERT': 0}
+    cnt = {'OK': 0, 'WARN': 0, 'BAD': 0, 'INVERT': 0, 'REF': 0}
     for r in rows:
         cnt[r.get('verdict', 'BAD')] = cnt.get(r.get('verdict', 'BAD'), 0) + 1
-        if a.bad_only and r.get('verdict') in ('OK',):
+        if a.bad_only and r.get('verdict') in ('OK', 'REF'):
             continue
-        tag = {'OK': '  ', 'WARN': '!!', 'BAD': '**', 'INVERT': 'IV'}.get(r.get('verdict'), '**')
+        tag = {'OK': '  ', 'WARN': '!!', 'BAD': '**', 'INVERT': 'IV', 'REF': 'RF'}.get(r.get('verdict'), '**')
         if r.get('flags') and r['flags'][0].startswith('BAD:读取'):
             print('%s %-22s %s' % (tag, r['name'], r['flags'][0]))
             continue
@@ -338,8 +362,8 @@ def main():
             r['jump_ratio'], r['gray_gap'], r['warm_red'], r['dr'], r['hue_err'],
             ('   ' + ' '.join(r['flags'])) if r.get('flags') else ''))
 
-    print('\n%d 张：OK %d ｜ WARN %d ｜ BAD %d ｜ 反相 %d' %
-          (len(rows), cnt['OK'], cnt['WARN'], cnt['BAD'], cnt['INVERT']))
+    print('\n%d 张：OK %d ｜ WARN %d ｜ BAD %d ｜ 原厂参考 %d ｜ 反相 %d' %
+          (len(rows), cnt['OK'], cnt['WARN'], cnt['BAD'], cnt['REF'], cnt['INVERT']))
 
     if a.photos:
         pdir = os.path.join(REPO, '..', '_photos') if a.photos == '@default' else a.photos
@@ -349,14 +373,14 @@ def main():
         else:
             print('\n[照片口径] 暖色区色相位移 dHue（负 = 偏红）｜>±3° 可辨 ｜>±5° 明显')
             print('           设计上就该暖的表（warm_*/sepia）与无色相表（mono_*/noir/invert）不判')
-            skip = ('warm_', 'sepia', 'zz_', 'mono_', 'style_noir')
+            skip = ('warm_', 'sepia', 'zz_', 'mono_', 'style_noir', 'bleach')
             ranked = sorted(rows, key=lambda r: pr.get(r['name'], (0, 0))[0])
             for r in ranked:
                 if r['name'] not in pr:
                     continue
                 dh, drg = pr[r['name']]
                 r['dHue'], r['dRG'] = dh, drg
-                exempt = r['name'].startswith(skip)
+                exempt = any(k in r['name'] for k in skip)
                 tag = '  '
                 if not exempt:
                     if dh < -5:
@@ -373,9 +397,9 @@ def main():
                     print('%s %-22s %+7.2f° %+7.3f%s' %
                           (tag, r['name'], dh, drg, '   (设计暖调/无色相，豁免)' if exempt else ''))
             n3 = sum(1 for r in rows if r['name'] in pr
-                     and pr[r['name']][0] < -3 and not r['name'].startswith(skip))
+                     and pr[r['name']][0] < -3 and not any(k in r['name'] for k in skip))
             n5 = sum(1 for r in rows if r['name'] in pr
-                     and pr[r['name']][0] < -5 and not r['name'].startswith(skip))
+                     and pr[r['name']][0] < -5 and not any(k in r['name'] for k in skip))
             print('  → dHue < -3° 共 %d 张，< -5° 共 %d 张（%d 张照片）' %
                   (n3, n5, a.limit))
 
