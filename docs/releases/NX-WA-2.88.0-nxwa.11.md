@@ -6,7 +6,7 @@
 ## 一句话
 
 自建表能保证不越界，但片种指纹被模型压平了；这一版把 13 张同名表换成公开来源的真胶片 CLUT、
-新增 30 张经典片种，再按项目既有去重门槛收敛回 90 张。顺带查明 release ≤10 包里的
+新增 30 张经典片种，再按人眼可辨阈值（median dE00 < 2.3）收敛回 82 张。顺带查明 release ≤10 包里的
 `cube2lut.arm` 一直是 RGB 直通，源码树里那个"已修复"版反而更坏。
 
 ## 一、外部 LUT 导入
@@ -32,14 +32,25 @@
 （全部彩色表 ~145°，自建表 5–12°），定案靠摄影常识：Portra 400 必须把 (208,48,48) 送成
 (251,65,23)，而不是 (113,80,227)。正确顺序是 `r = idx%64`（红最快）。
 
-## 二、收敛：112 → 90
+## 二、收敛：112 → 82
 
-`tools/lutgen/trim_plan.py` 归档 22 张（移到 `E:/NXWA/_looks_trim_20261025/`，不删除）：
+`tools/lutgen/trim_plan.py` 分两批归档 30 张（移到 `E:/NXWA/_looks_trim_20261025/`，不删除）。
+
+**第一批 22 张**（按项目去重门槛 3.112 找同片种/弱差异）：
 
 - 同一片种两份文件 4 张（`ektar100`、`film_portra`、`film_superia`、`film_expired`）
 - `v2_` 批次 11 张 —— 同片种已有公开来源版本，留着会让菜单出现两个近同名项
 - 人眼不可分（dE00 < 1.5）7 张：3513→3510、2393→2383、Delta3200→HP5、FP4→Delta100、
   style_noir→mono_hard、style_bleach→pentax_bleach、agfa_rsx200→pentax_vibrant
+
+**第二批 8 张**（收敛到 90 后按 JND 2.3 重算，21 对里有 8 张属真重复）：
+`fuji_fp3000b`→Tri-X(1.44)、`mono_tmax100`→Acros(1.67)、`fuji_160c`→400H(1.72)、
+`fuji_800z`→400H(2.11)、`cool_arctic`→Eterna500(1.87)、`kodak_ultramax400`→Gold200(1.94)、
+`fuji_xtrans_provia`→Provia100F(2.07，语义重复)、`polaroid_itype`→polaroid_600(2.09)。
+
+余下 13 对**不动**，它们是设计对立而非重复：3510(冷)/2383(暖)、Pro Neg Hi/Std、
+三张 warm_* 暖调、HP5/Pan-F(ISO50 超细颗粒)、K64/K200、Eterna500/pentax_satobi、
+pentax_vibrant/ricoh_xpro、400H/portra160。
 
 **没有用自动聚类定案**。按门槛 3.112 完整链接 + "名字短优先"会得出 `mono_fp4` 顶掉 Tri-X、
 `fuji_160c` 顶掉 Portra 160 —— 距离矩阵只能回答"像不像"，回答不了"哪张该活"。
@@ -70,7 +81,7 @@ RGB (0,34900,0) → 钳成 (0,0.53,0) → 转回 YCbCr = **(71,83,80)**。
 
 ## 四、机端状态
 
-- LUT 库 61 → **90 张**，全量 MD5 与本地一致；`encoding.json` 清掉 22 条悬挂登记。
+- LUT 库 61 → **82 张**，全量 MD5 与本地一致；`encoding.json` 清掉 30 条悬挂登记。
 - `cube2lut.arm` 两处副本（`/opt/usr/nx-ks/` 与 `/opt/usr/nx-ks/lut/`）均已换为 `b798964d`。
 - 相机地址变为 **192.168.0.102**（原 .106 不通）。
 

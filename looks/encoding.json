@@ -5,10 +5,6 @@
       "space": "CrCbY-BT601-full-v1",
       "sha256": "4ee9b3bd2e9d01f2d9d4e17d2993d1c6b2c25e00f4dc690444c3b442393b9985"
     },
-    "cool_arctic.bin": {
-      "space": "CrCbY-BT601-full-v1",
-      "sha256": "872311fccbf135834325e8163c0c8911bde5b3bd9b5a51250ec448a2879515eb"
-    },
     "film_cinestill.bin": {
       "space": "CrCbY-BT601-full-v1",
       "sha256": "2b57c96ca3a7a619ad6fd41c6fe8eec5eff930bcf2b52d983e6ff24674c9409f"
@@ -69,10 +65,6 @@
       "space": "CrCbY-BT601-full-v1",
       "sha256": "5ea7bfd6367ce4830ab9104e976040ab6ff163fe07bd38aa8620bf252b34d7db"
     },
-    "kodak_ultramax400.bin": {
-      "space": "CrCbY-BT601-full-v1",
-      "sha256": "cdaaeffc54e2b4225ff3518305a8a28c901d6639e59d2bd30b8d5371fa485bbe"
-    },
     "mono_acros.bin": {
       "space": "CrCbY-BT601-full-v1",
       "sha256": "452ddb806fb8a5d7d297f603189a422e7b2187a1adef517b8b57514a69e32536"
@@ -116,10 +108,6 @@
     "polaroid_expired.bin": {
       "space": "CrCbY-BT601-full-v1",
       "sha256": "67531e095e827ad2ea9f2c2846752900262d1fceba53eb9cc33bff3fe13f8088"
-    },
-    "polaroid_itype.bin": {
-      "space": "CrCbY-BT601-full-v1",
-      "sha256": "4a588ddc9f08dbfa443769b1db468acfcc15babf5dc59be35d21eae6fef6ffdc"
     },
     "ricoh_bleach.bin": {
       "space": "CrCbY-BT601-full-v1",
@@ -273,14 +261,6 @@
       "space": "CrCbY-BT601-full-v1",
       "sha256": "d0f629d207e6b9e94db12054c49964ded4362eb05cf57680941c809fd5a0cee3"
     },
-    "fuji_160c.bin": {
-      "space": "CrCbY-BT601-full-v1",
-      "sha256": "402581b75893458e0a06a2b28a8e2cec4ca9fc836fd38ad7e6ad2137098f69c9"
-    },
-    "fuji_800z.bin": {
-      "space": "CrCbY-BT601-full-v1",
-      "sha256": "1daed71c87bdd1c65c937e4e0fd754ea0f767a68d3118cbddf929b49c330de5c"
-    },
     "fuji_superia100.bin": {
       "space": "CrCbY-BT601-full-v1",
       "sha256": "5099d55b27e386f2f01cdb2998885af1e4e40bce57dd12b850f7fa217250d289"
@@ -313,10 +293,6 @@
       "space": "CrCbY-BT601-full-v1",
       "sha256": "27aa68a5538cc0378dafdcc780b70f2000f386a8154ef0610ef880946ed08f59"
     },
-    "mono_tmax100.bin": {
-      "space": "CrCbY-BT601-full-v1",
-      "sha256": "60623b718c870a7cebc51750ee3dcd3e023146ac2f993fafa17121e8b65b1ebc"
-    },
     "mono_hp5.bin": {
       "space": "CrCbY-BT601-full-v1",
       "sha256": "f773afdf8f5e22329df2a3ac29ceddd7ae41b831f87457de03a1ff923920b874"
@@ -345,10 +321,6 @@
       "space": "CrCbY-BT601-full-v1",
       "sha256": "32691a99cc74249a2f3adace195d8d2deba1df50869c1afc25dafcfb0e19e21c"
     },
-    "fuji_fp3000b.bin": {
-      "space": "CrCbY-BT601-full-v1",
-      "sha256": "9d83105dc155794d242bdf7449a9b482c7d645785fd299a76cfe01c80cd33a99"
-    },
     "fuji_pro_neg_hi.bin": {
       "space": "CrCbY-BT601-full-v1",
       "sha256": "a5620796c1870d061e095ba599452b48c53047aad7bfa7b6a441773722e3e538"
@@ -356,10 +328,6 @@
     "fuji_pro_neg_std.bin": {
       "space": "CrCbY-BT601-full-v1",
       "sha256": "ce8d857f5152e5256d9018160e2ae03f743955bdeeb935c3505214b6007e8993"
-    },
-    "fuji_xtrans_provia.bin": {
-      "space": "CrCbY-BT601-full-v1",
-      "sha256": "2b88b53ba3724905411018c2645cfae3e3bc183751b18fba6145c9112f39a87e"
     }
   }
 }

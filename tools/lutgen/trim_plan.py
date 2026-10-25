@@ -55,6 +55,19 @@ TRIM = {
     'v2_pentax_gold':       ('pentax_gold', 5.00, '同片种重复'),
     'v2_pentax_satobi':     ('pentax_satobi', 5.40, '同片种重复'),
     'v2_fuji_eterna':       ('fuji_eterna500', 4.40, '同片种重复'),
+
+    # --- 第二批：收敛到 90 之后重算，JND(2.3) 内仍有 21 对，其中 8 张属真重复 ---
+    # 其余 13 对是设计对立，不动：3510(冷)/2383(暖)、pro_neg_hi/pro_neg_std、
+    # warm_gold/warm_honey/warm_rust、hp5/panf50(ISO50 超细颗粒)、kchrome64/kchrome200、
+    # eterna500/pentax_satobi、pentax_vibrant/ricoh_xpro、400h/portra160。
+    'fuji_fp3000b':     ('mono_trix400', 1.44, '黑白撕拉片，LUT 层面与 Tri-X 无差别'),
+    'mono_tmax100':     ('mono_acros', 1.67, '同为细颗粒 100 度黑白，探针上几乎重合'),
+    'fuji_160c':        ('fuji_400h', 1.72, '富士 Pro 负片三兄弟，160C 已停产'),
+    'fuji_800z':        ('fuji_400h', 2.11, '同上，与 400H 差 2.11、与 160C 差 1.89'),
+    'cool_arctic':      ('fuji_eterna500', 1.87, '自建冷调，与 Eterna500 同向且更弱'),
+    'kodak_ultramax400': ('kodak_gold200', 1.94, '两张柯达民用负片，Gold 200 更经典'),
+    'fuji_xtrans_provia': ('fuji_provia100f', 2.07, '机内 Provia 与真 Provia 100F 语义重复'),
+    'polaroid_itype':   ('polaroid_600', 2.09, '两代整幅拍立得，色调差 2.09'),
 }
 
 # v2_canon_landscape 保留：品牌风光风格，库里没有别的表覆盖它。
