@@ -38,11 +38,15 @@ GAIN_HARD = 0.55   # 灰轴偏差 > HARD_TH 时启用的强度（明显过头才
 HARD_TH = 20.0
 WARM = 0.30        # 暖色降压强度
 WARM_HUE = (330, 50)
-SKIP_SUBSTR = ('warm_', 'sepia', 'mono_', 'identity', 'film_negative')
+SKIP_SUBSTR = ('warm_', 'sepia', 'mono_', 'identity', 'film_negative',
+               'samsung_', 'cool_')   # samsung_* 是只读原厂参考表，cool_* 是 mk_coolfix 产物
 
 
 def load_table(path):
     """→ (17,17,17,3) float，索引 [r][g][b]（按 R 变化最快还原）"""
+    from native_codec import space_for, NATIVE
+    if space_for(path) == NATIVE:
+        raise ValueError('原生 CrCbY 表不能按 RGB 修改；请调整 RGB 配方后重新编译')
     d = np.frombuffer(open(path, 'rb').read(), dtype=np.uint8)[:N * N * N * 4]
     t = d.reshape(N, N, N, 4)[:, :, :, :3].astype(np.float32)
     return t.transpose(2, 1, 0, 3)          # [b][g][r] → [r][g][b]

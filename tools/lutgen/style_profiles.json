@@ -1,0 +1,144 @@
+{
+  "schema": 1,
+  "interpretation": "Reference-inspired creative designs, not measured manufacturer or film-stock replicas. Lab adjustments are design choices.",
+  "tone_input_L": [0, 8, 20, 40, 60, 80, 92, 100],
+  "selection": ["pentax_gold", "pentax_satobi", "fuji_classicchrome", "fuji_velvia50", "fuji_eterna", "kodak_portra400", "kodak_gold200", "kodak_kchrome64", "ricoh_bleach", "canon_landscape", "polaroid600", "ilford_hp5"],
+  "profiles": {
+    "pentax_gold": {
+      "label": "宾得 Gold · 蓝影金光", "family": "split-gold", "source": "https://www.ricoh-imaging.co.jp/english/products/custom_image/",
+      "intent": "Blue shadows, neutral middle greys and clearly yellow highlights; no magenta wash.",
+      "tone": [0, 5, 16, 38, 61, 83, 95, 100], "sat": 1.03,
+      "sat_hues": {"60": 1.12, "120": 0.92},
+      "split": {"shadow": [-1.2, -12], "mid": [0, 0], "highlight": [-1, 14]}
+    },
+    "pentax_satobi": {
+      "label": "宾得 Satobi · 青蓝暗黄褪红", "family": "muted-retro", "source": "https://www.ricoh-imaging.co.jp/english/products/custom_image/",
+      "intent": "Cyan blue, dull yellow and faded red; deliberately different from a warm overall tint.",
+      "tone": [3, 12, 23, 43, 60, 77, 89, 97], "sat": 0.82,
+      "sat_hues": {"0": 0.57, "30": 0.85, "60": 0.93, "120": 0.78, "180": 1.15, "240": 1.08},
+      "hue": {"120": -16, "240": -18}, "lightness_hues": {"60": -5},
+      "split": {"shadow": [-2, -5], "mid": [0, 1], "highlight": [-0.5, 3]}
+    },
+    "pentax_reversal": {
+      "label": "宾得 Reversal · 深黑正片", "family": "deep-reversal", "source": "https://www.ricoh-imaging.co.jp/english/products/custom_image/",
+      "intent": "Deep tonal separation with warm foliage and strong colour; neutral highlights.",
+      "tone": [0, 3, 11, 31, 61, 86, 97, 100], "sat": 1.10,
+      "sat_hues": {"120": 1.17, "240": 0.92, "30": 0.90}, "hue": {"120": -10},
+      "split": {"shadow": [0, -1], "mid": [0, 0], "highlight": [0, 0]}
+    },
+    "fuji_classicchrome": {
+      "label": "富士 Classic Chrome · 冷影纪实", "family": "documentary", "source": "https://www.fujifilm-x.com/global/products/film-simulation/classic-chrome/",
+      "intent": "Muted colour, substantial shadows, olive greens, cyan blues and suppressed magenta.",
+      "tone": [0, 4, 13, 34, 59, 81, 94, 100], "sat": 0.79,
+      "sat_hues": {"0": 1.04, "120": 0.88, "180": 1.04, "240": 0.86, "300": 0.62},
+      "hue": {"120": -13, "240": -10},
+      "split": {"shadow": [-2, -6], "mid": [0, 0], "highlight": [0, 1.5]}
+    },
+    "fuji_velvia50": {
+      "label": "富士 Velvia · 浓绿深蓝", "family": "vivid-nature", "source": "https://www.fujifilm-x.com/en-us/products/film-simulation/",
+      "intent": "Strong contrast, emerald foliage and saturated skies with restrained orange skin.",
+      "tone": [0, 2, 9, 29, 60, 86, 97, 100], "sat": 1.24,
+      "sat_hues": {"120": 1.22, "180": 1.10, "240": 1.12, "30": 0.77},
+      "hue": {"120": 11, "240": -5},
+      "split": {"shadow": [0, -1], "mid": [0, 0], "highlight": [0, -0.5]}
+    },
+    "fuji_eterna": {
+      "label": "富士 Eterna · 柔光电影", "family": "soft-cinema", "source": "https://www.fujifilm-x.com/en-us/products/film-simulation/",
+      "intent": "Open shadows, compressed highlights and low colour density; not a high-contrast teal filter.",
+      "tone": [3, 11, 24, 43, 61, 78, 89, 97], "sat": 0.72,
+      "sat_hues": {"30": 1.05, "120": 0.90, "240": 0.94}, "hue": {"120": 5, "240": -6},
+      "split": {"shadow": [-1.5, -2.5], "mid": [0, 0], "highlight": [0, 1]}
+    },
+    "fuji_superia400": {
+      "label": "富士 Superia · 青绿负片", "family": "consumer-negative", "source": "https://github.com/JanLohse/spectral_film_lut",
+      "intent": "Creative interpretation with cyan-green shadows, lively red and warm restrained highlights.",
+      "tone": [1, 8, 19, 40, 63, 84, 95, 100], "sat": 1.04,
+      "sat_hues": {"0": 1.10, "120": 1.12, "240": 1.02, "30": 0.94},
+      "hue": {"120": 14, "240": -9},
+      "split": {"shadow": [-3, -3], "mid": [-0.5, 0], "highlight": [0, 3]}
+    },
+    "kodak_portra400": {
+      "label": "柯达 Portra · 柔肤暖绿", "family": "soft-portrait", "source": "https://www.kodakprofessional.com/photographers/film/color/kodak-professional-portra-400-film/516",
+      "intent": "Soft skin, restrained foliage, broad highlight roll-off and slight warmth; neutral whites.",
+      "tone": [1, 9, 22, 43, 63, 82, 94, 100], "sat": 0.94,
+      "sat_hues": {"30": 0.96, "120": 0.80, "240": 0.94}, "hue": {"120": -7, "240": -4},
+      "split": {"shadow": [0, 0], "mid": [0, 1.5], "highlight": [0, 1]}
+    },
+    "kodak_gold200": {
+      "label": "柯达 Gold · 暖黄日常", "family": "warm-negative", "source": "https://www.kodak.com/en/still-film/product/consumer/gold-200-film/",
+      "intent": "Warm yellow middle tones and foliage, muted blue; unlike Pentax Gold, shadows are not blue.",
+      "tone": [1, 9, 21, 42, 63, 83, 94, 100], "sat": 1.10,
+      "sat_hues": {"60": 1.18, "30": 1.02, "120": 0.97, "240": 0.85},
+      "hue": {"120": -9, "240": -4},
+      "split": {"shadow": [0, 3], "mid": [-0.4, 5], "highlight": [-0.5, 4]}
+    },
+    "kodak_ektar100": {
+      "label": "柯达 Ektar · 鲜明彩色", "family": "vivid-negative", "source": "https://www.kodakprofessional.com/sites/default/files/wysiwyg/pro/resources/e4046_ektar_100.pdf",
+      "intent": "Vivid red/yellow and clean blue; moderate-to-strong contrast without a coloured white point.",
+      "tone": [0, 5, 15, 36, 63, 86, 96, 100], "sat": 1.23,
+      "sat_hues": {"0": 1.10, "30": 0.85, "60": 1.08, "120": 1.02, "240": 1.10},
+      "hue": {"0": 4, "120": 3, "240": -2},
+      "split": {"shadow": [0, 0], "mid": [0, 0.5], "highlight": [0, 0]}
+    },
+    "kodak_kchrome64": {
+      "label": "Kodachrome · 砖红深蓝", "family": "warm-reversal", "source": "https://github.com/JanLohse/spectral_film_lut",
+      "intent": "Creative reference: tight blacks, warm red/ochre, subdued olive green and deep blue.",
+      "tone": [0, 2, 10, 30, 60, 85, 97, 100], "sat": 1.05,
+      "sat_hues": {"0": 1.10, "30": 1.10, "60": 1.08, "120": 0.79, "240": 0.92},
+      "hue": {"0": 9, "120": -13, "240": 2},
+      "split": {"shadow": [0, -2], "mid": [0, 2], "highlight": [0, 1]}
+    },
+    "ricoh_positive": {
+      "label": "理光 Positive · 浓郁正片", "family": "positive", "source": "https://www.ricoh-imaging.co.jp/english/support/qa/gr-3/",
+      "intent": "Dense, distinct red/green/blue with orange skin protected from global saturation.",
+      "tone": [0, 3, 12, 34, 61, 85, 96, 100], "sat": 1.12,
+      "sat_hues": {"0": 1.22, "30": 0.79, "60": 0.95, "120": 1.18, "240": 1.19},
+      "hue": {"120": -6},
+      "split": {"shadow": [0, -2], "mid": [0, 0], "highlight": [0, 0.5]}
+    },
+    "ricoh_negative": {
+      "label": "理光 Negative · 褪色清彩", "family": "faded-negative", "source": "https://www.ricoh-imaging.co.jp/english/products/gr-3/firmup/",
+      "intent": "Faded tonal base with readable colour edges, cyan foliage and red leaning toward orange.",
+      "tone": [4, 13, 25, 45, 64, 82, 93, 99], "sat": 0.86,
+      "sat_hues": {"0": 0.90, "30": 0.88, "120": 1.04, "240": 0.87},
+      "hue": {"0": 10, "120": 12, "240": -8},
+      "split": {"shadow": [-1.5, -3], "mid": [0, 0], "highlight": [0, 4]}
+    },
+    "ricoh_bleach": {
+      "label": "理光 Bleach · 低彩硬调", "family": "bleach", "source": "https://www.ricoh-imaging.co.jp/english/support/qa/gr-3/",
+      "intent": "Strong tonal contrast with low saturation and cool, nearly neutral shadows.",
+      "tone": [0, 2, 10, 31, 64, 89, 97, 100], "sat": 0.38,
+      "split": {"shadow": [0, -2.5], "mid": [0, 0], "highlight": [0, 0]}
+    },
+    "canon_portrait": {
+      "label": "佳能 Portrait · 明亮柔肤", "family": "clean-portrait", "source": "https://global.canon/en/imaging/picturestyle/editor/understanding.html",
+      "intent": "Bright skin and relatively lively surrounding blue/green, with skin-only mild rosy colour.",
+      "tone": [0, 10, 24, 46, 66, 85, 95, 100], "sat": 1.00,
+      "sat_hues": {"30": 0.93, "120": 1.08, "240": 1.08},
+      "skin": {"a": 1.8, "b": 0.3},
+      "split": {"shadow": [0, 0], "mid": [0, 0], "highlight": [0, 0]}
+    },
+    "canon_landscape": {
+      "label": "佳能 Landscape · 蓝绿通透", "family": "clean-landscape", "source": "https://global.canon/en/imaging/picturestyle/editor/understanding.html",
+      "intent": "Clear vivid blue and green with clean whites and less severe shadows than a reversal look.",
+      "tone": [0, 5, 16, 36, 61, 85, 96, 100], "sat": 1.15,
+      "sat_hues": {"0": 0.98, "30": 0.90, "120": 1.24, "240": 1.25},
+      "hue": {"120": 6, "240": -6},
+      "split": {"shadow": [0, 0], "mid": [0, 0], "highlight": [0, 0]}
+    },
+    "polaroid600": {
+      "label": "Polaroid 600 · 奶油相纸", "family": "instant-print", "source": "creative print interpretation; not a calibrated film replica",
+      "intent": "Visible lifted black, gentle colour, soft paper white and creamy warm highlights.",
+      "tone": [5, 14, 26, 46, 64, 81, 90, 95], "sat": 0.69,
+      "sat_hues": {"0": 1.05, "120": 0.90, "240": 0.88}, "protect_white": false,
+      "split": {"shadow": [-1, 2], "mid": [0, 2], "highlight": [-0.5, 6]}
+    },
+    "ilford_hp5": {
+      "label": "Ilford HP5 · 银盐黑白", "family": "monochrome", "source": "https://www.ilfordphoto.com/hp5-plus-35mm/",
+      "intent": "Neutral monochrome with substantial midtone separation and open shadow detail; grain is not simulated.",
+      "tone": [0, 6, 17, 38, 62, 83, 95, 100], "sat": 0,
+      "monochrome": true, "lightness_hues": {"240": -5},
+      "split": {"shadow": [0, 0], "mid": [0, 0], "highlight": [0, 0]}
+    }
+  }
+}

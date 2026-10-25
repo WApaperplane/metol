@@ -17,6 +17,7 @@
 import argparse
 import colorsys
 import pathlib
+from native_codec import rgb_grid_view, GRID
 
 N = 17
 TABLE = 19652
@@ -28,19 +29,15 @@ VLV = [0.15, 0.35, 0.55, 0.80]
 
 
 def load(p):
-    return pathlib.Path(p).read_bytes()[:TABLE]
+    return rgb_grid_view(p)[:TABLE]
 
 
 def sample(lut, r, g, b):
     """三线性插值，输入 8bit。"""
     def coord(v):
-        f = v * 16.0 / 255.0
-        if f <= 0:
-            return 0, 0, 0.0
-        if f >= 16:
-            return 16, 16, 0.0
-        i = int(f)
-        return i, i + 1, f - i
+        v = max(0.0,min(255.0,v))
+        i = min(15,int(v // 16))
+        return i, i + 1, (v-GRID[i])/(GRID[i+1]-GRID[i])
 
     r0, r1, tr = coord(r)
     g0, g1, tg = coord(g)

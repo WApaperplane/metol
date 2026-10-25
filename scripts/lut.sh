@@ -48,6 +48,38 @@ need_tools() {
     [ -n "$REGT" ]  && [ -x "$REGT" ]  || die "missing nx_regtabwrite.arm (looked in $TD and /mnt/mmc/lut)"
 }
 
+# ---------- 屏幕色彩（OLED_COLOR）随之开关 ----------
+# 2026-10-25 对照使用屏幕色彩关闭的分支，并保存/恢复用户原设置。
+# 旧 Noir 偏绿/品红已由 RGB 设计被直接作为 CrCbY 表消费复现并修正；
+# identity 中性、RGB 三分量相等都不能证明原生格式或后段处理正确。
+# 保留此开关管理以沿用已验证的分支，不把 OLED 当成已经确认的偏色根因。
+# 首次 apply 记下用户原值，off 时还原；prefman 不可用则静默跳过，不阻塞主流程。
+PREFMAN=$(command -v prefman 2>/dev/null || echo /usr/bin/prefman)
+
+oled_save() {
+    [ -x "$PREFMAN" ] || return 0
+    [ -f "$ST/oled_orig" ] && return 0
+    "$PREFMAN" get 0 0x0a704 l 2>/dev/null \
+        | $BB awk '/value *= */{print $3; exit}' > "$ST/oled_orig" 2>/dev/null
+    [ -s "$ST/oled_orig" ] || echo 1 > "$ST/oled_orig"
+    return 0
+}
+
+oled_put() {
+    [ -x "$PREFMAN" ] || return 0
+    "$PREFMAN" set 0 0x0a704 l "$1" >/dev/null 2>&1
+    return 0
+}
+
+oled_restore() {
+    [ -f "$ST/oled_orig" ] || return 0
+    v=$($BB tr -dc '0-9' < "$ST/oled_orig" 2>/dev/null)
+    [ -n "$v" ] && oled_put "$v"
+    $BB rm -f "$ST/oled_orig"
+    echo "OK screen-color restored to ${v:-1}"
+    return 0
+}
+
 case "${1:-status}" in
 list)
     [ -d "$LAB" ] || die "no $LAB"
@@ -88,6 +120,11 @@ apply)
     [ -n "$src" ] || die "not found: $name (.cube or .bin)"
 
     $BB mkdir -p "$ST"
+
+    # 关屏幕色彩（理由见 oled_save 注释）。放在写槽之前，保证半按那一刻起 ISP
+    # 只受 LUT 一层影响。
+    oled_save
+    oled_put 0
 
     # 首次进入时若未备份，先建立本次会话的还原点（不写 LUT）
     if [ ! -f "$ST/ready" ]; then
@@ -170,6 +207,7 @@ off)
     #   登记表已回原厂，下一次 p7 自己的 Load（半按/切档/拍照）就会取到原厂表。
     #   若此刻画面仍停在上一张表上，半按一次即可。
     $BB rm -f "$ST/ready" "$ST/current" "$ST/keep"
+    oled_restore
     echo "OK restored (view=4 factory, still=BV12+Still6 factory, A18=original)"
     ;;
 

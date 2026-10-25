@@ -225,3 +225,6 @@ test_server/dropbear/ssh/
 # dropbear 源码树与对比产物（tar 在 dl/ 里，build_*.sh 可重建）
 test_server/dropbear/dropbear-2024.86/
 test_server/dropbear/out-*/
+
+# LUT 审计运行产物（脚本可重新生成）
+tools/lutgen/audit_out/

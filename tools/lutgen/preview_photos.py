@@ -14,6 +14,7 @@ import sys
 
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
+from native_codec import space_for, NATIVE
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(HERE))
@@ -24,14 +25,28 @@ GRID = np.array([16 * i for i in range(16)] + [255], dtype=np.float64)
 FONT = 'C:/Windows/Fonts/msyhbd.ttc'
 
 
+class LutArray(np.ndarray):
+    def __array_finalize__(self, source):
+        self.space = getattr(source, 'space', None)
+
+
 def load_lut(path):
-    raw = np.frombuffer(open(path, 'rb').read(), dtype=np.uint8)[:N * N * N * 4]
+    with open(path, 'rb') as source:
+        data = source.read()
+    raw = np.frombuffer(data, dtype=np.uint8)[:N * N * N * 4]
     tbl = raw.reshape(N, N, N, 4)[:, :, :, :3]      # [b][g][r][ch]
-    return tbl.astype(np.float32)
+    result = tbl.astype(np.float32).view(LutArray)
+    result.space = space_for(path, data)
+    return result
 
 
 def apply_lut(img, lut):
     """img: (h,w,3) float32 0..255 → (h,w,3) uint8"""
+    native = getattr(lut, 'space', None) == NATIVE
+    if native:
+        r,g,b = img[:,:,0],img[:,:,1],img[:,:,2]
+        img = np.clip(np.stack((128+.5*r-.418688*g-.081312*b,
+            128-.168736*r-.331264*g+.5*b, .299*r+.587*g+.114*b),axis=2),0,255)
     ia, fa = [], []
     for c in range(3):
         v = img[:, :, c]
@@ -52,6 +67,9 @@ def apply_lut(img, lut):
                 jj = np.minimum(N - 1, g0 + dg)
                 kk = np.minimum(N - 1, b0 + db)
                 out += lut[kk, jj, ii] * (wr * wg * wb)[:, :, None]
+    if native:
+        cr,cb,y = out[:,:,0]-128,out[:,:,1]-128,out[:,:,2]
+        out = np.stack((y+1.402*cr,y-.714136*cr-.344136*cb,y+1.772*cb),axis=2)
     return np.clip(out + 0.5, 0, 255).astype(np.uint8)
 
 

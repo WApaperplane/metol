@@ -23,6 +23,7 @@ import json
 import math
 import pathlib
 import sys
+from native_codec import rgb_grid_view
 
 N = 17
 GRID = [i * 16 for i in range(16)] + [255]
@@ -32,7 +33,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
 
 
 def load_lut(path):
-    raw = pathlib.Path(path).read_bytes()
+    raw = rgb_grid_view(path)
     if len(raw) < TABLE:
         raise ValueError(f"{path}: 长度 {len(raw)} < {TABLE}")
     return raw[:TABLE]
@@ -42,13 +43,9 @@ def at(lut, r8, g8, b8):
     """三线性插值取值 —— 必须插值。17 格点直接取最近点会把输出量化到 16 级，
     色相抖动可达 ±15°，测出来的全是量化噪声（identity17 也会报出几十度偏差）。"""
     def coord(v):
-        f = v * 16.0 / 255.0
-        i0 = int(math.floor(f))
-        if i0 >= 16:
-            return 16, 16, 0.0
-        if i0 < 0:
-            return 0, 0, 0.0
-        return i0, i0 + 1, f - i0
+        v = max(0.0,min(255.0,v))
+        i0 = min(15,int(v // 16))
+        return i0, i0 + 1, (v-GRID[i0])/(GRID[i0+1]-GRID[i0])
 
     r0, r1, tr = coord(r8)
     g0, g1, tg = coord(g8)

@@ -35,9 +35,11 @@
   python tools/lutgen/audit.py --bad-only       # 只列 WARN/BAD/INVERT
 """
 import argparse
+import hashlib
 import json
 import os
 import sys
+from native_codec import rgb_grid_view
 
 N = 17
 GRID = [16 * i for i in range(16)] + [255]
@@ -62,6 +64,14 @@ INVERT_NAMES = ('zz_invert',)
 # 机身原厂 LUT 槽的镜像 dump（md5 与 A00/A01/A02 槽完全一致）。用途是"对照原厂风格"，
 # 不是日常拍摄的 look —— 冷调、低反差、灰轴微非单调都是原厂设计，不按 look 口径判。
 FACTORY = ('samsung_a00', 'samsung_a01', 'samsung_a02')
+# ★ 只认 md5。文件名会骗人：commit 53af8e8 的「修偏红」脚本把这三张当成老表重算过一遍，
+#   白点 (182,182,254)→(195,195,228)，但文件名没变，FACTORY 豁免照样放行 ⇒ 豁免逻辑
+#   一直在为一张假表服务。现在 md5 不匹配就按普通 look 判，能直接把污染暴露出来。
+FACTORY_MD5 = {
+    '134909c75c58ba73104edeb68bf6ffc1': 'samsung_a00',
+    '69a4ac46b1c898409e201e92620a621f': 'samsung_a01',
+    '3ac9383743b305a10ee3e9b0a9cea2dd': 'samsung_a02',
+}
 
 
 def luma(c):
@@ -86,16 +96,19 @@ def hsv(r, g, b):
 
 def load(path):
     """返回 4913 个 (r,g,b)，索引 = ((B*17+G)*17+R)。顺手校验文件长度与槽尾 pad。"""
-    raw = open(path, 'rb').read()
+    raw = rgb_grid_view(path)
     if len(raw) != 19712:
         raise ValueError('长度 %d ≠ 19712' % len(raw))
+    # 槽尾 60B pad：我们生成的表填 0，但原厂表填的是非零元数据（samsung_a00/01/02
+    # 实测三张全部非零）。pad 不参与查表，不能当读取失败 —— 之前正是这条把原厂
+    # 参考表判成「BAD:读取失败」，反过来掩盖了它曾被改写这件事。
     pad = raw[N * N * N * 4:]
     if any(pad):
-        raise ValueError('槽尾 pad 非零（%d 字节）' % len(pad))
+        pass  # 保留位置：pad 内容与查表无关
     return [(raw[i * 4], raw[i * 4 + 1], raw[i * 4 + 2]) for i in range(N * N * N)]
 
 
-def audit_one(name, lut):
+def audit_one(name, lut, md5=None):
     idx = lambda r, g, b: ((b * N + g) * N + r)
     is_warm = name.startswith('warm_') or name.startswith('sepia')
 
@@ -200,7 +213,7 @@ def audit_one(name, lut):
               ('dr', dr, True), ('hue_err', hue_err, False)]
     # 原厂参考表只做"是否与机身槽一致"的核对，不按 look 好坏判 —— 低反差/灰轴微非单调
     # 是原厂冷调设计（见 LUT_UI_2026-10-18 §8.5）。
-    if name in FACTORY:
+    if name in FACTORY and md5 in FACTORY_MD5:
         flags.append('REF:原厂参考表（md5 同机身槽）')
         for key, val, inv in checks:
             if key in ('black_luma', 'crush_pct', 'jump_ratio'):
@@ -340,7 +353,8 @@ def main():
     rows = []
     for n in names:
         try:
-            rows.append(audit_one(n, load(os.path.join(LOOKS, n + '.bin'))))
+            rows.append(audit_one(n, load(os.path.join(LOOKS, n + '.bin')),
+                                  hashlib.md5(open(os.path.join(LOOKS, n + '.bin'), 'rb').read()).hexdigest()))
         except Exception as e:
             rows.append({'name': n, 'verdict': 'BAD', 'flags': ['BAD:读取失败 %s' % e]})
 
