@@ -182,6 +182,14 @@ status)
     fi
     echo "BACKUP $([ -f "$ST/a18_orig.bin" ] && echo present || echo absent)"
     "$REGT" status 2>/dev/null | $BB sed -n '2,4p'
+    # 引擎实际指向哪个槽（0x2082b00c = 3DLUT 表指针）。
+    # 注意：所有表都写在同一个槽 A18，所以指针恒为 A18，**不能**用它判断
+    # "槽内容有没有被 p7 重新读入"——那要靠半按快门触发 View::_load。
+    ENG=$($BB devmem 0x2082b00c 32 2>/dev/null | $BB tr 'A-F' 'a-f')
+    if [ -n "$ENG" ]; then
+        echo "ENGINE $ENG  (3DLUT 当前表指针)"
+        echo "NOTE   apply 之后若没半按过快门，画面可能仍是上一张表"
+    fi
     ;;
 
 *)
