@@ -790,5 +790,7 @@
         "SHARPNESS": 10,
         "CONTRAST": 11
     }
+  },
+  "presets": {
   }
 }
