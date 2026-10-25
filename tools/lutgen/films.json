@@ -226,64 +226,6 @@
     "fog": [0.022, 0.020, 0.0], "crosstalk": 0.05, "max_gray": 30
   },
 
-  "_comment_restore": "旧命名批次 —— 与 kodak_*/fuji_* 同题材但不同名的 9 张。2026-10-25 曾整体下架，现恢复参数继续受管；去留见 docs/current/LUT_AUDIT_2026-10-25.md §10",
-  "kodak_portra800": {
-    "contrast": 0.06, "shoulder": 0.24, "sat": 0.90, "lift": 0.018,
-    "sat_hues": {"30": 1.06, "120": 0.94, "240": 0.96},
-    "shadow": [0.004, 0.006, 0.012], "high": [0.014, 0.007, 0.002],
-    "fog": [0.012, 0.005, 0.002], "crosstalk": 0.035, "max_gray": 16
-  },
-  "canon_standard": {
-    "contrast": 0.14, "shoulder": 0.14, "sat": 1.12, "lift": 0.008,
-    "sat_hues": {"0": 1.08, "30": 1.06, "120": 1.02, "240": 1.0},
-    "shadow": [0.002, 0.003, 0.006], "high": [0.008, 0.004, 0.002],
-    "fog": [0.004, 0.002, 0.002], "crosstalk": 0.02, "max_gray": 12
-  },
-  "canon_faithful": {
-    "contrast": 0.04, "shoulder": 0.16, "sat": 0.96, "lift": 0.006,
-    "shadow": [0.0, 0.002, 0.004], "high": [0.004, 0.002, 0.002],
-    "crosstalk": 0.015, "max_gray": 10
-  },
-  "canon_5dclassic": {
-    "contrast": 0.12, "shoulder": 0.18, "sat": 1.06, "lift": 0.010,
-    "sat_hues": {"0": 1.10, "30": 1.08, "120": 0.98, "240": 0.98},
-    "hue_rot": {"0": 2, "180": -4},
-    "shadow": [0.003, 0.003, 0.008], "high": [0.012, 0.006, 0.0],
-    "fog": [0.010, 0.004, 0.004], "gamma": [1.0, 1.0, 1.02],
-    "crosstalk": 0.03, "max_gray": 14
-  },
-  "instax_mini": {
-    "contrast": 0.02, "shoulder": 0.22, "sat": 0.96, "lift": 0.018,
-    "sat_hues": {"30": 1.10, "0": 1.06, "180": 1.04, "240": 0.94},
-    "hue_rot": {"180": -4},
-    "shadow": [0.008, 0.006, 0.008], "high": [0.016, 0.008, 0.002],
-    "fog": [0.012, 0.006, 0.004], "crosstalk": 0.03, "max_gray": 16
-  },
-  "portra160": {
-    "contrast": 0.02, "shoulder": 0.22, "sat": 0.94, "lift": 0.014,
-    "sat_hues": {"30": 1.02, "0": 1.0, "120": 0.97, "240": 0.98},
-    "shadow": [0.002, 0.004, 0.010], "high": [0.010, 0.005, 0.002],
-    "fog": [0.008, 0.004, 0.004], "gamma": [1.0, 1.0, 1.015],
-    "crosstalk": 0.03, "max_gray": 12
-  },
-  "portra400uc": {
-    "contrast": 0.10, "shoulder": 0.16, "sat": 1.14, "lift": 0.010,
-    "sat_hues": {"30": 1.08, "0": 1.08, "120": 0.98, "240": 1.04},
-    "fog": [0.010, 0.004, 0.002], "crosstalk": 0.03, "max_gray": 12
-  },
-  "film_velvia": {
-    "contrast": 0.28, "shoulder": 0.14, "sat": 1.26,
-    "sat_hues": {"120": 1.18, "240": 1.14, "0": 1.10},
-    "hue_rot": {"120": -4, "180": -3},
-    "shadow": [0.0, 0.004, 0.010], "high": [0.008, 0.005, 0.0],
-    "crosstalk": 0.02, "max_gray": 12
-  },
-  "film_ektar": {
-    "contrast": 0.18, "shoulder": 0.16, "sat": 1.14,
-    "sat_hues": {"240": 1.06, "180": 1.04, "0": 1.02},
-    "shadow": [0.0, 0.003, 0.008], "high": [0.006, 0.004, 0.0],
-    "crosstalk": 0.025, "max_gray": 12
-  },
 
   "_comment_ricoh": "理光 GR Image Control。positive=正片（红纯/蓝绿浓/橙抑制保肤色）；negative=负片（抬黑提亮/朱红褪色/绿偏蓝）；retro=怀旧；bleach=漂白；xpro=交叉冲洗（通道曲线分离）",
   "ricoh_positive": {
@@ -365,16 +307,14 @@
     "fog": [0.004, 0.002, 0.010], "crosstalk": 0.025, "max_gray": 18
   },
 
-  "_comment_rebuild": "以下两张是旧批次遗留的坏表（从 .cube 转换而来，黑点被抬到 77/93，整幅起灰雾、非单调 217/319 点），用参数模型重建同名表",
+  "_comment_rebuild": "老批次同名双胞胎表（portra160/portra400uc/film_velvia/film_ektar 等，从 .cube 转换而来，黑点抬到 46-93、非单调、高光烧穿）已于 2026-10-25 去重下架，参数留在 git 历史。同名题材现由 kodak_*/fuji_* 受管表覆盖。",
 
-  "_comment_rebuild2": "老模型（rea-tmp/gen_looks.py）的 sat 用 luma 插值 + c01 硬 clamp，高饱和表会同时压死暗部、烧穿高光：style_vivid 黑 15%/白 12.4%、film_velvia 白 16.1%。用新模型重建同名表",
   "style_vivid": {
     "contrast": 0.18, "shoulder": 0.12, "sat": 1.22,
     "sat_hues": {"0": 1.16, "120": 1.20, "240": 1.16},
     "crosstalk": 0.02, "max_gray": 12
   },
 
-  "_comment_rebuild3": "以下 4 张老表的 lift 过大（黑点抬到 46-50，整幅起灰雾）或高光烧穿（film_ektar 白点 11.2%）。重建时抬黑降到 ~0.12、加 shoulder 保住高光",
   "film_expired": {
     "contrast": -0.10, "shoulder": 0.26, "sat": 0.86, "lift": 0.13,
     "sat_hues": {"60": 1.15, "30": 1.10, "240": 0.88, "120": 0.92},
