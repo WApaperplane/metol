@@ -12,6 +12,7 @@ gen_luts.py — 生成三星 NX500 (DRIMe5) 硬件 3D LUT 表
 管线（gamma 域为主，白平衡与串扰在 linear 域）：
   linear → WB → 逐层 gamma → S 曲线 → 高光滚降 → 提升+色罩
          → 染料串扰 → 色相选择性(饱和/旋转) → clamp
+         → 暖色保护(削 R) → 量化 → 冷色保护(蓝区饱和封顶)
 """
 
 import json
@@ -31,6 +32,9 @@ WARM_HUEW = 60.0      # 色相窗口半宽（度）。>0 用余弦淡出，边�
 WARM_VSOFT = True     # v 门槛软化，避免红轴低端亮度倒挂
 WARM_CUT = 0.15       # 单点最大削幅，占该点 R 的比例（1.0 = 不限制）
 WARM_LIFT = 0.0       # 削幅还给 G 的比例；0.51 ≈ 亮度守恒。默认 0：实测会过冲（见文档）
+COOL_CAP = 0.70       # 蓝区饱和度上限（0 = 关闭）。原厂 samsung_a00 蓝角点 = 0.69
+COOL_HMIN = 190.0     # 冷色保护色相范围（度）
+COOL_HMAX = 270.0
 
 
 # ---------- 色彩基础 ----------
@@ -245,11 +249,26 @@ def apply_film(rgb8, p):
                     # ⇒ wlift = 0.51 时 Δluma ≈ 0。色相仍向黄侧移动（R 降 G 升）。
                     g += cut * wlift
 
-    # 9) 输出
+    # 9) 量化
     out = []
     for v in (r, g, b):
         q = int(v * 255.0 + 0.5)
         out.append(0 if q < 0 else (255 if q > 255 else q))
+
+    # 10) 冷色保护：蓝区饱和度封顶（在 8bit 域做，与 tools/lutgen/mk_coolfix.py 逐字节一致）
+    #     动机（2026-10-25 实机确认）：sRGB 蓝原色在显示器上本身偏紫，把蓝推到
+    #     (0,0,255) 的观感就是「电子紫」，配方再怎么调都出不来蓝冷色。原厂
+    #     samsung_a00 在蓝角点给 (77,79,246)（饱和 0.69），我们全库中位 0.95。
+    #     封顶 0.70 后 cool_blue 纯蓝 (5,3,249) → (76,75,249)，机端确认「蓝色对了」。
+    #     参数：cool_guard 上限；0 = 关闭。只动 hue 190-270 且 s 超限的格点，
+    #     天蓝 (90,140,199) 这种 s=0.57 的一点不碰。
+    cg = p.get('cool_guard', COOL_CAP)
+    if cg > 0.0 and max(out) > 0:
+        h, s, v = rgb_to_hsv(out[0] / 255.0, out[1] / 255.0, out[2] / 255.0)
+        if s > cg and COOL_HMIN <= h <= COOL_HMAX:
+            r2, g2, b2 = hsv_to_rgb(h, cg, v)
+            out = [min(255, max(0, int(x * 255.0 + 0.5))) for x in (r2, g2, b2)]
+
     return bytes(out) + b'\0'
 
 
