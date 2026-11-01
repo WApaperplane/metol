@@ -28,9 +28,12 @@ exit 0
 '''
 
 # LUT 面板的固定行位（720x208）：
-#   y=60 滤镜条 · y=110 滚动条/强度滑杆 · y=133 按钮行
+#   y=20 顶栏（padding 8 + 行高 24/2）· y=60 滤镜条 · y=110 滚动条/强度滑杆
+#   y=133 按钮行
 STRIP_Y, BAR_Y, BTN_Y = 60, 110, 133
 COL1, COL2, COL3, COL4 = 96, 272, 448, 624
+# 顶栏四格：起点 x=12（padding），356 + 104 + 104 + 104，格间距 8
+TOP_Y, TOP_MIX_X = 20, 540
 
 
 def run_library_ui(prefix, env, label):
@@ -76,18 +79,20 @@ def run_library_ui(prefix, env, label):
                     time.sleep(.05)
                 raise AssertionError("%r not in log\n%s" % (needle, log.read_text()[-1500:]))
 
-            def wait_call(word, limit=4.0):
-                """等引擎真的被调用 —— 桩把命令写进 calls 文件，不在面板日志里。"""
+            def wait_calls(word, n, limit=6.0):
+                """等到某类引擎调用累计到 n 条（同一个动词可能要跑两遍）。"""
                 deadline = time.time() + limit
                 while time.time() < deadline:
                     text = calls.read_text() if calls.exists() else ""
                     got = [l for l in text.splitlines() if l.startswith(word)]
-                    if got:
+                    if len(got) >= n:
                         return got
                     time.sleep(.05)
                 text = calls.read_text() if calls.exists() else ""
-                raise AssertionError("%r never reached the engine\ncalls=%r\n--- panel ---\n%s"
-                                     % (word, text, log.read_text()[-1200:]))
+                raise AssertionError("%r 只到 %d 条（期望 %d）\ncalls=%r\n--- panel ---\n%s"
+                                     % (word, len([l for l in text.splitlines()
+                                                   if l.startswith(word)]), n,
+                                        text, log.read_text()[-1200:]))
 
             # ── 1. 长按进编辑态：700ms 按住，远超 550ms 阈值 ──
             send("click", str(COL2), str(STRIP_Y), "700")
@@ -101,7 +106,7 @@ def run_library_ui(prefix, env, label):
             assert after_one == before, "第一次点删除就调用了引擎：%r" % after_one
 
             send("click", str(COL1), str(BTN_Y), "30")
-            dels = wait_call("del ")
+            dels = wait_calls("del ", 1)
             assert len(dels) == 1, "应有且只有一次 del：%r" % dels
             gone = dels[0].split()[1]
             assert gone in looks, "del 的目标不是库里的 key：%r" % gone
@@ -113,10 +118,10 @@ def run_library_ui(prefix, env, label):
 
             # ── 4. 编辑态仍在：左移交给引擎 ──
             send("click", str(COL2), str(BTN_Y), "30")
-            moves = wait_call("move ")
+            moves = wait_calls("move ", 1)
             assert moves[-1].split()[2] == "up", moves
 
-            # ── 5. 完成 → 回浏览态；F2 进混合态 ──
+            # ── 5. 完成 → 回浏览态；先进一次混合（键盘 F2），再用顶栏按钮进一次 ──
             send("click", str(COL4), str(BTN_Y), "30")
             time.sleep(.3)
             send("key", "F2")
@@ -130,13 +135,32 @@ def run_library_ui(prefix, env, label):
             send("drag", "160", str(BAR_Y), "450", str(BAR_Y), "10")   # 强度 20% -> 60%
             time.sleep(.4)
             send("click", str(COL3), str(BTN_Y), "30")   # 应用混合
-            mixes = wait_call("mix ", limit=6.0)
+            mixes = wait_calls("mix ", 1)
             parts = mixes[-1].split()
             assert len(parts) == 4, parts
             a, b, pct = parts[1], parts[2], parts[3]
             assert a in looks and b in looks, parts
             assert a != b, "A 与 B 不能是同一张：%r" % parts
             assert pct.isdigit() and 30 <= int(pct) <= 90, "滑杆位置没被读进来：%s" % pct
+
+            # ── 6. 机身没有 F2（2026-10-17 实测：只有 XF86Reload/XF86Favorites
+            #        能到 X11，方向键与转盘在 X11 和 evdev 里都没有事件），
+            #        所以混合态的**唯一**入口是顶栏那个按钮。这里两次点击把它
+            #        验全：先「退出混合」回浏览态，再「混合」重新进入。
+            #        顶栏几何：padding 12/8，行 24 高，四格 356+104+104+104。
+            send("click", str(TOP_MIX_X), str(TOP_Y), "30")     # 退出混合
+            time.sleep(.4)
+            send("click", str(TOP_MIX_X), str(TOP_Y), "30")     # 触摸进混合
+            time.sleep(.4)
+            send("click", str(COL2), str(BTN_Y), "30")          # 设为A
+            time.sleep(.3)
+            send("key", "Right")
+            time.sleep(.3)
+            send("click", str(COL2), str(BTN_Y), "30")          # 设为B
+            time.sleep(.3)
+            send("click", str(COL3), str(BTN_Y), "30")          # 应用混合
+            mixes = wait_calls("mix ", 2)   # 没进混合态的话这里会等到超时
+            assert mixes[-1].split()[1] in looks, mixes
 
             p.wait(timeout=12)
             return log.read_text()

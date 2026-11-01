@@ -380,22 +380,55 @@ static int action_from_name(const char *s) {
         if (!strcmp(s, act_names[i])) return i;
     return ACT_NONE;
 }
+/* keys.conf 里可以写 keysym 名字，也可以写 0x1008FF73 这样的数字。
+ * 数字形式是给「名字解析不出来」留的后路：相机上这份 libX11 只有 79 个
+ * XF86* 名字（strings 实测），名字表比桌面小，但不是每个键都在里面。 */
+static KeySym parse_keysym(const char *s) {
+    const char *p;
+    unsigned long v = 0;
+    if (!s || !*s) return NoSymbol;
+    if (s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) {
+        for (p = s + 2; *p; p++) {
+            int d;
+            if (*p >= '0' && *p <= '9') d = *p - '0';
+            else if (*p >= 'a' && *p <= 'f') d = *p - 'a' + 10;
+            else if (*p >= 'A' && *p <= 'F') d = *p - 'A' + 10;
+            else return NoSymbol;
+            v = v * 16u + (unsigned long)d;
+        }
+        return (KeySym)v;
+    }
+    return XStringToKeysym(s);
+}
 static void keymap_add(const char *name, int act) {
     KeySym k;
     if (keymap_n >= KEYMAP_MAX || act == ACT_NONE) return;
-    k = XStringToKeysym(name);
+    k = parse_keysym(name);
     if (k == NoSymbol) { fprintf(stderr, "KEYMAP unknown keysym %s\n", name); return; }
     keymap[keymap_n].sym = k; keymap[keymap_n].act = act; keymap_n++;
 }
 static void keymap_defaults(void) {
-    /* 只断言标准 keysym：机身转盘的实测名另外写进 keys.conf。 */
+    /* 桌面 / Xvfb 的标准键：只服务于本机回归（verify_display、库管理 UI 测试
+     * 都靠它们发 F1/F2/方向键）。机身上不存在这些键，别把它们当交互设计。 */
     keymap_add("Left", ACT_PREV);  keymap_add("Up", ACT_PREV);
     keymap_add("Right", ACT_NEXT); keymap_add("Down", ACT_NEXT);
     keymap_add("Return", ACT_OK);  keymap_add("KP_Enter", ACT_OK);
     keymap_add("space", ACT_OK);
     keymap_add("Escape", ACT_CLOSE);
-    keymap_add("F1", ACT_EDIT);    /* 默认无冲突；实际键位见 keys.conf */
-    keymap_add("F2", ACT_MIX);
+    keymap_add("F1", ACT_EDIT);    /* 仅桌面；机身靠长按进编辑态 */
+    keymap_add("F2", ACT_MIX);     /* 仅桌面；机身上另有顶栏「混合」按钮 */
+
+    /* ★ 机身实测（2026-10-17，上机双探针：keysym_probe.c + evdev_probe.c）：
+     *   · 能到 X11 的**只有** XF86Reload(181) 与 XF86Favorites(164) 两个 keysym
+     *   · 方向键 / 转盘在 X11 **和** evdev 都没有事件 —— 它们走
+     *     /dev/gpiodev.3 + /dev/d5_ipcc 的 GPIO 私有通道，被 di-camera-app 独占
+     *   · 半按快门有事件：/dev/input/event0 code 125 (KEY_LEFTMETA)，
+     *     已用于「半按关闭面板」，不占键位表
+     * 所以机身导航的**主**通道是触摸（点选 / 拖滚条 / 长按），这两个键是补充。
+     * 它们各自对应哪个物理按键还没和用户对过：按反了就把下面两行对调，
+     * 或在 keys.conf 里覆盖，不必改二进制。 */
+    keymap_add("XF86Reload", ACT_PREV);
+    keymap_add("XF86Favorites", ACT_NEXT);
 }
 static void keymap_load(void) {
     char path[256], line[160], name[64], act[32];
@@ -558,6 +591,24 @@ static int reload_recipes_file(void) {
     return 1;
 }
 
+/* 混合态进出：键盘（F2，仅桌面）与顶栏按钮共用。进态时给 A/B 一个可用起点，
+ * 否则用户要先想「设成哪两张」才敢动滚条。 */
+static void toggle_mix(void) {
+    if (!lut_mode) { message("混合只在 LUT 面板可用"); return; }
+    ui_mode = (ui_mode == UI_MIX) ? UI_BROWSE : UI_MIX;
+    confirm_del = 0;
+    if (ui_mode == UI_MIX) {
+        if (mix_a < 0) mix_a = selected;
+        if (mix_b < 0) mix_b = (selected + 1 < count) ? selected + 1 : selected;
+        if (mix_a >= 0 && mix_a < count)
+            snprintf(mix_key_a, sizeof mix_key_a, "%s", recipes[mix_a].key);
+        if (mix_b >= 0 && mix_b < count)
+            snprintf(mix_key_b, sizeof mix_key_b, "%s", recipes[mix_b].key);
+        message("混合：选条目后设为 A / B，滚条调强度");
+    } else message("已退出混合");
+    dirty = 1;
+}
+
 /* 按键/触摸的语义分发：把「哪个键」和「做什么」解耦，键位表才好换。 */
 static void do_action(int act) {
     if (act == ACT_NONE) return;
@@ -571,19 +622,7 @@ static void do_action(int act) {
         confirm_del = 0;
         message(ui_mode == UI_EDIT ? "编辑：删除 / 左移 / 右移 / 完成" : "已退出编辑");
         break;
-    case ACT_MIX:
-        if (!lut_mode) { message("混合只在 LUT 面板可用"); return; }
-        ui_mode = (ui_mode == UI_MIX) ? UI_BROWSE : UI_MIX;
-        if (ui_mode == UI_MIX) {
-            if (mix_a < 0) mix_a = selected;
-            if (mix_b < 0) mix_b = (selected + 1 < count) ? selected + 1 : selected;
-            if (mix_a >= 0 && mix_a < count)
-                snprintf(mix_key_a, sizeof mix_key_a, "%s", recipes[mix_a].key);
-            if (mix_b >= 0 && mix_b < count)
-                snprintf(mix_key_b, sizeof mix_key_b, "%s", recipes[mix_b].key);
-            message("混合：选条目后设为 A / B，滚条调强度");
-        } else message("已退出混合");
-        break;
+    case ACT_MIX: toggle_mix(); return;
     case ACT_DEL:    if (ui_mode == UI_EDIT) lib_delete(selected); break;
     case ACT_MOVE_L: if (ui_mode == UI_EDIT) lib_move(selected, -1); break;
     case ACT_MOVE_R: if (ui_mode == UI_EDIT) lib_move(selected, +1); break;
@@ -729,8 +768,12 @@ static void draw(void) {
     char line[320]; int i, start;
     struct nk_color accent = nk_rgb(203, 233, 153);
     if (nk_begin(ctx, "NXWA", nk_rect(0, 0, (float)width, (float)height), NK_WINDOW_NO_SCROLLBAR)) {
-        nk_layout_row_begin(ctx, NK_STATIC, 24, 3);
-        nk_layout_row_push(ctx, 460);
+        /* 顶栏四格（356+104×3 + 间距 ≈ 680 < 面板内宽 704）。
+         * 第三格是「混合」入口：机身实测没有 F2 这类键（2026-10-17 双探针），
+         * 只有触摸，所以混合态必须有一个手指够得到的入口，否则等于没交付。
+         * 非 LUT 模式用空 label 占位 —— 行是手动 push 的，格数必须对满。 */
+        nk_layout_row_begin(ctx, NK_STATIC, 24, 4);
+        nk_layout_row_push(ctx, 356);
         nk_label_colored(ctx, menu ? "NX-KS  /  菜单"
                             : (lut_mode ? (ui_mode == UI_EDIT ? "LUT  /  编辑"
                                           : ui_mode == UI_MIX ? "LUT  /  混合"
@@ -743,6 +786,9 @@ static void draw(void) {
             if (menu) { menu = 0; resize_panel(); }
             else { char p[64]; snprintf(p, sizeof p, "gui_ini.NX500"); load_menu(p); }
         }
+        nk_layout_row_push(ctx, 104);
+        if (!lut_mode || menu) nk_label(ctx, "", NK_TEXT_LEFT);
+        else if (nk_button_label(ctx, ui_mode == UI_MIX ? "退出混合" : "混合")) toggle_mix();
         nk_layout_row_push(ctx, 104);
         if (nk_button_label(ctx, "关闭")) queue.close_requested = 1;
         nk_layout_row_end(ctx);
@@ -1140,6 +1186,10 @@ int main(int argc, char **argv) {
     last_choice_load();   /* 回到上次停的那一项；没有记录就留在第一项 */
     keymap_defaults();
     keymap_load();        /* keys.conf 覆盖默认值；没有这个文件就是默认 */
+    /* 无条件打一行：相机那份 libX11 的 keysym 名字表比桌面小，XF86* 若解析
+     * 不出来会变成 "KEYMAP unknown keysym"，键位表就静默少几项。verify_display
+     * 断言这行是 entries=12 且没有 unknown，跑在相机 ABI 上才算数。 */
+    fprintf(stderr, "KEYMAP entries=%d\n", keymap_n);
     if (inputlog_path && *inputlog_path && (inputlog = fopen(inputlog_path, "a")))
         fprintf(inputlog, "=== nxui inputlog %s ===\n", lut_mode ? "lut" : "filmlab");
     recipes_ready = now_ms();

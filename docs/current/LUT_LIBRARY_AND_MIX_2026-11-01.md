@@ -19,7 +19,8 @@
 | 5 | 配方库**不建第二份顺序**，直接对 `recipes.json` 做块级重排，顺序即文件顺序 | ✅ 21 项断言 |
 | 6 | 配方写盘后用 `recipes.txt` 可用行数做校验，不符即回滚 —— 这是唯一可靠的格式判据 | ✅ |
 | 7 | 面板三态（浏览 / 编辑 / 混合）**复用同一行布局**，未破 720×208，未移动任何既有坐标 | ✅ 19 项全绿 |
-| 8 | 键位表可覆盖（`keys.conf`），但**机身真实键码仍未测** | ⚠️ 唯一缺口 |
+| 8 | 机身键码**已实测**（2026-10-17 上机双探针）：X11 只有 `XF86Reload` / `XF86Favorites` 两个键，方向键与转盘在 X11 和 evdev 里都**没有事件** | ✅ 已写进默认表 |
+| 9 | ⇒ 机身导航的主通道**只能是触摸**；混合态另给顶栏按钮（机身无 `F2`） | ✅ 双入口都有回归 |
 
 ---
 
@@ -166,23 +167,47 @@ commit       → 条目数 == 预期 && recipes.txt 可用行数 == 条目数 ? 
 
 ### 4.1 三种模式
 
-| 模式 | 标题 | 列表点击 | 底部行 |
+| 模式 | 标题 | 怎么进 | 怎么出 |
 |---|---|---|---|
-| `UI_BROWSE` | `LUT` / `FILMLAB` | 选中 = 应用 | `←→选择  Enter应用` |
-| `UI_EDIT` | `LUT / 编辑` | 选中（不改画面） | `A下架 ←左移 →右移 B完成` |
-| `UI_MIX` | `LUT / 混合` | 选中 | `A:x B:y 强度 n%` + `A设A B设B Enter应用 Esc退出` |
+| `UI_BROWSE` | `LUT` / `FILMLAB` | 默认 | — |
+| `UI_EDIT` | `LUT / 编辑` | **长按列表项 ≥550 ms**（机身唯一入口）/ 桌面 `F1` | 「完成」/ `F1` / `Esc` |
+| `UI_MIX` | `LUT / 混合` | **顶栏「混合」按钮**（机身唯一入口）/ 桌面 `F2` | 顶栏「退出混合」/ 「退出」/ `F2` |
+
+三态的列表行、滚条位置、按钮行坐标**完全共用**，切态只换文案与按钮语义 —— 所以不会出现「进了编辑态按钮跑到面板外面」这类位移问题。
 
 `UI_MIX` 的强度滑杆直接复用底部**状态行**显示（`A:sample B:stock 强度 45%`），不新增行 —— 按钮行的 `y=123 / 149` 两个坐标被既有测试钉死，动一下整排落出 208px 面板。
 
-### 4.2 键位表（可覆盖）
+### 4.2 键位：机身实测只有两个键（2026-10-17 上机，双探针）
 
-默认只断言标准 keysym；机身真实键码写 `$NXUI_STATE_DIR/keys.conf`，一行 `<keysym> <action>`：
+这不是推测，是当时挂了两个探针（`keysym_probe.c` 抓 X11 KeyPress、`evdev_probe.c` 直读 event0/1/2）实打实量出来的：
+
+| 通道 | 实测结果 |
+|---|---|
+| **X11 KeyPress** | 只有 **`XF86Reload`（keycode 181）** 与 **`XF86Favorites`（keycode 164）** 能到；其余键**一个都没有** |
+| **方向键 / 转盘** | X11 **无事件**，evdev 也**无事件** —— 走 `/dev/gpiodev.3` + `/dev/d5_ipcc` 的 GPIO 私有通道，被 `di-camera-app` 独占 |
+| **evdev 直读** | 有事件的是半按快门：`/dev/input/event0` **code 125（`KEY_LEFTMETA`）**，已用于「半按关闭面板」，不占键位表 |
+| **输入设备** | `event0` Drime5 GPIO Keyboard / `event1` ADC Keyboard / `event2` Melfas 触摸屏（**没有独立滚轮设备**） |
+
+⇒ **方向键与转盘在这台机器上不可能作为交互通道**，不存在「再调一调就能用」的空间。所以机身的主通道是触摸，键盘只是补充。
+
+默认键位表因此分两层：
+
+| 键 | 动作 | 在哪有用 |
+|---|---|---|
+| `XF86Reload` | `prev` | **机身**（实测唯二之一） |
+| `XF86Favorites` | `next` | **机身**（实测唯二之一） |
+| `Left` / `Up` / `Right` / `Down` | `prev` / `next` | 仅桌面 / Xvfb 回归 |
+| `Return` / `KP_Enter` / `space` | `ok` | 仅桌面 |
+| `Escape` | `close` | 仅桌面 |
+| `F1` / `F2` | `edit` / `mix` | 仅桌面（机身靠长按 / 顶栏按钮） |
+
+`$NXUI_STATE_DIR/keys.conf` 可以覆盖，一行 `<keysym> <action>`；keysym 写名字或 `0x1008FF73` 这样的**数字**都行（相机那份 libX11 的 XF86 名字表只有 79 条，数字形式是名字解析不出来时的后路）：
 
 ```
-# keys.conf 示例
-F1      edit
-F2      mix
-BackSpace del
+# keys.conf
+XF86Reload    prev
+XF86Favorites next
+0x1008FF73    prev
 ```
 
 | 动作 | 含义 |
@@ -193,9 +218,19 @@ BackSpace del
 | `edit` / `mix` | 切换编辑态 / 混合态 |
 | `del` / `movel` / `mover` | 编辑态内的三个操作 |
 
-配好表之后不必为一个按键改二进制。
+> **这两个键各自对应哪个物理按键，还没和用户对过**（探针只说「按下去会到 X11」，没记是按的哪个键）。按反了就把 `prev`/`next` 对调，或在 `keys.conf` 里覆盖，不必改二进制。
 
-### 4.2.1 采数通道（`nxui.sh` 现在透传多余参数）
+### 4.2.1 因为机身没有 F2，混合态必须有触摸入口
+
+`F2` 只存在于桌面。若没有别的入口，混合功能在机身上等于没交付 —— 所以**顶栏第三格**加了一个「混合」按钮（LUT 模式显示，非 LUT 模式用空 label 占位，行是手动 push 的，格数必须对满）：
+
+```
+[ LUT / 3D 滤镜          356 ] [ 菜单 104 ] [ 混合 104 ] [ 关闭 104 ]
+```
+
+顶栏几何（`padding=12/8`，行高 24，格间距 8）：标题 356 + 三格 104×3 + 3×8 = 692 ≤ 面板内宽 696。`test_library_ui.py` 现在**两个入口都验**：先用 F2 进一次，再用顶栏按钮「退出混合」→「混合」进第二次，两次都要真的走到 `lut.sh mix`。
+
+### 4.2.2 采数通道（`nxui.sh` 现在透传多余参数）
 
 ```
 sh /opt/usr/nx-ks/nxui.sh lut --inputlog /mnt/mmc/nxui/keys.log
@@ -241,7 +276,9 @@ sh <engine> <verb> [arg1 [arg2 [arg3]]]
 | `test_server/lutpipe/test_recipelib.sh` | `recipelib.sh` 增删排序 / 双校验 / 回滚 / 备份保留 / 路径穿越 | **21 PASS / 0 FAIL** |
 | `test_server/nxui/verify_display.py` | 面板全量：host + ARM qemu 双目标 × 9 模式 + focus-handoff | **19/19 PASS** |
 
-`verify_display.py` 新增 `library-ui` 模式，完整走一遍：长按 → 编辑态 → 两段删除 → 自动刷新 → 左移 → 完成 → F2 混合 → 设 A / 设 B → 拖滑杆 → 应用。引擎用桩脚本，断言的是**实际收到的命令行**（写进 `calls` 文件轮询），不是面板日志 —— 面板日志里根本没有引擎输出。
+`verify_display.py` 新增 `library-ui` 模式，完整走一遍：长按 → 编辑态 → 两段删除 → 自动刷新 → 左移 → 完成 → F2 混合 → 设 A / 设 B → 拖滑杆 → 应用 → **顶栏「退出混合」→ 顶栏「混合」→ 再混一次**。引擎用桩脚本，断言的是**实际收到的命令行**（写进 `calls` 文件轮询），不是面板日志 —— 面板日志里根本没有引擎输出。
+
+同一个脚本现在还有一条键位断言：每个渲染模式都必须打出 `KEYMAP entries=12` 且**没有** `unknown keysym`。这条断言只在 ARM 目标（qemu + 相机 libX11）上才有意义 —— 相机那份 `libX11.so.6` 的 XF86 名字表实测只有 79 条（`strings` 数的），名字解析不出来就静默丢键。现在 host 与 arm 两种目标都过了，日志落在 `out/<target>-<mode>.log`。
 
 另：`test_lut_sh_rotation.py` 已加 `skipUnless(LEGACY)`。它锚定早已退役的 `CAP=/usr/bin/st`，HEAD 版也失败；现行覆盖由 `test_lut_lib.sh` 承担。
 
@@ -256,7 +293,7 @@ sh <engine> <verb> [arg1 [arg2 [arg3]]]
 | 文件 | 字节 | md5 | 落点 |
 |---|---|---|---|
 | `scripts/lut/lutmix.arm` | 5,164 | `addae113…` | `/opt/usr/nx-ks/lut/lutmix.arm` |
-| `scripts/nxui/nxui.arm` | 474,652 | `2eb6ed6d…` | `/opt/usr/nx-ks/nxui/nxui.arm` |
+| `scripts/nxui/nxui.arm` | 474,740 | `8d8936d9…` | `/opt/usr/nx-ks/nxui/nxui.arm` |
 | `scripts/lut.sh` | 19,548 | `686c41e7…` | `/opt/usr/nx-ks/lut.sh` |
 | `scripts/recipelib.sh` | 9,527 | `1d5d4977…` | `/opt/usr/nx-ks/recipelib.sh` |
 | `scripts/filmlab.sh` | 63,157 | `9972291c…` | `/opt/usr/nx-ks/filmlab.sh` |
@@ -269,11 +306,19 @@ sh <engine> <verb> [arg1 [arg2 [arg3]]]
 
 ## 7. 尚未闭环
 
-| # | 事项 | 卡在哪 | 怎么收 |
-|---|---|---|---|
-| 1 | **机身真实键码** | 相机 `192.168.0.102 / .106` 均 ping 不通 | 上线后 `nxui.sh lut --inputlog /mnt/mmc/nxui/keys.log`，按一遍硬件键，照日志写 `keys.conf` |
-| 2 | 转盘是否发 `KeyPress` | 无窗口管理器下焦点窗口才收键；若转盘走的是别的事件类型，键位表覆盖不到 | 同 1 的日志能看出：日志里一条没有就说明不是 X 键盘事件，要改走触摸/其他通道 |
-| 3 | 混合结果的照片复核 | 需要实拍 | 混合表写进 A18 后**必须半按一次快门**；花屏/不生效都先怀疑 reload，**不要**去碰强制 reload |
-| 4 | `nxui.sh` 是否加 `--inputlog` 开关 | 部署决策 | 建议默认不写日志（SD 卡 exFAT 写入碎片化），只在采数时手动带 |
+| # | 事项 | 状态 / 怎么收 |
+|---|---|---|
+| 1 | **`XF86Reload` / `XF86Favorites` 各对应哪个物理按键** | 键码本身 10-17 已实测，**只差物理归属**。上机时 `nxui.sh lut --inputlog /mnt/mmc/nxui/keys.log`，各按一次即知；按反了在 `keys.conf` 里对调两行 |
+| 2 | 混合结果的照片复核 | 需要实拍。混合表写进 A18 后**必须半按一次快门**；花屏 / 不生效都先怀疑 reload，**不要**去碰强制 reload |
+| 3 | 顶栏「混合」按钮在真屏上的可点性 | 顶栏行高 24 px 偏小（手指目标一般要 ≥40 px）。若实测手感差，把顶栏行高提到 32 并相应压掉列表条的 8 px —— 现在没法验，因为面板只能在离线 X 里跑 |
+| 4 | SD 母本同步 | 相机不在线，未同步 `/mnt/mmc/scripts/`。**下次上机装之前必须先同步**，否则 `install.sh` 会把机身打回旧版 |
+| 5 | 「半按=关闭面板」与「半按=让 p7 重新 Load 表」是不是**同一次**半按 | 未验证。若同一次，流程最顺：改完强度 → 半按一次，面板关、表也生效；若不同，必须关面板后再半按一次。测量方法：面板内改强度 → 半按 → 退出后立刻看 `lut.sh status` 的 `ENGINE` 与实拍画面 |
+
+已经被证据关掉的两条（留着是因为它们在别的文档里还写着「待验」）：
+
+| 旧问题 | 实测结论 |
+|---|---|
+| 转盘 / 方向键会不会发 `KeyPress` | **不会**。X11 无事件、evdev 也无事件，走 GPIO 私有通道被 App 独占 ⇒ 不再是「待验」，是「此路不通」 |
+| 是否要给 `--inputlog` 加默认开关 | **不加**。只在采数时手动带参数，常驻写 SD 会加剧 exFAT 碎片 |
 
 半按快门这条是硬约束：`commit_table` 只写槽 + 改三张登记表，**从不自动触发硬件 Load**。裸写 `+0x00c` 加脉冲会花屏，这一点在 10-18 就定过，本轮没有改动。
