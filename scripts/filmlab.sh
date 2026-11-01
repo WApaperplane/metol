@@ -1187,6 +1187,16 @@ export)
   ;;
 
 #---------------------------------------------------------------
+lib)
+  # 配方库的机内增删排序（recipes.json 块级手术 + 自动 export）。
+  # 实现独立成 recipelib.sh：filmlab.sh 是整条 PW 链的入口，不值得为库管理
+  # 在这里塞 200 行 awk；两边都改的风险也比多一个文件高得多。
+  # 用法：filmlab.sh lib list|move <key> up|down|top|del <key>|verify|backup|restore <f>
+  shift
+  exec sh /opt/usr/nx-ks/recipelib.sh "$@"
+  ;;
+
+#---------------------------------------------------------------
 *)
   echo "filmlab-apply.sh — FilmLab SD 卡配方引擎"
   echo
@@ -1205,6 +1215,7 @@ export)
   echo "  reset             全部槽位恢复出厂中性"
   echo "  mkgui             ★ 从 SD 卡配方库生成 mod_gui 菜单页（打开 mod_gui 时自动跑）"
   echo "  export            ★ 导出 recipes.txt（给机内 UI 程序读）"
+  echo "  lib list|move|del|verify|backup|restore   ★ 配方库机内增删排序（recipelib.sh）"
   echo "  cycle              轮换到下一个配方（绑机身键用，零界面）"
   echo "  check [slot]      ★ 客观判据（只读）：ISP 手上的 7 维 vs prefman 槽位值"
   echo "  reload            ★ 只重触发（不写配方）+ 打印判据 —— 配方没变但画面没跟上时用"

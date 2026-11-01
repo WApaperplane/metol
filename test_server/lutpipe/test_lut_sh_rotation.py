@@ -77,6 +77,13 @@ esac
 '''
 
 @unittest.skipUnless(SH and shutil.which('flock'), 'requires a POSIX shell and flock (run in WSL)')
+LEGACY = "CAP=/usr/bin/st" in PRODUCT.read_text(encoding="utf-8")
+
+
+@unittest.skipUnless(
+    LEGACY,
+    "旧版 lut.sh 的 a18/a19 轮转 + capdtm 档位分支已退役（现为 A18 定槽 + 只改登记表）；"
+    "本文件保留作历史归档。现行覆盖见 test_lut_lib.sh")
 class SwitchingTests(unittest.TestCase):
     def setUp(self):
         scratch = PRODUCT.parents[1] / '.tmp'

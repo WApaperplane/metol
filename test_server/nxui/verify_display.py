@@ -11,6 +11,7 @@ import time
 from test_interaction import run_interaction, run_lut_interaction
 from test_performance import run_performance
 from test_service_interaction import run_service_interaction
+from test_library_ui import run_library_ui
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent.parent
@@ -70,6 +71,8 @@ try:
         records.append({"target": name, "mode": "lut-interaction", "result": "PASS"})
         run_service_interaction(prefix, runenv, name)
         records.append({"target": name, "mode": "service-interaction", "result": "PASS"})
+        run_library_ui(prefix, runenv, name)
+        records.append({"target": name, "mode": "library-ui", "result": "PASS"})
         perf = run_performance(prefix, runenv, name)
         records.append({"target": name, "mode": "performance", "cases": perf, "result": "PASS"})
     # Focus handoff: the panel must give the keyboard back to the camera window.

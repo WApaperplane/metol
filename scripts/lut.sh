@@ -11,12 +11,26 @@
 #     本脚本走 3D LUT 槽 + 登记表；两者可叠加
 #   · begin 备份、off 还原；apply 不覆盖首次备份
 #
+# 库管理（2026-11-01 新增）：
+#   · 顺序与收藏存在 $ST/order（SD 卡），一行一条，`*` 前缀 = 收藏
+#   · 删除是「移到 looks/_trash/」而不是 rm：exFAT 删同名文件会释放簇链，
+#     且重复目录项无法逐条清理，移动可逆、可由 PC 侧回收
+#   · list 输出顺序 = order 文件顺序；未登记的条目按名字追加在后面
+#
 # 用法：
-#   lut.sh list                 列出滤镜库
-#   lut.sh begin                预检 + 备份（不写相机内存）
+#   lut.sh list                 列出滤镜库（按 order 顺序，隐藏 _ 开头）
+#   lut.sh list --fav           只列收藏
 #   lut.sh apply <name>         应用（.cube 自动转换）
+#   lut.sh begin                预检 + 备份（不写相机内存）
 #   lut.sh off                  还原
 #   lut.sh status               当前状态
+#   lut.sh fav <name>           收藏/取消收藏（新收藏排到最前）
+#   lut.sh move <name> up|down|top   调整顺序
+#   lut.sh del <name>           移到 _trash/（不物理删除）
+#   lut.sh index                重建 order（清掉已消失的条目）
+#   lut.sh mix <A> <B> <0-100>  两表交叉混合：0=A，100=B
+#   lut.sh strength <name> <0-100>   强度混合：0=原厂，100=该 look
+#   lut.sh stock                dump 原厂 A17 到 looks/_stock_A17.bin（强度 0 端）
 #=====================================================================
 set -u
 
@@ -24,11 +38,15 @@ D=/opt/usr/nx-ks
 BB=$D/busybox
 TD=$D/lut                       # 工具目录（随包安装：scripts/lut -> /opt/usr/nx-ks/lut）
 LAB=/mnt/mmc/looks              # 滤镜库：*.cube / *.bin
+TRASH=$LAB/_trash               # 下架区（不是删除）
 ST=/mnt/mmc/lut/state           # 备份与状态（放 SD，随卡走）
 SLOT=0x81119F00                 # A18
+STOCK_SLOT=0x81115200           # A17 原厂表（强度 0 端基准）
 BAKDIR=/mnt/mmc/nxwa_regtab_20261018   # 原厂登记表备份（Still6 / BV12）
 STILLBAK=$BAKDIR/still6_orig.bin
 BVBAK=$BAKDIR/bv12_orig.bin
+ORD=$ST/order                   # 库顺序 + 收藏
+CV=$ST/cv                       # .cube → native 转换缓存（混合时反复用同一张）
 
 # 工具查找：优先随包安装的 $TD，其次手工部署的 /mnt/mmc/lut
 pick_tool() {
@@ -40,6 +58,7 @@ pick_tool() {
 SLOTW=$(pick_tool nx_slotwrite.arm)
 REGT=$(pick_tool nx_regtabwrite.arm)
 CUBE=$(pick_tool cube2lut.arm)
+MIX=$(pick_tool lutmix.arm)
 
 die() { echo "ERR $*"; exit 1; }
 
@@ -80,45 +99,85 @@ oled_restore() {
     return 0
 }
 
-case "${1:-status}" in
-list)
-    [ -d "$LAB" ] || die "no $LAB"
-    $BB ls "$LAB" 2>/dev/null | $BB grep -E '\.(cube|bin)$' | $BB sed 's/\.[^.]*$//' | $BB sort -u
-    ;;
+# ---------- 库顺序 ----------
+# 名称合法性：面板会把名字原样当参数传回来，所以这里也要挡住路径与
+# shell 元字符（与 nxui 的 nx_key_valid 同口径）。'_' 开头是内部项
+# （_stock_A17 / _trash），不参与列表与排序。
+valid_name() {
+    case "$1" in
+        '') return 1 ;;
+        _*) return 1 ;;
+        */*|*\\*|*..*|*'|'*|*';'*|*'$'*|*'`'*) return 1 ;;
+    esac
+    return 0
+}
 
-begin)
-    need_tools
-    $BB mkdir -p "$ST" || die "cannot create $ST"
-    # 每次进入都重新取一份"当前状态"作为本次会话的还原点。
-    # 但有两种例外：
-    #   · 上次是半按关闭（keep 标记）⇒ 用户要保留这个 look，沿用同一份备份
-    #   · 上次异常退出（ready 残留但无 keep）⇒ 先还原，避免把已改状态当原厂
-    if [ -f "$ST/ready" ]; then
-        if [ -f "$ST/keep" ]; then
-            $BB rm -f "$ST/keep"
-            echo "OK resumed (look kept, previous backup reused)"
-            exit 0
-        fi
-        sh "$0" off > "$ST/previous-off.log" 2>&1
+# 重建 order：已登记且仍存在的保持顺序与星标，新文件按名字追加，消失的丢弃。
+order_sync() {
+    [ -d "$LAB" ] || return 0
+    $BB mkdir -p "$ST"
+    $BB ls "$LAB" 2>/dev/null | $BB grep -E '\.(cube|bin)$' \
+        | $BB sed 's/\.[^.]*$//' | $BB grep -v '^_' | $BB sort -u > "$ST/.names"
+    if [ -s "$ORD" ]; then
+        $BB awk '
+            FNR==NR { have[$0]=1; next }
+            { k=$0; sub(/^\*/,"",k)
+              if (!(k in have) || (k in seen)) next
+              seen[k]=1; print }
+        ' "$ST/.names" "$ORD" > "$ST/.order.1"
+        $BB awk '
+            FNR==NR { k=$0; sub(/^\*/,"",k); seen[k]=1; next }
+            { if (($0 in seen) || ($0 ~ /^_/)) next; print }
+        ' "$ST/.order.1" "$ST/.names" >> "$ST/.order.1"
+    else
+        : > "$ST/.order.1"
+        while IFS= read -r n; do
+            [ -n "$n" ] && printf '%s\n' "$n" >> "$ST/.order.1"
+        done < "$ST/.names"
     fi
-    "$SLOTW" read "$SLOT" "$ST/a18_orig.bin" > "$ST/begin.log" 2>&1 \
-        || { cat "$ST/begin.log"; die "slot backup failed"; }
-    $BB grep -q 'SLOT dumped' "$ST/begin.log" || { cat "$ST/begin.log"; die "slot backup not confirmed"; }
-    : > "$ST/ready"
-    echo "OK backup written to $ST/a18_orig.bin"
-    ;;
+    $BB mv -f "$ST/.order.1" "$ORD"
+    $BB rm -f "$ST/.names"
+    return 0
+}
 
-apply)
-    name=${2:-}
-    [ -n "$name" ] || die "usage: lut.sh apply <name>"
-    need_tools
-    [ -d "$LAB" ] || die "no $LAB"
+# order 里的星标条目数（收藏是「前排」而不是另一个筛选维度）
+order_fav_count() {
+    [ -f "$ORD" ] || { echo 0; return 0; }
+    $BB grep -c '^\*' "$ORD" 2>/dev/null || echo 0
+}
 
+# ---------- 表路径解析（.cube 走缓存） ----------
+# 输出 native 表路径。混合/强度要反复用同一张表，每次重转 0.478 s 太贵，
+# 所以按 cksum 缓存：源文件没变就不重转。
+# 同名 .cube 优先（与 apply 一致），否则用 .bin。
+table_of() {
+    n=$1
     src=
-    [ -f "$LAB/$name.cube" ] && src=$LAB/$name.cube
-    [ -z "$src" ] && [ -f "$LAB/$name.bin" ] && src=$LAB/$name.bin
-    [ -n "$src" ] || die "not found: $name (.cube or .bin)"
+    [ -f "$LAB/$n.cube" ] && src=$LAB/$n.cube
+    [ -z "$src" ] && [ -f "$LAB/$n.bin" ] && src=$LAB/$n.bin
+    [ -n "$src" ] || return 1
+    case "$src" in
+        *.bin) echo "$src"; return 0 ;;
+    esac
+    [ -x "$CUBE" ] || die "missing $CUBE"
+    $BB mkdir -p "$CV"
+    sum=$($BB cksum "$src" 2>/dev/null | $BB awk '{print $1 "-" $2}')
+    cache=$CV/$n.bin
+    if [ ! -s "$cache" ] || [ "$(cat "$CV/$n.sum" 2>/dev/null)" != "$sum" ]; then
+        "$CUBE" "$src" "$cache" > "$ST/convert.log" 2>&1 \
+            || { cat "$ST/convert.log"; return 1; }
+        $BB grep -q '=== done ===' "$ST/convert.log" \
+            || { cat "$ST/convert.log"; return 1; }
+        printf '%s\n' "$sum" > "$CV/$n.sum"
+    fi
+    echo "$cache"
+    return 0
+}
 
+# ---------- 写槽 + 改三张登记表（apply 与 mix 共用） ----------
+commit_table() {
+    label=$1
+    table=$2
     $BB mkdir -p "$ST"
 
     # 关屏幕色彩（理由见 oled_save 注释）。放在写槽之前，保证半按那一刻起 ISP
@@ -131,19 +190,6 @@ apply)
         sh "$0" begin || die "backup failed"
     fi
 
-    # .cube 需要机上转换
-    table=$src
-    case "$src" in
-        *.cube)
-            [ -x "$CUBE" ] || die "missing $CUBE"
-            table=$ST/current.bin
-            "$CUBE" "$src" "$table" > "$ST/convert.log" 2>&1 \
-                || { cat "$ST/convert.log"; die "cube conversion failed"; }
-            $BB grep -q '=== done ===' "$ST/convert.log" || { cat "$ST/convert.log"; die "conversion not confirmed"; }
-            ;;
-    esac
-
-    # 写槽（不覆盖首次备份）
     "$SLOTW" write "$SLOT" "$table" > "$ST/write.log" 2>&1 \
         || { cat "$ST/write.log"; die "slot write failed"; }
     $BB grep -q 'READBACK ok' "$ST/write.log" || { cat "$ST/write.log"; die "slot write not verified"; }
@@ -178,9 +224,189 @@ apply)
     #   让 p7 自己走完选表流程才能复位。
     #   p7 只在自己的事件（半按/切档）里重新读取登记表，所以这里只改表与指针，
     #   由用户半按一次完成装载。半按在 LUT 模式下不会关闭面板。
-    printf '%s\n' "$name" > "$ST/current"
-    echo "OK applied $name"
+    printf '%s\n' "$label" > "$ST/current"
+    echo "OK applied $label"
     echo "NEXT half-press once (panel stays open)"
+}
+
+case "${1:-status}" in
+list)
+    [ -d "$LAB" ] || die "no $LAB"
+    order_sync
+    only_fav=0
+    [ "${2:-}" = "--fav" ] && only_fav=1
+    while IFS= read -r line; do
+        [ -n "$line" ] || continue
+        key=${line#\*}
+        if [ $only_fav -eq 1 ]; then
+            case "$line" in \**) ;; *) continue ;; esac
+        fi
+        echo "$key"
+    done < "$ORD"
+    ;;
+
+fav)
+    name=${2:-}
+    valid_name "$name" || die "bad name"
+    [ -d "$LAB" ] || die "no $LAB"
+    order_sync
+    if $BB grep -qx "\*$name" "$ORD" 2>/dev/null; then
+        # 取消收藏：去掉星标，留在原位（不做位置回弹，用户调过的顺序不被打乱）
+        $BB awk -v k="$name" '{ if ($0 == "*" k) print k; else print }' "$ORD" > "$ST/.o"
+        $BB mv -f "$ST/.o" "$ORD"
+        echo "OK unfav $name"
+    else
+        # 新收藏 = 排到最前（收藏是「前排」语义，不是筛选维度）
+        $BB awk -v k="$name" 'BEGIN { print "*" k }
+                              { if ($0 == k || $0 == "*" k) next; print }' "$ORD" > "$ST/.o"
+        $BB mv -f "$ST/.o" "$ORD"
+        echo "OK fav $name"
+    fi
+    ;;
+
+move)
+    name=${2:-}; dir=${3:-up}
+    valid_name "$name" || die "bad name"
+    order_sync
+    $BB grep -qx "$name" "$ORD" 2>/dev/null || $BB grep -qx "\*$name" "$ORD" 2>/dev/null \
+        || die "not in library: $name"
+    $BB awk -v k="$name" -v dir="$dir" '
+        { line[NR]=$0; key[NR]=$0; sub(/^\*/,"",key[NR]) }
+        END {
+            pos=0
+            for (i=1;i<=NR;i++) if (key[i]==k) { pos=i; break }
+            if (dir=="top") {
+                if (pos>1) { t=line[pos]; for (i=pos;i>1;i--) line[i]=line[i-1]; line[1]=t }
+            } else if (dir=="up") {
+                if (pos>1) { t=line[pos]; line[pos]=line[pos-1]; line[pos-1]=t }
+            } else if (dir=="down") {
+                if (pos<NR) { t=line[pos]; line[pos]=line[pos+1]; line[pos+1]=t }
+            }
+            for (i=1;i<=NR;i++) print line[i]
+        }
+    ' "$ORD" > "$ST/.o"
+    $BB mv -f "$ST/.o" "$ORD"
+    echo "OK moved $name $dir"
+    ;;
+
+index)
+    [ -d "$LAB" ] || die "no $LAB"
+    order_sync
+    echo "OK order rebuilt: $($BB wc -l < "$ORD" | $BB tr -d ' ') entries, $(order_fav_count) fav"
+    ;;
+
+del)
+    name=${2:-}
+    valid_name "$name" || die "bad name"
+    [ -d "$LAB" ] || die "no $LAB"
+    moved=
+    $BB mkdir -p "$TRASH"
+    for ext in cube bin; do
+        if [ -f "$LAB/$name.$ext" ]; then
+            $BB mv -f "$LAB/$name.$ext" "$TRASH/$name.$ext" || die "cannot move $name.$ext"
+            moved="$moved $name.$ext"
+        fi
+    done
+    [ -n "$moved" ] || die "not found: $name (.cube or .bin)"
+    $BB rm -f "$CV/$name.bin" "$CV/$name.sum" 2>/dev/null
+    order_sync
+    $BB awk -v k="$name" '{ if ($0 != k && $0 != "*" k) print }' "$ORD" > "$ST/.o"
+    $BB mv -f "$ST/.o" "$ORD"
+    # 正在生效的就是它 ⇒ 一并还原，否则登记表指向一张已下架的表
+    if [ -f "$ST/current" ] && [ "$(cat "$ST/current")" = "$name" ]; then
+        sh "$0" off >/dev/null 2>&1 && echo "OK active look removed, restored to factory"
+    fi
+    echo "OK trashed:$moved"
+    echo "NEXT recover from $TRASH on a PC if this was a mistake"
+    ;;
+
+stock)
+    need_tools
+    [ -d "$LAB" ] || die "no $LAB"
+    "$SLOTW" read "$STOCK_SLOT" "$LAB/_stock_A17.bin" > "$ST/stock.log" 2>&1 \
+        || { cat "$ST/stock.log"; die "stock dump failed"; }
+    $BB grep -q 'SLOT dumped' "$ST/stock.log" || { cat "$ST/stock.log"; die "stock dump not confirmed"; }
+    echo "OK stock A17 dumped to $LAB/_stock_A17.bin ($($BB wc -c < "$LAB/_stock_A17.bin" | $BB tr -d ' ') bytes)"
+    ;;
+
+mix)
+    a=${2:-}; b=${3:-}; pct=${4:-}
+    valid_name "$a" || die "bad A"
+    valid_name "$b" || die "bad B"
+    case "$pct" in ''|*[!0-9]*) die "usage: lut.sh mix <A> <B> <0-100>" ;; esac
+    [ "$pct" -le 100 ] || die "percent must be 0..100"
+    need_tools
+    [ -n "$MIX" ] && [ -x "$MIX" ] || die "missing lutmix.arm (looked in $TD and /mnt/mmc/lut)"
+    ta=$(table_of "$a") || die "cannot resolve A: $a"
+    tb=$(table_of "$b") || die "cannot resolve B: $b"
+    $BB mkdir -p "$ST"
+    perm=$((pct * 10))
+    "$MIX" "$ta" "$tb" "$perm" "$ST/mix.bin" > "$ST/mix.log" 2>&1 \
+        || { cat "$ST/mix.log"; die "lutmix failed"; }
+    $BB grep -q '=== done ===' "$ST/mix.log" || { cat "$ST/mix.log"; die "lutmix not confirmed"; }
+    commit_table "mix:${a}+${b}@${pct}%" "$ST/mix.bin"
+    ;;
+
+strength)
+    name=${2:-}; pct=${3:-}
+    valid_name "$name" || die "bad name"
+    case "$pct" in ''|*[!0-9]*) die "usage: lut.sh strength <name> <0-100>" ;; esac
+    [ "$pct" -le 100 ] || die "percent must be 0..100"
+    need_tools
+    [ -n "$MIX" ] && [ -x "$MIX" ] || die "missing lutmix.arm (looked in $TD and /mnt/mmc/lut)"
+    # 0 端 = 原厂 A17（白点 206,207,240）。没有 dump 过就退到 identity，
+    # 并在输出里说明——identity 是 255 白点，拉到 0% 会比平时更冷更亮。
+    if [ -f "$LAB/_stock_A17.bin" ]; then
+        base=$LAB/_stock_A17.bin
+        base_label=stock
+    else
+        base=$ST/identity.bin
+        if [ ! -s "$base" ]; then
+            "$MIX" --identity "$base" > "$ST/identity.log" 2>&1 \
+                || { cat "$ST/identity.log"; die "identity build failed"; }
+        fi
+        base_label=identity
+        echo "WARN no _stock_A17.bin; 0% uses identity (colder/brighter than factory)"
+        echo "HINT run: sh $0 stock"
+    fi
+    ta=$(table_of "$name") || die "cannot resolve: $name"
+    $BB mkdir -p "$ST"
+    perm=$((pct * 10))
+    "$MIX" "$base" "$ta" "$perm" "$ST/mix.bin" > "$ST/mix.log" 2>&1 \
+        || { cat "$ST/mix.log"; die "lutmix failed"; }
+    $BB grep -q '=== done ===' "$ST/mix.log" || { cat "$ST/mix.log"; die "lutmix not confirmed"; }
+    commit_table "strength:${name}@${pct}%($base_label)" "$ST/mix.bin"
+    ;;
+
+begin)
+    need_tools
+    $BB mkdir -p "$ST" || die "cannot create $ST"
+    # 每次进入都重新取一份"当前状态"作为本次会话的还原点。
+    # 但有两种例外：
+    #   · 上次是半按关闭（keep 标记）⇒ 用户要保留这个 look，沿用同一份备份
+    #   · 上次异常退出（ready 残留但无 keep）⇒ 先还原，避免把已改状态当原厂
+    if [ -f "$ST/ready" ]; then
+        if [ -f "$ST/keep" ]; then
+            $BB rm -f "$ST/keep"
+            echo "OK resumed (look kept, previous backup reused)"
+            exit 0
+        fi
+        sh "$0" off > "$ST/previous-off.log" 2>&1
+    fi
+    "$SLOTW" read "$SLOT" "$ST/a18_orig.bin" > "$ST/begin.log" 2>&1 \
+        || { cat "$ST/begin.log"; die "slot backup failed"; }
+    $BB grep -q 'SLOT dumped' "$ST/begin.log" || { cat "$ST/begin.log"; die "slot backup not confirmed"; }
+    : > "$ST/ready"
+    echo "OK backup written to $ST/a18_orig.bin"
+    ;;
+
+apply)
+    name=${2:-}
+    [ -n "$name" ] || die "usage: lut.sh apply <name>"
+    need_tools
+    [ -d "$LAB" ] || die "no $LAB"
+    table=$(table_of "$name") || die "not found: $name (.cube or .bin)"
+    commit_table "$name" "$table"
     ;;
 
 off)
@@ -219,6 +445,8 @@ status)
         echo "IDLE"
     fi
     echo "BACKUP $([ -f "$ST/a18_orig.bin" ] && echo present || echo absent)"
+    echo "STOCK  $([ -f "$LAB/_stock_A17.bin" ] && echo present || echo absent)"
+    echo "LIB    $([ -f "$ORD" ] && $BB grep -c . "$ORD" 2>/dev/null || echo 0) entries, $([ -f "$ORD" ] && order_fav_count || echo 0) fav"
     "$REGT" status 2>/dev/null | $BB sed -n '2,4p'
     # 引擎实际指向哪个槽（0x2082b00c = 3DLUT 表指针）。
     # 注意：所有表都写在同一个槽 A18，所以指针恒为 A18，**不能**用它判断
@@ -231,7 +459,9 @@ status)
     ;;
 
 *)
-    echo "usage: lut.sh list|begin|apply <name>|off|status"
+    echo "usage: lut.sh list [--fav]|begin|apply <name>|off|status"
+    echo "       lut.sh fav <name>|move <name> up|down|top|del <name>|index"
+    echo "       lut.sh mix <A> <B> <0-100>|strength <name> <0-100>|stock"
     exit 2
     ;;
 esac

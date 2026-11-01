@@ -47,6 +47,29 @@ static long long draw_total_ms; static int draw_calls;
  * ("save and close", OK). Restoring is now an explicit button. */
 static int lut_mode = 0;
 static int touch_x, touch_active, close_after_child;
+/* ── 库管理 / 混合 / 输入（2026-11-01）───────────────────────────────
+ * 三个 UI 状态共用一个滤镜条，只换下面那排按钮 —— 720×208 里没有第二个
+ * 面板的位置，而"换掉按钮行"比新开一层窗口更不容易挡住取景器：
+ *   BROWSE 浏览（原有行为）
+ *   EDIT   长按进入：删除 / 左移 / 右移 / 完成（删除要两次点确认）
+ *   MIX    双表交叉混合：设为A / 设为B / 应用 / 退出，滚条变成 0-100 强度
+ * 混合本身不在面板里算：面板只发 `lut.sh mix A B pct`，表由 lutmix.arm 生成。
+ * 这样面板永远不持有像素数据，也不需要为 19,712 字节的缓冲区估内存。 */
+#define UI_BROWSE 0
+#define UI_EDIT   1
+#define UI_MIX    2
+static int ui_mode = UI_BROWSE;
+static int confirm_del;              /* 删除按钮的二次确认窗口 */
+static long long confirm_del_at;
+static int mix_a = -1, mix_b = -1, mix_pct = 100;
+static char mix_key_a[96], mix_key_b[96];   /* 存 key 不存序号：库增删后序号会指错 */
+/* 库变更后要重建列表：1 = 重跑 `lut.sh list`（LUT 面板），2 = 重读配方表 */
+static int refresh_pending, refresh_after;
+static const char *recipes_path_global;
+/* 长按：按下计时，手指移动超过阈值就当作滑动，不再触发 */
+static int press_active, press_x, press_y;
+static long long press_at;
+static const char *inputlog_path; static FILE *inputlog;
 /* A half-press usually lands inside the 150 ms debounce window that follows the
  * last swipe: the highlighted look is the one the operator wants, but the queue
  * has not dispatched it yet. Dropping that request on close meant the slot kept
@@ -251,6 +274,10 @@ static int start_child(int kind, int index, const char *command) {
     if (kind == 1) preview_status(); else message("正在执行…");
     return 1;
 }
+static int rebuild_lut_list(const char *text);
+static int reload_recipes_file(void);
+static int run_engine(const char *verb, const char *a1, const char *a2,
+                      const char *a3, int refresh);
 static void poll_child(void) {
     int code, success, was_commit; pid_t result;
     if (!child) return;
@@ -316,12 +343,258 @@ static void poll_child(void) {
         message(success ? "已还原中性 · 切档或重启回原厂" : "还原失败 · 详情见日志");
     } else if (busy_kind == 8) {
         message(success ? "已还原原厂表" : "还原失败 · 详情见日志");
+    } else if (busy_kind == 5) {
+        /* 库变更后重跑 `lut.sh list`：输出就是新的顺序 */
+        if (!success) message("库列表刷新失败 · 见 /tmp/nxui.log");
+        else if (rebuild_lut_list(output)) message("库已刷新");
+        else message("库读空了 · 保留原列表");
     } else {
+        if (!success) message(refresh_after ? "操作失败 · 详情见日志" : "命令失败 · 详情见日志");
+        else if (refresh_after) { refresh_pending = refresh_after; message("已完成 · 正在刷新库"); }
+        else if (close_after_child) { /* fall through to the close chain */ }
+        else message("命令已完成");
+        refresh_after = 0;
         if (close_after_child) {
             close_after_child = 0;
             if (success) { quit = 1; queue.close_requested = 1; }
         }
-        message(success ? "命令已完成" : "命令失败 · 详情见日志");
+    }
+    dirty = 1;
+}
+/* ═══════════════════════ 键位映射 ═══════════════════════════════════
+ * 相机在无窗口管理器下把硬件键翻译成 X KeyPress 发给焦点窗口，但机身
+ * 转盘/方向键到底映射成哪个 keysym，只能在机身上量（--inputlog）。
+ * 所以这里做一张可覆盖的表：默认够用，量到新键就写进 keys.conf，
+ * 不必为了一个按键改二进制。 */
+enum { ACT_NONE = 0, ACT_PREV, ACT_NEXT, ACT_OK, ACT_CLOSE, ACT_EDIT, ACT_MIX,
+       ACT_DEL, ACT_MOVE_L, ACT_MOVE_R };
+static const char *const act_names[] = { "none", "prev", "next", "ok", "close",
+    "edit", "mix", "del", "movel", "mover" };
+#define KEYMAP_MAX 24
+static struct { KeySym sym; int act; } keymap[KEYMAP_MAX];
+static int keymap_n;
+
+static int action_from_name(const char *s) {
+    int i;
+    for (i = 1; i < (int)(sizeof act_names / sizeof *act_names); i++)
+        if (!strcmp(s, act_names[i])) return i;
+    return ACT_NONE;
+}
+static void keymap_add(const char *name, int act) {
+    KeySym k;
+    if (keymap_n >= KEYMAP_MAX || act == ACT_NONE) return;
+    k = XStringToKeysym(name);
+    if (k == NoSymbol) { fprintf(stderr, "KEYMAP unknown keysym %s\n", name); return; }
+    keymap[keymap_n].sym = k; keymap[keymap_n].act = act; keymap_n++;
+}
+static void keymap_defaults(void) {
+    /* 只断言标准 keysym：机身转盘的实测名另外写进 keys.conf。 */
+    keymap_add("Left", ACT_PREV);  keymap_add("Up", ACT_PREV);
+    keymap_add("Right", ACT_NEXT); keymap_add("Down", ACT_NEXT);
+    keymap_add("Return", ACT_OK);  keymap_add("KP_Enter", ACT_OK);
+    keymap_add("space", ACT_OK);
+    keymap_add("Escape", ACT_CLOSE);
+    keymap_add("F1", ACT_EDIT);    /* 默认无冲突；实际键位见 keys.conf */
+    keymap_add("F2", ACT_MIX);
+}
+static void keymap_load(void) {
+    char path[256], line[160], name[64], act[32];
+    FILE *f;
+    if (!state_dir || !*state_dir) return;
+    snprintf(path, sizeof path, "%s/keys.conf", state_dir);
+    if (!(f = fopen(path, "r"))) return;
+    while (fgets(line, sizeof line, f)) {
+        line[strcspn(line, "\r\n")] = 0;
+        if (!line[0] || line[0] == '#') continue;
+        if (sscanf(line, "%63s %31s", name, act) != 2) continue;
+        keymap_add(name, action_from_name(act));
+    }
+    fclose(f);
+    fprintf(stderr, "KEYMAP conf=%s entries=%d\n", path, keymap_n);
+}
+static int keymap_action(KeySym k) {
+    int i;
+    for (i = 0; i < keymap_n; i++) if (keymap[i].sym == k) return keymap[i].act;
+    return ACT_NONE;
+}
+static void logline(const char *s) {
+    if (!inputlog) return;
+    fprintf(inputlog, "%lld %s\n", now_ms(), s);
+    fflush(inputlog);
+}
+
+/* ═══════════════════════ 库管理 / 混合 ══════════════════════════════ */
+static int find_key(const char *k) {
+    int i;
+    if (!k || !*k) return -1;
+    for (i = 0; i < count; i++) if (!strcmp(recipes[i].key, k)) return i;
+    return -1;
+}
+/* 引擎调用统一走 /bin/sh <engine> <verb> [args...]：与 apply/off 同一条
+ * 链，不要求脚本带可执行位。refresh 说明这次操作会不会改变库内容：
+ *   0 = 不改库（混合/还原）  1 = LUT 库（要重跑 list）  2 = 重读配方表 */
+static int run_engine(const char *verb, const char *a1, const char *a2,
+                      const char *a3, int refresh) {
+    char cmd[600];
+    if (a3) snprintf(cmd, sizeof cmd, "sh %s %s %s %s %s", engine, verb, a1, a2, a3);
+    else if (a2) snprintf(cmd, sizeof cmd, "sh %s %s %s %s", engine, verb, a1, a2);
+    else if (a1) snprintf(cmd, sizeof cmd, "sh %s %s %s", engine, verb, a1);
+    else snprintf(cmd, sizeof cmd, "sh %s %s", engine, verb);
+    refresh_after = refresh;
+    if (!start_child(2, -1, cmd)) { refresh_after = 0; return 0; }
+    return 1;
+}
+static int busy_guard(void) {
+    if (child) { fprintf(stderr, "LIB busy kind=%d, request ignored\n", busy_kind);
+                 message("正在执行 · 请稍候"); return 1; }
+    return 0;
+}
+/* 下架：两段确认。LUT 是"移到 _trash"（可找回），配方是物理删除（有备份），
+ * 但两者都不该被一次误触完成。 */
+static void lib_delete(int idx) {
+    if (idx < 0 || idx >= count || busy_guard()) return;
+    if (!confirm_del) {
+        confirm_del = 1; confirm_del_at = now_ms();
+        snprintf(status, sizeof status, "%s下架「%s」？再点一次删除确认",
+                 lut_mode ? "" : "永久删除配方「", lut_mode ? "" : recipes[idx].label);
+        if (!lut_mode) snprintf(status, sizeof status, "永久删除「%s」？再点一次确认（有备份）", recipes[idx].label);
+        dirty = 1;
+        return;
+    }
+    confirm_del = 0;
+    if (lut_mode) {
+        if (run_engine("del", recipes[idx].key, NULL, NULL, 1)) message("正在移到 _trash…");
+    } else if (run_engine("lib", "del", recipes[idx].key, NULL, 2)) message("正在删除配方…");
+}
+static void lib_move(int idx, int delta) {
+    const char *dir = delta < 0 ? "up" : "down";
+    if (idx < 0 || idx >= count || busy_guard()) return;
+    if (lut_mode) {
+        if (run_engine("move", recipes[idx].key, dir, NULL, 1)) message("正在调整顺序…");
+    } else if (run_engine("lib", "move", recipes[idx].key, dir, 2)) message("正在调整顺序…");
+}
+static void mix_apply(void) {
+    char pct[8];
+    if (!lut_mode) { message("混合只在 LUT 面板可用"); return; }
+    if (mix_a < 0 || mix_b < 0) { message("先把两张 look 分别设为 A 和 B"); return; }
+    if (busy_guard()) return;
+    snprintf(pct, sizeof pct, "%d", mix_pct);
+    if (run_engine("mix", recipes[mix_a].key, recipes[mix_b].key, pct, 0)) {
+        /* 混合表的登记名是 mix:A+B@pct，选中项不再是"当前生效的那张表" */
+        queue.applied = -1; queue.desired = -1;
+        snprintf(status, sizeof status, "正在混合 %s × %s @%d%%…",
+                 recipes[mix_a].label, recipes[mix_b].label, mix_pct);
+        dirty = 1;
+    }
+}
+/* 把 recipes[] 写回面板读的那份扁平表。只在 LUT 模式用：配方的
+ * recipes.txt 是 filmlab.sh export 的产物，面板不该抢着写。 */
+static void write_recipes_file(void) {
+    char tmp[300], line[256];
+    FILE *f;
+    int i;
+    if (!lut_mode || !recipes_path_global) return;
+    snprintf(tmp, sizeof tmp, "%s.tmp", recipes_path_global);
+    if (!(f = fopen(tmp, "w"))) return;
+    for (i = 0; i < count; i++) {
+        snprintf(line, sizeof line, "%s|%s|0|0|0|0|0|0|0\n", recipes[i].key, recipes[i].label);
+        fputs(line, f);
+    }
+    if (fclose(f) == 0) {
+        if (rename(tmp, recipes_path_global) != 0) unlink(tmp);
+    }
+}
+/* LUT 库的列表来自 `lut.sh list` 的输出。只认名字行：OK/NEXT/ERR/WARN
+ * 这些是同一套脚本的动作回执，混进来会变成"叫 OK 的 look"。 */
+static int rebuild_lut_list(const char *text) {
+    static struct nx_recipe tmp[NXUI_MAX_RECIPES];
+    int n = 0;
+    const char *p = text;
+    char keep[96];
+    int keep_idx = (selected >= 0 && selected < count) ? selected : 0;
+    snprintf(keep, sizeof keep, "%s", count > 0 ? recipes[keep_idx].key : "");
+    while (p && *p && n < NXUI_MAX_RECIPES) {
+        size_t len = strcspn(p, "\n"), copy = len;
+        if (copy >= sizeof tmp[n].key - 1) copy = sizeof tmp[n].key - 1;
+        if (len > 0) {
+            memcpy(tmp[n].key, p, copy); tmp[n].key[copy] = 0;
+            tmp[n].key[strcspn(tmp[n].key, "\r")] = 0;
+        }
+        p += len; if (*p) p++;
+        if (!tmp[n].key[0]) continue;
+        if (!strncmp(tmp[n].key, "OK ", 3) || !strncmp(tmp[n].key, "ERR ", 4) ||
+            !strncmp(tmp[n].key, "NEXT ", 5) || !strncmp(tmp[n].key, "WARN ", 5) ||
+            !strncmp(tmp[n].key, "HINT ", 5) || tmp[n].key[0] == '#') continue;
+        if (!nx_key_valid(tmp[n].key)) continue;
+        memset(tmp[n].label, 0, sizeof tmp[n].label);
+        strcpy(tmp[n].label, tmp[n].key);
+        n++;
+    }
+    if (n <= 0) { fprintf(stderr, "REFRESH lut: empty list, keeping %d entries\n", count); return 0; }
+    memcpy(recipes, tmp, (size_t)n * sizeof *recipes);
+    count = n;
+    selected = find_key(keep);
+    if (selected < 0) selected = 0;
+    mix_a = find_key(mix_key_a);
+    mix_b = find_key(mix_key_b);
+    write_recipes_file();
+    fprintf(stderr, "REFRESH lut: entries=%d sel=%d mix=%d/%d\n", count, selected, mix_a, mix_b);
+    return 1;
+}
+static int reload_recipes_file(void) {
+    static struct nx_recipe tmp[NXUI_MAX_RECIPES];
+    char keep[96];
+    int n, keep_idx = (selected >= 0 && selected < count) ? selected : 0;
+    snprintf(keep, sizeof keep, "%s", count > 0 ? recipes[keep_idx].key : "");
+    n = nx_load_recipes(recipes_path_global, tmp, NXUI_MAX_RECIPES);
+    if (n <= 0) { fprintf(stderr, "REFRESH recipes: reload failed (%d)\n", n); return 0; }
+    memcpy(recipes, tmp, (size_t)n * sizeof *recipes);
+    count = n;
+    selected = find_key(keep);
+    if (selected < 0) selected = 0;
+    mix_a = find_key(mix_key_a);
+    mix_b = find_key(mix_key_b);
+    fprintf(stderr, "REFRESH recipes: entries=%d sel=%d\n", count, selected);
+    return 1;
+}
+
+/* 按键/触摸的语义分发：把「哪个键」和「做什么」解耦，键位表才好换。 */
+static void do_action(int act) {
+    if (act == ACT_NONE) return;
+    if (act == ACT_CLOSE) { queue.close_requested = 1; return; }
+    if (menu) return;                 /* 菜单模式不抢按键，行为与旧版一致 */
+    switch (act) {
+    case ACT_PREV: choose(selected - 1); break;
+    case ACT_NEXT: choose(selected + 1); break;
+    case ACT_EDIT:
+        ui_mode = (ui_mode == UI_EDIT) ? UI_BROWSE : UI_EDIT;
+        confirm_del = 0;
+        message(ui_mode == UI_EDIT ? "编辑：删除 / 左移 / 右移 / 完成" : "已退出编辑");
+        break;
+    case ACT_MIX:
+        if (!lut_mode) { message("混合只在 LUT 面板可用"); return; }
+        ui_mode = (ui_mode == UI_MIX) ? UI_BROWSE : UI_MIX;
+        if (ui_mode == UI_MIX) {
+            if (mix_a < 0) mix_a = selected;
+            if (mix_b < 0) mix_b = (selected + 1 < count) ? selected + 1 : selected;
+            if (mix_a >= 0 && mix_a < count)
+                snprintf(mix_key_a, sizeof mix_key_a, "%s", recipes[mix_a].key);
+            if (mix_b >= 0 && mix_b < count)
+                snprintf(mix_key_b, sizeof mix_key_b, "%s", recipes[mix_b].key);
+            message("混合：选条目后设为 A / B，滚条调强度");
+        } else message("已退出混合");
+        break;
+    case ACT_DEL:    if (ui_mode == UI_EDIT) lib_delete(selected); break;
+    case ACT_MOVE_L: if (ui_mode == UI_EDIT) lib_move(selected, -1); break;
+    case ACT_MOVE_R: if (ui_mode == UI_EDIT) lib_move(selected, +1); break;
+    case ACT_OK:
+        if (ui_mode == UI_MIX) { mix_apply(); break; }
+        if (ui_mode == UI_EDIT) { ui_mode = UI_BROWSE; message("已退出编辑"); break; }
+        if (!child && count > 0) {
+            nx_queue_select(&queue, selected, now_ms() - NXUI_DEBOUNCE_MS);
+            queue.commit_requested = 1; queue.close_requested = 1;
+        }
+        break;
     }
     dirty = 1;
 }
@@ -459,7 +732,11 @@ static void draw(void) {
         nk_layout_row_begin(ctx, NK_STATIC, 24, 3);
         nk_layout_row_push(ctx, 460);
         nk_label_colored(ctx, menu ? "NX-KS  /  菜单"
-                            : (lut_mode ? "LUT  /  3D 滤镜" : "FILMLAB  /  滤镜预览"),
+                            : (lut_mode ? (ui_mode == UI_EDIT ? "LUT  /  编辑"
+                                          : ui_mode == UI_MIX ? "LUT  /  混合"
+                                          : "LUT  /  3D 滤镜")
+                                        : (ui_mode == UI_EDIT ? "FILMLAB  /  编辑"
+                                          : "FILMLAB  /  滤镜预览")),
                          NK_TEXT_LEFT, accent);
         nk_layout_row_push(ctx, 104);
         if (nk_button_label(ctx, menu ? "滤镜" : "菜单")) {
@@ -473,7 +750,7 @@ static void draw(void) {
             start = page * 6;
             nk_layout_row_dynamic(ctx, 55, 2);
             for (i = start; i < start + 6; i++) {
-                if (i >= item_count) { nk_spacing(ctx, 1); continue; }
+                if (i >= item_count) { nk_label(ctx, "", NK_TEXT_LEFT); continue; }
                 if (!strcmp(base_name(items[i].command), "telnet_toggle.sh"))
                     nx_services_label(&services, line, sizeof line);
                 else snprintf(line, sizeof line, "%s%s", items[i].checkbox ? (checked(items[i].command) ? "[开] " : "[关] ") : "", items[i].label);
@@ -496,9 +773,17 @@ static void draw(void) {
             if (first < 0) first = 0;
             for (gi = 0; gi < win; gi++) {
                 idx = first + gi;
-                if (idx >= count) { nk_spacing(ctx, 1); continue; }
+                /* ★ 空位必须用 nk_label 占，不能用 nk_spacing(1)：
+                 * nk_spacing 在「最后一列」上会把 row.index 绕回 0 并
+                 * nk_panel_alloc_row —— 等于多开一整行 65px。库内条目 < 5 时
+                 * 按钮行被顶到 y=188，整行掉出 208px 面板（静默不渲染）。
+                 * 只有"库里只剩几张表"才会触发，常规 40+ 张时永远看不到。 */
+                if (idx >= count) { nk_label(ctx, "", NK_TEXT_LEFT); continue; }
                 nk_bool picked = (idx == selected);
-                snprintf(line, sizeof line, "%s%s", idx == selected ? "● " : "", recipes[idx].label);
+                /* MIX 模式下在条目上标 [A]/[B]：否则用户看不出混的是哪两张 */
+                snprintf(line, sizeof line, "%s%s%s", idx == selected ? "● " : "",
+                         ui_mode == UI_MIX ? (idx == mix_a ? "[A] " : idx == mix_b ? "[B] " : "") : "",
+                         recipes[idx].label);
                 /* A tap always applies, including on the highlighted row: the
                  * camera or the legacy menu may have changed ISP state since
                  * the preview, so the marker is not proof the value is live.
@@ -518,13 +803,48 @@ static void draw(void) {
             }
             /* 横向滚动条（两模式共用）：整条宽度映射到 0..count-1，拖动直接改
              * 选中项，视图随 first = selected - win/2 一起滚。拖动期间的连续
-             * choose 由 150ms 防抖收敛成一次 apply，不会每个像素写一次槽。 */
+             * choose 由 150ms 防抖收敛成一次 apply，不会每个像素写一次槽。
+             * MIX 模式下同一条控件变成 0-100 的强度滑杆：手势与位置都没变，
+             * 用户不用学第二套操作，也不多占一行高度。 */
             nk_layout_row_dynamic(ctx, 16, 1);
-            {
+            if (ui_mode == UI_MIX) {
+                int want = scrollbar_row(ctx, mix_pct, 101);
+                if (want >= 0 && want != mix_pct) { mix_pct = want; dirty = 1; }
+            } else {
                 int want = scrollbar_row(ctx, selected, count);
                 if (want >= 0 && want != selected) choose(want);
             }
-            if (lut_mode) {
+            if (ui_mode == UI_EDIT) {
+                /* 编辑态：按钮行整体换掉，不做成一排六个小按钮 ——
+                 * 168px 一列是手指可点的下限，六个就只剩 112px。
+                 * 「删除」是两段式：第一次只提示，第二次才执行；3 秒不动自动撤销。 */
+                int b_del, b_ml, b_mr, b_done;
+                nk_layout_row_dynamic(ctx, 26, 4);
+                b_del  = nk_button_label(ctx, confirm_del ? "确认删除" : "删除");
+                b_ml   = nk_button_label(ctx, "‹ 左移");
+                b_mr   = nk_button_label(ctx, "右移 ›");
+                b_done = nk_button_label(ctx, "完成");
+                if (b_ml)   { confirm_del = 0; lib_move(selected, -1); }
+                if (b_mr)   { confirm_del = 0; lib_move(selected, +1); }
+                if (b_done) { confirm_del = 0; ui_mode = UI_BROWSE; message("已退出编辑"); }
+                if (b_del)  lib_delete(selected);
+            } else if (ui_mode == UI_MIX) {
+                /* A/B 各由一个按钮就地指定（当前选中项），滚条给强度。
+                 * 顺序：设A / 设B / 应用 / 退出 —— 应用留第三列，远离退出。 */
+                nk_layout_row_dynamic(ctx, 26, 4);
+                if (nk_button_label(ctx, "设为A") && count > 0) {
+                    mix_a = selected;
+                    snprintf(mix_key_a, sizeof mix_key_a, "%s", recipes[selected].key);
+                    snprintf(status, sizeof status, "A = %s", recipes[selected].label); dirty = 1;
+                }
+                if (nk_button_label(ctx, "设为B") && count > 0) {
+                    mix_b = selected;
+                    snprintf(mix_key_b, sizeof mix_key_b, "%s", recipes[selected].key);
+                    snprintf(status, sizeof status, "B = %s", recipes[selected].label); dirty = 1;
+                }
+                if (nk_button_label(ctx, "应用混合")) mix_apply();
+                if (nk_button_label(ctx, "退出")) { ui_mode = UI_BROWSE; message("已退出混合"); }
+            } else if (lut_mode) {
                 /* LUT 面板：apply 本身就是"保存"（写槽 + 登记表），所以
                  * "保存并关闭"只等队列里最后一张 drain 完再退出，没有额外 commit。
                  * 四个按钮与 FILMLAB 对齐：浏览 / 提交 / 复位 / 浏览。
@@ -589,7 +909,17 @@ static void draw(void) {
                      NK_TEXT_LEFT);
         }
         nk_layout_row_dynamic(ctx, 23, 1);
-        nk_label_colored(ctx, live ? status : "演示模式 · 未连接相机", NK_TEXT_LEFT, nk_rgb(171, 182, 190));
+        /* 混合态把 A/B/强度放到底部状态行，而不是新开一行：LUT 面板的
+         * 123/149 按钮行位置被测试钉死，多一行 16px + 5px 间距会把按钮行
+         * 推出面板底部（旧版就这样静默丢掉过整行按钮）。 */
+        if (ui_mode == UI_MIX && count > 0) {
+            snprintf(line, sizeof line, "A:%s   B:%s   强度 %d%% · 选条目后设为A/B，滚条调强度",
+                mix_a >= 0 && mix_a < count ? recipes[mix_a].label : "—",
+                mix_b >= 0 && mix_b < count ? recipes[mix_b].label : "—", mix_pct);
+            nk_label_colored(ctx, line, NK_TEXT_LEFT, accent);
+        } else {
+            nk_label_colored(ctx, live ? status : "演示模式 · 未连接相机", NK_TEXT_LEFT, nk_rgb(171, 182, 190));
+        }
     }
     nk_end(ctx);
     nk_xlib_render(window, nk_rgb(24, 29, 33));
@@ -777,7 +1107,8 @@ int main(int argc, char **argv) {
         else if (i+1 < argc && !strcmp(argv[i], "--snapshot")) shot = argv[++i];
         else if (i+1 < argc && !strcmp(argv[i], "--lifetime-ms")) lifetime = atol(argv[++i]);
         else if (i+1 < argc && !strcmp(argv[i], "--bench-frames")) bench_frames = atoi(argv[++i]);
-        else { fprintf(stderr, "Usage: nxui [--live|--dry-run] [--root dir] [--recipes file] [--menu gui_file] [--engine file] [--snapshot ppm] [--lifetime-ms n]\n"); return 2; }
+        else if (i+1 < argc && !strcmp(argv[i], "--inputlog")) inputlog_path = argv[++i];
+        else { fprintf(stderr, "Usage: nxui [--live|--dry-run] [--root dir] [--recipes file] [--menu gui_file] [--engine file] [--snapshot ppm] [--lifetime-ms n] [--inputlog file]\n"); return 2; }
     }
     if (getenv("NXUI_NET_DIR")) net_dir = getenv("NXUI_NET_DIR"); /* isolated service-state tests */
     /* 缺字回退与"子集字体缺失"共用这一个文件路径；不同固件字体名可能不同，
@@ -804,8 +1135,13 @@ int main(int argc, char **argv) {
     nx_queue_init(&queue);
     count = nx_load_recipes(recipe_path, recipes, NXUI_MAX_RECIPES);
     if (count < 0) count = 0;
+    recipes_path_global = recipe_path;
     if (getenv("NXUI_STATE_DIR")) state_dir = getenv("NXUI_STATE_DIR");
     last_choice_load();   /* 回到上次停的那一项；没有记录就留在第一项 */
+    keymap_defaults();
+    keymap_load();        /* keys.conf 覆盖默认值；没有这个文件就是默认 */
+    if (inputlog_path && *inputlog_path && (inputlog = fopen(inputlog_path, "a")))
+        fprintf(inputlog, "=== nxui inputlog %s ===\n", lut_mode ? "lut" : "filmlab");
     recipes_ready = now_ms();
     display = XOpenDisplay(NULL);
     if (!display) { fprintf(stderr, "XOpenDisplay failed\n"); return 4; }
@@ -983,6 +1319,9 @@ int main(int argc, char **argv) {
                  * 的 xmotion.state 常被服务器清零，用它会导致整段拖动不跟手。
                  * 纯 hover 不置脏：相机触摸板会持续发 motion，全量重绘会让
                  * 空闲面板变成 10Hz 常亮渲染。 */
+                if (press_active &&
+                    (abs(event.xmotion.x - press_x) > 12 || abs(event.xmotion.y - press_y) > 12))
+                    press_active = 0;   /* 手指在动 ⇒ 这是滑动，不是长按 */
                 nk_input_motion(ctx, event.xmotion.x, event.xmotion.y);
                 if (ctx->input.mouse.buttons[NK_BUTTON_LEFT].down) dirty = 1;
                 continue;
@@ -1002,20 +1341,42 @@ int main(int argc, char **argv) {
             if (event.type == ClientMessage && (Atom)event.xclient.data.l[0] == wm_delete) queue.close_requested = 1;
             if (event.type == KeyPress) {
                 KeySym key = XLookupKeysym(&event.xkey, 0);
-                /* Only standard keysyms are asserted. Camera wheel mappings need measurement. */
-                if (key == XK_Escape) queue.close_requested = 1;
-                else if (!menu && (key == XK_Right || key == XK_Down)) choose(selected+1);
-                else if (!menu && (key == XK_Left || key == XK_Up)) choose(selected-1);
-                else if (!menu && (key == XK_Return || key == XK_KP_Enter) && !child && count > 0) {
-                    nx_queue_select(&queue, selected, now_ms()-NXUI_DEBOUNCE_MS);
-                    queue.commit_requested = 1; queue.close_requested = 1;
+                /* 键位表驱动（nxui/keys.conf 可覆盖）。默认仍是方向键/回车
+                 * /Esc —— 与旧版逐键等价，但机身转盘的实测 keysym 只要写进
+                 * 配置就能用，不必改二进制。 */
+                if (inputlog) {
+                    char b[160];
+                    snprintf(b, sizeof b, "KEY sym=%s code=%u state=0x%x",
+                             XKeysymToString(key) ? XKeysymToString(key) : "?",
+                             event.xkey.keycode, event.xkey.state);
+                    logline(b);
                 }
+                do_action(keymap_action(key));
             }
             if (event.type == ButtonPress && !menu && (event.xbutton.button == 4 || event.xbutton.button == 5))
                 choose(selected + (event.xbutton.button == 4 ? -1 : 1));
             /* Touchscreens can send a tap without a preceding MotionNotify. */
             if (event.type == ButtonPress || event.type == ButtonRelease)
                 nk_input_motion(ctx, event.xbutton.x, event.xbutton.y);
+            /* 长按计时：按下记位置与时刻，motion 超过阈值就取消（见上）；
+             * 到 550ms 还没动 ⇒ 进编辑态。触摸屏与鼠标走同一条路。 */
+            if (event.type == ButtonPress && event.xbutton.button == 1 && !menu) {
+                press_active = 1; press_x = event.xbutton.x; press_y = event.xbutton.y;
+                press_at = now_ms();
+                if (inputlog) {
+                    char b[96];
+                    snprintf(b, sizeof b, "PRESS x=%d y=%d", press_x, press_y);
+                    logline(b);
+                }
+            }
+            if (event.type == ButtonRelease) {
+                press_active = 0;
+                if (inputlog) {
+                    char b[96];
+                    snprintf(b, sizeof b, "RELEASE x=%d y=%d", event.xbutton.x, event.xbutton.y);
+                    logline(b);
+                }
+            }
             /* 左右滑动手势：超阈值切换选中；release 移出控件避免被当成点击 */
             /* 左右滑动手势只在滤镜条（y < 100）生效：滚动条本身也是一次
              * 按住拖动，Release 时若再按位移切一次，会把刚拖到的项改掉。 */
@@ -1039,6 +1400,28 @@ int main(int argc, char **argv) {
           nk_input_end(ctx);
         }
         poll_child();
+        /* 库变更后的列表重建。LUT 的顺序与增删由 lut.sh 决定，面板不自己
+         * 推断——重跑一次 list，把它的输出当唯一答案；配方表是
+         * filmlab.sh export 的产物，直接重读即可。 */
+        if (!child && refresh_pending) {
+            int mode = refresh_pending;
+            refresh_pending = 0;
+            if (mode == 2) {
+                if (reload_recipes_file()) message("配方库已刷新");
+                else message("配方表重读失败 · 见日志");
+            } else {
+                char list_cmd[600];
+                snprintf(list_cmd, sizeof list_cmd, "sh %s list", engine);
+                if (!start_child(5, -1, list_cmd)) message("无法刷新库列表");
+            }
+        }
+        /* 长按（550ms 不动）进编辑态。触摸屏和鼠标共用这一条：
+         * motion 超过 12px 时 press_active 已在上面的分支里清掉。 */
+        if (press_active && !child && now_ms() - press_at >= 550) {
+            press_active = 0;
+            if (ui_mode == UI_BROWSE) do_action(ACT_EDIT);
+        }
+        if (confirm_del && now_ms() - confirm_del_at > 3000) { confirm_del = 0; dirty = 1; }
         refresh_services(0);
         /* Unmap as soon as a close is requested: while the backend finishes
          * (up to the 12 s timeout) the panel must not keep covering the frame
@@ -1101,6 +1484,16 @@ int main(int argc, char **argv) {
          * the 60 s idle timeout swallow the gesture. Dry runs have no gesture
          * to catch and keep the long sleep. */
         if (live && ev_fd < 0 && !child && delay > 250) delay = 250;
+        /* 长按与二次确认都是"到点做事"，不能等到 60 s 的空闲超时才发现：
+         * 按下之后没有新事件时，select 会睡满上一个 delay。 */
+        if (press_active) {
+            long long left = press_at + 550 - now_ms();
+            if (left < delay) delay = left < 0 ? 0 : left;
+        }
+        if (confirm_del) {
+            long long left = confirm_del_at + 3000 - now_ms();
+            if (left < delay) delay = left < 0 ? 0 : left;
+        }
         if (delay < 0) delay = 0;
         FD_ZERO(&fds);
         /* Pending events are already in the client queue. Watching a readable
