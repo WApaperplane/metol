@@ -22,7 +22,13 @@ is_nx500() {
     done < /etc/version.info 2>/dev/null
     return 1
 }
-case "${1:-filmlab}" in
+MODE=${1:-filmlab}
+# 额外参数原样透传给 nxui.arm（例如 --inputlog /mnt/mmc/nxui/keys.log）。
+# 必须先存成字符串：下面每一段都在用 `set --` 重建参数表，$@ 会被覆盖。
+# 只支持不含空格的参数（键位采集路径不会带空格）。
+[ $# -gt 0 ] && shift
+EXTRAS="$*"
+case "$MODE" in
   disable)
     rm -f "$D/nxui/enabled"
     $BB killall -q -TERM nxui.arm 2>/dev/null
@@ -37,8 +43,11 @@ case "${1:-filmlab}" in
   available)
     [ -x "$BIN" ] && [ -f "$D/nxui/enabled" ] && is_nx500
     exit $? ;;
-  menu|filmlab|lut|demo|list) MODE=${1:-filmlab} ;;
-  *) echo 'nxui.sh menu|filmlab|demo|list|stop|enable|disable|available'; exit 2 ;;
+  menu|filmlab|lut|demo|list) ;;
+  *)
+    echo 'nxui.sh menu|filmlab|lut|demo|list|stop|enable|disable|available [extra...]'
+    echo '  extra 透传给 nxui.arm，例：nxui.sh lut --inputlog /mnt/mmc/nxui/keys.log'
+    exit 2 ;;
 esac
 [ -x "$BIN" ] || exit 1
 is_nx500 || exit 1
@@ -100,6 +109,10 @@ if [ "$MODE" = lut ]; then
     set -- --root "$D" --recipes "$LU.rec" --engine "$D/lut.sh" --lut
 fi
 if [ "$MODE" = demo ]; then set -- "$@" --dry-run; else set -- "$@" --live; fi
+# 透传参数放在最后追加：上面所有 set -- 都重建整个参数表，提前塞进去会被冲掉。
+if [ -n "$EXTRAS" ]; then
+    for x in $EXTRAS; do set -- "$@" "$x"; done
+fi
 # Keep lifetime/kill handling in the UI: close waits for an in-flight apply.
 # A separate session prevents telnet disconnect from terminating an apply halfway.
 # ★ 不能写成 "$BB" setsid "$BB" "$BIN"：setsid 只 exec 一个 PROG，多套一层 BB

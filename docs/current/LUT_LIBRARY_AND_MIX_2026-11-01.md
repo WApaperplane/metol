@@ -195,6 +195,16 @@ BackSpace del
 
 配好表之后不必为一个按键改二进制。
 
+### 4.2.1 采数通道（`nxui.sh` 现在透传多余参数）
+
+```
+sh /opt/usr/nx-ks/nxui.sh lut --inputlog /mnt/mmc/nxui/keys.log
+```
+
+日志把**每一个** KeyPress 都记下来（`KEY sym=<名字> code=<keycode> state=0x<修饰键>`），**绑定与否都记** —— 这才是采数用的，不是调试用的。按一遍硬件键，看日志里出现哪些 keysym，照抄进 `keys.conf` 即可。
+
+实现上有个顺序问题：`nxui.sh` 全程用 `set --` 重建参数表（`--root/--recipes/--engine/--lut/--live` 分四段拼），所以透传参数**必须最后追加**，提前塞进去会被下一次 `set --` 冲掉。参数不支持含空格。
+
 ### 4.3 触屏手势
 
 | 手势 | 结果 |
@@ -234,6 +244,10 @@ sh <engine> <verb> [arg1 [arg2 [arg3]]]
 `verify_display.py` 新增 `library-ui` 模式，完整走一遍：长按 → 编辑态 → 两段删除 → 自动刷新 → 左移 → 完成 → F2 混合 → 设 A / 设 B → 拖滑杆 → 应用。引擎用桩脚本，断言的是**实际收到的命令行**（写进 `calls` 文件轮询），不是面板日志 —— 面板日志里根本没有引擎输出。
 
 另：`test_lut_sh_rotation.py` 已加 `skipUnless(LEGACY)`。它锚定早已退役的 `CAP=/usr/bin/st`，HEAD 版也失败；现行覆盖由 `test_lut_lib.sh` 承担。
+
+> ★ 写 WSL 测试时的两个环境坑（不是脚本的错，但会把人绕进去）：
+> 1. **`$?` 的展开在这套 WSL 会话里不可靠**（`false; echo $?` 会打印 0），但 `if cmd; then`、`cmd && …`、`cmd || …` 反映的是**真实退出状态**。断言一律写 `if`/`&&`，不要写 `[ "$?" = 0 ]`。
+> 2. 用 `bash -lc "…heredoc…"` 生成辅助脚本时，`$@`/`$#`/`$1` 会在**外层**就被展开，生成出 `exec ""` 这种空壳。带 `$` 的辅助脚本一律先用文件工具写盘再 `cp` 进去。
 
 ---
 
