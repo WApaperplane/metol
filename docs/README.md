@@ -1,6 +1,6 @@
 # Metol 文档索引（旧称 NX-KS2 / NX-WA）
 
-> 更新：**2026-10-20**（新增 Still 通路审计：BV12 分支漏改导致成片无 LUT）· 分支：`nxwa`
+> 更新：**2026-11-01**（机内 LUT 混合 + 两套库的增删排序 + 面板编辑/混合态）· 分支：`nxwa`
 > 本目录按**时效**分区，避免"旧结论淹没新结论"。
 
 ## 目录结构
@@ -26,7 +26,24 @@ docs/
 
 ---
 
-## 2. 现行结论（10-15 ~ 10-18）
+## 2. 现行结论（10-15 ~ 11-01）
+
+### 2.0 最近一轮（10-25 ~ 11-01）★ 先看这一组
+
+| 文档 | 定位 |
+|---|---|
+| [`LUT_LIBRARY_AND_MIX_2026-11-01.md`](current/LUT_LIBRARY_AND_MIX_2026-11-01.md) | ★★★★★ **机内混合 + 库管理 + 面板三态**：`lutmix.arm` 契约与逐字节验证；`order`/`_trash` 语义；`recipelib.sh` 块级手术与双校验；BROWSE/EDIT/MIX 与键位表；含 `nk_spacing` 撑行坑 |
+| [`LUT_ONDEVICE_PIPELINE_2026-11-01.md`](current/LUT_ONDEVICE_PIPELINE_2026-11-01.md) | ★★★★ 机内 LUT 链路现状：三条转换路径与格式契约；缺口只剩「文件怎么进卡」（FTP 即可） |
+| [`LUT_STRENGTH_MIX_2026-10-31.md`](current/LUT_STRENGTH_MIX_2026-10-31.md) | ★★★★ 强度混合的数学：逐节点插值 = 输出域混合；可辨粒度；三个必须先定的语义 |
+| [`DUAL_LUT_FEASIBILITY_2026-10-31.md`](current/DUAL_LUT_FEASIBILITY_2026-10-31.md) | ★★★ 两张表串联不可行的证明（混合是它的替代答案） |
+| [`JPEG_QUALITY_CONSTANTS_2026-10-31.md`](current/JPEG_QUALITY_CONSTANTS_2026-10-31.md) | ★★★★ 质量不是标量：17 档预置量化表、`FUN_80128378` 查表、4:2:2 为硬件固定 |
+| [`LUT_GRID_17_VS_33_2026-10-31.md`](current/LUT_GRID_17_VS_33_2026-10-31.md) | ★★★ 17³ native 与 33³ 设计的取舍实测 |
+| [`CAPTURE_CHAIN_HARDENING_2026-10-31.md`](current/CAPTURE_CHAIN_HARDENING_2026-10-31.md) · [`MULTIEXP_P7_PATH_2026-10-31.md`](current/MULTIEXP_P7_PATH_2026-10-31.md) | 拍摄链加固与多重曝光 p7 路径 |
+| [`CUBE2LUT_NATIVE_FIX_2026-10-25.md`](current/CUBE2LUT_NATIVE_FIX_2026-10-25.md) | ★★★★★ **机内转换器语义修正**：8880 B 旧版是 RGB 直通；现行 10,828 B `b798964d` 必须核对 |
+| [`LUT_WEB_SOURCE_2026-10-25.md`](current/LUT_WEB_SOURCE_2026-10-25.md) · [`LUT_PHYSICAL_FILM_2026-10-25.md`](current/LUT_PHYSICAL_FILM_2026-10-25.md) | 外部 CLUT 导入的解码坑；物理胶片配方线 |
+| [`LUT_AUDIT_2026-10-25.md`](current/LUT_AUDIT_2026-10-25.md) · [`LUT_STYLE_AUDIT_V2_2026-10-25.md`](current/LUT_STYLE_AUDIT_V2_2026-10-25.md) · [`LUT_DEDUP_AND_GAPFILL_2026-10-25.md`](current/LUT_DEDUP_AND_GAPFILL_2026-10-25.md) · [`LUT_BRAND_LOOKS_2026-10-25.md`](current/LUT_BRAND_LOOKS_2026-10-25.md) | 库体检、风格复核、去重补隙、品牌色 |
+| [`LUT_CRCBY_ONDEVICE_FIX_2026-10-25.md`](current/LUT_CRCBY_ONDEVICE_FIX_2026-10-25.md) · [`LUT_COLORSPACE_REGRESSION_REVIEW_2026-10-25.md`](current/LUT_COLORSPACE_REGRESSION_REVIEW_2026-10-25.md) · [`COLOR_DEF_2026-10-25.md`](current/COLOR_DEF_2026-10-25.md) | CrCbY 机内修正、色彩回归复核、`colordef` 常量 |
+| [`NX500_AF_STATIC_ROUND9_2026-10-31.md`](current/NX500_AF_STATIC_ROUND9_2026-10-31.md) | AF 静态分析第九轮（前八轮见同名前缀，`ROUND2..8`） |
 
 ### 2.1 LUT：运行态换表（★ 当前主线）
 
