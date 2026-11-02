@@ -63,13 +63,48 @@ The camera menu also has `IP: x.x.x.x [Telnet关]` (tap to toggle 23/21), `远�
 
 | Item | Status |
 | --- | --- |
-| Table format | `4913×4B {R,G,B,pad}`, index `((B*17+G)*17+R)*4`, slot 19,712 B, stride `0x4D00` |
+| Table format | `4913×4B {Cr,Cb,Y,pad}`, index `((Y*17+Cb)*17+Cr)*4`, slot 19,712 B, stride `0x4D00` (closed on-device 10-19; the older RGB naming is retired) |
 | Retarget | Write 19,712 B into the work slot (A18 `0x81119F00`) + point **all four** registry tables at it + **half-press once** |
 | Registry tables | `View4` (4 entries, colour space × screen colour) + `Still6` (6) + `BV12` (12) — **none may be skipped**, or you get "viewfinder filtered, photo not" |
 | Import | `.cube → 19,712 B slot table` via on-camera `cube2lut.arm`, or host-side `test_server/isp/nx3dlut.py` |
 | Live view / stills | Live view reads only `View4`; stills have **two mutually exclusive branches** (screen colour on → `BV12`, off → `Still6`) and both must be retargeted |
 | Limits | Pure memory operations — **power cycle restores stock** (boot-persistent needs an image patch). Colour is trustworthy in sRGB; AdobeRGB only guarantees "it applies" |
 | No-go | ⛔ Writing `+0x00C` yourself and pulsing the config register makes the ISP read out-of-sequence addresses ⇒ **severe colour corruption**. The only safe reload is **half-press** |
+
+### Library and blending
+
+| Capability | Command |
+| --- | --- |
+| Library | `lut.sh list [--fav]` / `fav` / `move up\|down\|top` / `del` / `index` / `stock` |
+| Cross-fade | `lut.sh mix <A> <B> <0-100>` |
+| Strength of one look | `lut.sh strength <name> <0-100>` (0-end = stock A17; run `lut.sh stock` once first) |
+| **Two looks, two strengths** | `lut.sh blend <A> <r 0-100> <B> <s 0-100>` — `r` = A/B ratio, `s` = total strength |
+
+Order and favourites live in `lut/state/order` on the card (one name per line, `*` = favourite).
+Removal is a **move to `looks/_trash/`**, never an `rm` — deleting a duplicated name on exFAT
+releases the cluster chain and corrupts the siblings.
+
+Blending is **normalised weighting**: `r = B/(A+B)` picks the mix, `s = min(A+B, 100)` the strength,
+`T = stock + s·(mix(A,B,r) − stock)`. Both at 100% therefore lands on the midpoint instead of
+clipping — offset-summing clips 14% of the table, layer-compositing shifts 7–30 levels when you
+swap A/B. See [`docs/current/DUAL_STRENGTH_2026-11-02.md`](docs/current/DUAL_STRENGTH_2026-11-02.md).
+
+### Panel keys (NX500 hardware keys, all measured)
+
+| Key | Browse | Edit | Mix |
+| --- | --- | --- | --- |
+| Up / Down · EV dial | page | — | page |
+| Left / Right | page | — | pick A / B focus |
+| Centre OK | apply & close | done | apply blend |
+| Play ▶ | enter edit | — | — |
+| Long-press a row | enter edit | — | — |
+| Fn | enter mix | — | leave mix |
+| Top-right dial | page | — | adjust focused strength (5%/step) |
+| BACK · MENU | close | close | close |
+
+> Only the edit state changes the library. A/B is set with the button row
+> (`Set A` / `Set B` / `Apply` / `Exit`); leaving the mix state does **not** apply.
+> Keys are overridable via `$NXUI_STATE_DIR/keys.conf`, one `<keysym> <action>` per line, `none` unbinds.
 
 ```sh
 sh /opt/usr/nx-ks/lut.sh list | begin | apply <name> | off | status   # looks live in /mnt/mmc/looks/
