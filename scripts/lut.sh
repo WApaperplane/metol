@@ -385,6 +385,51 @@ strength)
     commit_table "strength:${name}@${pct}%($base_label)" "$ST/mix.bin"
     ;;
 
+# 双 LUT 各自强度：两张表各有一个强度，但落到表上只有一步 ——
+#   T = base + s * (mix(A,B,r) − base)        s = min(sa+sb, 100),  r = sb/(sa+sb)
+# 这正是「归一加权」语义（docs/current/DUAL_STRENGTH_2026-11-02.md §2）：两张表
+# 按比例混成一张，再整体按总强度施加。好处是任何组合都不会外推出 0..255，
+# 且与 A/B 的顺序无关。两次 lutmix 调用，不需要新工具。
+blend)
+    a=${2:-}; ar=${3:-}; b=${4:-}; bs=${5:-}
+    valid_name "$a" || die "bad A"
+    valid_name "$b" || die "bad B"
+    case "$ar" in ''|*[!0-9]*) die "usage: lut.sh blend <A> <r 0-100> <B> <s 0-100>" ;; esac
+    case "$bs" in ''|*[!0-9]*) die "usage: lut.sh blend <A> <r 0-100> <B> <s 0-100>" ;; esac
+    [ "$ar" -le 100 ] || die "r must be 0..100"
+    [ "$bs" -le 100 ] || die "s must be 0..100"
+    need_tools
+    [ -n "$MIX" ] && [ -x "$MIX" ] || die "missing lutmix.arm (looked in $TD and /mnt/mmc/lut)"
+    ta=$(table_of "$a") || die "cannot resolve A: $a"
+    tb=$(table_of "$b") || die "cannot resolve B: $b"
+    if [ -f "$LAB/_stock_A17.bin" ]; then
+        base=$LAB/_stock_A17.bin
+        base_label=stock
+    else
+        base=$ST/identity.bin
+        base_label=identity
+        if [ ! -s "$base" ]; then
+            "$MIX" --identity "$base" > "$ST/identity.log" 2>&1 \
+                || { cat "$ST/identity.log"; die "identity build failed"; }
+        fi
+        echo "WARN no _stock_A17.bin; 0 strength uses identity (colder/brighter than factory)"
+        echo "HINT run: sh $0 stock"
+    fi
+    $BB mkdir -p "$ST"
+    # 中间表放 /tmp（内存）：这是两次连续运算的临时产物，不该落到 exFAT 上。
+    mid=/tmp/.lutblend.$$
+    "$MIX" "$ta" "$tb" $((ar * 10)) "$mid" > "$ST/blend.log" 2>&1 \
+        || { cat "$ST/blend.log"; $BB rm -f "$mid"; die "blend step1 (mix) failed"; }
+    $BB grep -q '=== done ===' "$ST/blend.log" \
+        || { cat "$ST/blend.log"; $BB rm -f "$mid"; die "blend step1 not confirmed"; }
+    "$MIX" "$base" "$mid" $((bs * 10)) "$ST/mix.bin" > "$ST/blend.log" 2>&1 \
+        || { cat "$ST/blend.log"; $BB rm -f "$mid"; die "blend step2 (strength) failed"; }
+    $BB grep -q '=== done ===' "$ST/blend.log" \
+        || { cat "$ST/blend.log"; $BB rm -f "$mid"; die "blend step2 not confirmed"; }
+    $BB rm -f "$mid"
+    commit_table "blend:${a}+${b} r=${ar}% s=${bs}%($base_label)" "$ST/mix.bin"
+    ;;
+
 begin)
     need_tools
     $BB mkdir -p "$ST" || die "cannot create $ST"

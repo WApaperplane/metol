@@ -63,7 +63,7 @@ EOF
 cat > "$D/lut/lutmix.arm" <<'EOF'
 #!/bin/sh
 if [ "$1" = "--identity" ]; then head -c 19712 /dev/zero > "$2"; echo '=== done ==='; exit 0; fi
-printf 'MIX %s %s %s' "$1" "$2" "$3" > /tmp/lutlib-mix.log
+printf 'MIX %s %s %s %s\n' "$1" "$2" "$3" "$4" >> /tmp/lutlib-mix.log
 head -c 19712 /dev/zero > "$4"
 echo '=== done ==='
 EOF
@@ -135,6 +135,7 @@ check "第二次不再重转（缓存文件未变）" 'cmp -s "$CV/delta.bin" /t
 check "current 记录强度语义" 'grep -q "strength:delta@70%" "$ST/current"'
 
 # ---- 7. 混合 ----
+rm -f /tmp/lutlib-mix.log
 $L mix alpha zeta 35 > /tmp/lutlib-m2.log 2>&1
 check "mix 成功" '[ $? = 0 ]'
 check "mix 传给引擎的是千分数" 'grep -q "350" /tmp/lutlib-mix.log'
@@ -143,6 +144,32 @@ $L mix alpha zeta 101 >/dev/null 2>&1
 check "mix 拒绝 >100" '[ $? -ne 0 ]'
 $L mix alpha zeta abc >/dev/null 2>&1
 check "mix 拒绝非数字" '[ $? -ne 0 ]'
+
+# ---- 7b. 双强度 blend：两步 lutmix，先 mix 出比例再 strength 出总强度 ----
+rm -f /tmp/lutlib-mix.log
+$L blend alpha 60 zeta 40 > /tmp/lutlib-b1.log 2>&1
+check "blend 成功" '[ $? = 0 ]'
+check "blend 调用了两次 lutmix" '[ "$(wc -l < /tmp/lutlib-mix.log)" = 2 ]'
+# 这两条不能用 check：check 走 eval，$4 会在 eval 里被吃掉。直接 if。
+if [ "$(sed -n 1p /tmp/lutlib-mix.log | awk '{print $4}')" = 600 ]; then
+    ok "blend 第一步用比例千分数"
+else
+    bad "blend 第一步用比例千分数"
+fi
+if [ "$(sed -n 2p /tmp/lutlib-mix.log | awk '{print $4}')" = 400 ]; then
+    ok "blend 第二步用总强度千分数"
+else
+    bad "blend 第二步用总强度千分数"
+fi
+check "blend 第二步的 0 端是原厂表" 'sed -n 2p /tmp/lutlib-mix.log | grep -q "_stock_A17"'
+check "blend 写进 current" 'grep -q "blend:alpha+zeta r=60% s=40%" "$ST/current"'
+check "blend 清掉了中间表" 'test ! -e /tmp/.lutblend.*'
+$L blend alpha 60 zeta 101 >/dev/null 2>&1
+check "blend 拒绝 s>100" '[ $? -ne 0 ]'
+$L blend alpha 101 zeta 40 >/dev/null 2>&1
+check "blend 拒绝 r>100" '[ $? -ne 0 ]'
+$L blend alpha 60 >/dev/null 2>&1
+check "blend 参数不全时拒绝" '[ $? -ne 0 ]'
 
 # ---- 8. 非法名字 ----
 $L del '../etc/passwd' >/dev/null 2>&1

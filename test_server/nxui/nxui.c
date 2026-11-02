@@ -61,7 +61,15 @@ static int touch_x, touch_active, close_after_child;
 static int ui_mode = UI_BROWSE;
 static int confirm_del;              /* 删除按钮的二次确认窗口 */
 static long long confirm_del_at;
-static int mix_a = -1, mix_b = -1, mix_pct = 100;
+/* 双强度：A、B 各自 0..100。落到表上按「归一加权」算：
+ *   r = rb/(ra+rb)          A/B 的比例（0=全 A，100=全 B）
+ *   s = min(ra+rb, 100)     总强度（离原厂多远）
+ *   T = 原厂 + s·(mix(A,B,r) − 原厂)
+ * 这样任何组合都不会外推出 0..255，也与 A/B 顺序无关
+ * （三种语义的实测对比见 docs/current/DUAL_STRENGTH_2026-11-02.md）。 */
+static int mix_a = -1, mix_b = -1;
+static int mix_ra = 100, mix_rb = 100;   /* A、B 各自的强度 */
+static int mix_focus;                    /* MIX 态正在调哪一个：0=A 1=B */
 static char mix_key_a[96], mix_key_b[96];   /* 存 key 不存序号：库增删后序号会指错 */
 /* 库变更后要重建列表：1 = 重跑 `lut.sh list`（LUT 面板），2 = 重读配方表 */
 static int refresh_pending, refresh_after;
@@ -278,6 +286,8 @@ static int rebuild_lut_list(const char *text);
 static int reload_recipes_file(void);
 static int run_engine(const char *verb, const char *a1, const char *a2,
                       const char *a3, int refresh);
+static int run_engine4(const char *verb, const char *a1, const char *a2,
+                       const char *a3, const char *a4, int refresh);
 static void poll_child(void) {
     int code, success, was_commit; pid_t result;
     if (!child) return;
@@ -367,9 +377,9 @@ static void poll_child(void) {
  * 所以这里做一张可覆盖的表：默认够用，量到新键就写进 keys.conf，
  * 不必为了一个按键改二进制。 */
 enum { ACT_NONE = 0, ACT_PREV, ACT_NEXT, ACT_OK, ACT_CLOSE, ACT_EDIT, ACT_MIX,
-       ACT_DEL, ACT_MOVE_L, ACT_MOVE_R, ACT_INC, ACT_DEC };
+       ACT_DEL, ACT_MOVE_L, ACT_MOVE_R, ACT_INC, ACT_DEC, ACT_LEFT, ACT_RIGHT };
 static const char *const act_names[] = { "none", "prev", "next", "ok", "close",
-    "edit", "mix", "del", "movel", "mover", "inc", "dec" };
+    "edit", "mix", "del", "movel", "mover", "inc", "dec", "left", "right" };
 /* 24 条不够了：桌面 10 + 机身实测 14，正好卡满，再加一个就静默丢键。 */
 #define KEYMAP_MAX 32
 static struct { KeySym sym; int act; } keymap[KEYMAP_MAX];
@@ -426,8 +436,11 @@ static void keymap_add(const char *name, int act) {
 static void keymap_defaults(void) {
     /* 桌面 / Xvfb 的标准键：只服务于本机回归（verify_display、库管理 UI 测试
      * 都靠它们发 F1/F2/方向键）。机身上不存在这些键，别把它们当交互设计。 */
-    keymap_add("Left", ACT_PREV);  keymap_add("Up", ACT_PREV);
-    keymap_add("Right", ACT_NEXT); keymap_add("Down", ACT_NEXT);
+    /* 左右与上下分开：上下永远是翻页，左右在混合态变成「选 A / 选 B」。
+     * 分成两个动作是为了让 MIX 态能区分「左右」和「上下」—— 都绑 prev/next
+     * 的话做不到这一点（键位表按动作分发，不按物理位置）。 */
+    keymap_add("Left", ACT_LEFT);   keymap_add("Up", ACT_PREV);
+    keymap_add("Right", ACT_RIGHT); keymap_add("Down", ACT_NEXT);
     keymap_add("Return", ACT_OK);  keymap_add("KP_Enter", ACT_OK);
     keymap_add("space", ACT_OK);
     keymap_add("Escape", ACT_CLOSE);
@@ -449,8 +462,8 @@ static void keymap_defaults(void) {
      * 模式拨盘的 F8/F9 刻意不绑：相机切模式时自己要用，误触代价高。
      * 半按快门 = X11 的 Super_L = evdev code 125(KEY_LEFTMETA)，由 evdev 那条
      * 路径处理（半按关闭面板），不占键位表。 */
-    keymap_add("KP_Up", ACT_PREV);    keymap_add("KP_Left", ACT_PREV);
-    keymap_add("KP_Down", ACT_NEXT);  keymap_add("KP_Right", ACT_NEXT);
+    keymap_add("KP_Up", ACT_PREV);    keymap_add("KP_Left", ACT_LEFT);
+    keymap_add("KP_Down", ACT_NEXT);  keymap_add("KP_Right", ACT_RIGHT);
     keymap_add("XF86AudioPrev", ACT_PREV);   /* EV 拨盘 ← */
     keymap_add("XF86AudioNext", ACT_NEXT);   /* EV 拨盘 → */
     keymap_add("Menu", ACT_CLOSE);           /* MENU 键当退出 */
@@ -500,8 +513,13 @@ static int find_key(const char *k) {
  *   0 = 不改库（混合/还原）  1 = LUT 库（要重跑 list）  2 = 重读配方表 */
 static int run_engine(const char *verb, const char *a1, const char *a2,
                       const char *a3, int refresh) {
-    char cmd[600];
-    if (a3) snprintf(cmd, sizeof cmd, "sh %s %s %s %s %s", engine, verb, a1, a2, a3);
+    return run_engine4(verb, a1, a2, a3, NULL, refresh);
+}
+static int run_engine4(const char *verb, const char *a1, const char *a2,
+                       const char *a3, const char *a4, int refresh) {
+    char cmd[700];
+    if (a4) snprintf(cmd, sizeof cmd, "sh %s %s %s %s %s %s", engine, verb, a1, a2, a3, a4);
+    else if (a3) snprintf(cmd, sizeof cmd, "sh %s %s %s %s %s", engine, verb, a1, a2, a3);
     else if (a2) snprintf(cmd, sizeof cmd, "sh %s %s %s %s", engine, verb, a1, a2);
     else if (a1) snprintf(cmd, sizeof cmd, "sh %s %s %s", engine, verb, a1);
     else snprintf(cmd, sizeof cmd, "sh %s %s", engine, verb);
@@ -538,17 +556,32 @@ static void lib_move(int idx, int delta) {
         if (run_engine("move", recipes[idx].key, dir, NULL, 1)) message("正在调整顺序…");
     } else if (run_engine("lib", "move", recipes[idx].key, dir, 2)) message("正在调整顺序…");
 }
+/* 两个强度 → 一条 blend 命令。换算在这里做，能一次性把边界都挡住：
+ * 两个 0 没有意义、A/B 同张没有意义、总和超 100 由 lut.sh 的归一处理。 */
+/* 两个强度 → (比例 r, 总强度 s)。状态行和真正下发都用它，避免两处算法漂移。 */
+static void mix_ratio(int *r, int *s) {
+    int sum = mix_ra + mix_rb;
+    if (sum <= 0) { *r = 0; *s = 0; return; }
+    *r = (mix_rb * 100 + sum / 2) / sum;     /* B 的占比：0=全 A，100=全 B */
+    *s = sum > 100 ? 100 : sum;              /* 总和超 100 就饱和，不外推 */
+}
+
 static void mix_apply(void) {
-    char pct[8];
+    char rbuf[8], sbuf[8];
+    int r, s;
     if (!lut_mode) { message("混合只在 LUT 面板可用"); return; }
-    if (mix_a < 0 || mix_b < 0) { message("先把两张 look 分别设为 A 和 B"); return; }
+    if (mix_a < 0 || mix_b < 0) { message("先在浏览态长按标记 A 和 B"); return; }
+    if (mix_a == mix_b) { message("A 和 B 是同一张 · 再标一个别的"); return; }
+    if (mix_ra + mix_rb <= 0) { message("两个强度都是 0 · 没有可混合的"); return; }
+    mix_ratio(&r, &s);
     if (busy_guard()) return;
-    snprintf(pct, sizeof pct, "%d", mix_pct);
-    if (run_engine("mix", recipes[mix_a].key, recipes[mix_b].key, pct, 0)) {
-        /* 混合表的登记名是 mix:A+B@pct，选中项不再是"当前生效的那张表" */
+    snprintf(rbuf, sizeof rbuf, "%d", r);
+    snprintf(sbuf, sizeof sbuf, "%d", s);
+    if (run_engine4("blend", recipes[mix_a].key, rbuf, recipes[mix_b].key, sbuf, 0)) {
+        /* 混合表的登记名是 blend:A+B，选中项不再是"当前生效的那张表" */
         queue.applied = -1; queue.desired = -1;
-        snprintf(status, sizeof status, "正在混合 %s × %s @%d%%…",
-                 recipes[mix_a].label, recipes[mix_b].label, mix_pct);
+        snprintf(status, sizeof status, "正在混合 %s × %s（比例 %d%% · 强度 %d%%）…",
+                 recipes[mix_a].label, recipes[mix_b].label, r, s);
         dirty = 1;
     }
 }
@@ -625,19 +658,73 @@ static int reload_recipes_file(void) {
 
 /* 混合态进出：键盘（F2，仅桌面）与顶栏按钮共用。进态时给 A/B 一个可用起点，
  * 否则用户要先想「设成哪两张」才敢动滚条。 */
+/* 进出混合态。★ 退出即应用 —— 混合态里没有「应用」按钮，腾出来的四个格子
+ * 全给 A-/A+/B-/B+。这要求用户知道「退出就是生效」，所以进入时的提示必须写清。 */
 static void toggle_mix(void) {
     if (!lut_mode) { message("混合只在 LUT 面板可用"); return; }
-    ui_mode = (ui_mode == UI_MIX) ? UI_BROWSE : UI_MIX;
-    confirm_del = 0;
     if (ui_mode == UI_MIX) {
-        if (mix_a < 0) mix_a = selected;
-        if (mix_b < 0) mix_b = (selected + 1 < count) ? selected + 1 : selected;
-        if (mix_a >= 0 && mix_a < count)
-            snprintf(mix_key_a, sizeof mix_key_a, "%s", recipes[mix_a].key);
-        if (mix_b >= 0 && mix_b < count)
-            snprintf(mix_key_b, sizeof mix_key_b, "%s", recipes[mix_b].key);
-        message("混合：选条目后设为 A / B，滚条或右上拨盘调强度");
-    } else message("已退出混合");
+        ui_mode = UI_BROWSE;
+        mix_focus = 0;
+        confirm_del = 0;
+        dirty = 1;
+        if (mix_a >= 0 && mix_b >= 0 && mix_a != mix_b) mix_apply();
+        else message("已退出混合");
+        return;
+    }
+    ui_mode = UI_MIX;
+    mix_focus = 0;
+    confirm_del = 0;
+    /* 没标记过就给个能用的起点，但标记权仍在浏览态的长按上 */
+    if (mix_a < 0 && count > 0) {
+        mix_a = selected;
+        snprintf(mix_key_a, sizeof mix_key_a, "%s", recipes[mix_a].key);
+    }
+    if (mix_b < 0 && count > 1) {
+        mix_b = (selected + 1 < count) ? selected + 1 : 0;
+        if (mix_b == mix_a) mix_b = (mix_a + 1) % count;
+        snprintf(mix_key_b, sizeof mix_key_b, "%s", recipes[mix_b].key);
+    }
+    message("左右键切 A/B · 滚条或拨盘调强度 · 退出即应用");
+    dirty = 1;
+}
+
+/* 浏览态长按：在 A / B / 清空之间循环。比起「进混合态再翻 60 项去按设为B」，
+ * 这样标记就是一次普通浏览，翻到哪标到哪。 */
+static void mark_cycle(int idx) {
+    char nm[96];
+    if (!lut_mode || idx < 0 || idx >= count) return;
+    snprintf(nm, sizeof nm, "%s", recipes[idx].key);
+    if (mix_a >= 0 && !strcmp(mix_key_a, nm)) {
+        mix_a = -1; mix_key_a[0] = 0;
+        snprintf(status, sizeof status, "已取消 A 标记（%s）", recipes[idx].label);
+    } else if (mix_b >= 0 && !strcmp(mix_key_b, nm)) {
+        mix_b = -1; mix_key_b[0] = 0;
+        snprintf(status, sizeof status, "已取消 B 标记（%s）", recipes[idx].label);
+    } else if (mix_a < 0) {
+        mix_a = idx;
+        snprintf(mix_key_a, sizeof mix_key_a, "%s", nm);
+        snprintf(status, sizeof status, "A = %s · 再长按另一个标 B", recipes[idx].label);
+    } else if (mix_b < 0) {
+        mix_b = idx;
+        snprintf(mix_key_b, sizeof mix_key_b, "%s", nm);
+        snprintf(status, sizeof status, "B = %s · Fn 或顶栏进混合", recipes[idx].label);
+    } else {
+        /* 两个都满了：替换 B（用户更可能是想换掉刚标的那个），A 保持不动 */
+        mix_b = idx;
+        snprintf(mix_key_b, sizeof mix_key_b, "%s", nm);
+        snprintf(status, sizeof status, "B 改为 %s（A 不变）", recipes[idx].label);
+    }
+    dirty = 1;
+}
+
+/* 调当前焦点的强度。混合态的滑杆与右上拨盘走同一条路，避免两处逻辑漂移。 */
+static void bump_strength(int delta) {
+    int *v = mix_focus ? &mix_rb : &mix_ra;
+    int nv = *v + delta;
+    if (nv < 0) nv = 0;
+    if (nv > 100) nv = 100;
+    if (nv == *v) return;
+    *v = nv;
     dirty = 1;
 }
 
@@ -649,6 +736,13 @@ static void do_action(int act) {
     switch (act) {
     case ACT_PREV: choose(selected - 1); break;
     case ACT_NEXT: choose(selected + 1); break;
+    /* 左右键：混合态选 A/B 焦点，其余态就是翻页。上下键始终翻页。 */
+    case ACT_LEFT:
+        if (ui_mode == UI_MIX) { mix_focus = 0; message("正在调 A"); break; }
+        choose(selected - 1); break;
+    case ACT_RIGHT:
+        if (ui_mode == UI_MIX) { mix_focus = 1; message("正在调 B"); break; }
+        choose(selected + 1); break;
     case ACT_EDIT:
         ui_mode = (ui_mode == UI_EDIT) ? UI_BROWSE : UI_EDIT;
         confirm_del = 0;
@@ -662,10 +756,10 @@ static void do_action(int act) {
      * 步进 5% 是刻意的 —— 转盘每格一个 KeyPress，1% 步进要拧 100 格才走完，
      * 5% 是「拧三下能看出差别、又不至于跳过头」的折中（可辨粒度约 10%）。 */
     case ACT_INC:
-        if (ui_mode == UI_MIX) { mix_pct = mix_pct + 5 > 100 ? 100 : mix_pct + 5; break; }
+        if (ui_mode == UI_MIX) { bump_strength(+5); break; }
         choose(selected + 1); break;
     case ACT_DEC:
-        if (ui_mode == UI_MIX) { mix_pct = mix_pct - 5 < 0 ? 0 : mix_pct - 5; break; }
+        if (ui_mode == UI_MIX) { bump_strength(-5); break; }
         choose(selected - 1); break;
     case ACT_OK:
         if (ui_mode == UI_MIX) { mix_apply(); break; }
@@ -756,7 +850,9 @@ static void activate_item(int index) {
  * 这里改成：按下即跳到该比例（tap-to-jump），按住移动每帧按绝对位置重算，
  * 只有目标序号真的变了才返回，避免同像素重复 choose。 */
 static int bar_drag;   /* 左键是否在滚动条上按着（面板只有一扇窗，静态即可） */
-static int scrollbar_row(struct nk_context *c, int sel, int n)
+/* m1/m2 = 要在轨道上标出的两个位置（A/B）。跨页时用户不用记「我刚才标的是哪一项」，
+ * 两个小刻度一直画在那里。混合态的强度滑杆不需要刻度，传 -1 即可。 */
+static int scrollbar_row(struct nk_context *c, int sel, int n, int m1, int m2)
 {
     struct nk_rect b, track, fill, knob;
     struct nk_command_buffer *cv;
@@ -795,6 +891,21 @@ static int scrollbar_row(struct nk_context *c, int sel, int n)
     nk_fill_rect(cv, track, 4.0f, nk_rgb(45, 53, 59));
     fill = nk_rect(track.x, track.y, ratio * track.w, track.h);
     if (fill.w > 0.0f) nk_fill_rect(cv, fill, 4.0f, nk_rgb(88, 111, 79));
+    /* A/B 刻度画在轨道之上、滑块之下：比轨道高 6px，拇指也能看见。 */
+    if (n > 1) {
+        struct nk_color mark[2];
+        int mm[2], k;
+        mark[0] = nk_rgb(203, 233, 153);   /* A：与面板强调色一致 */
+        mark[1] = nk_rgb(235, 176, 122);   /* B：暖橙，和 A 一眼分得开 */
+        mm[0] = m1; mm[1] = m2;
+        for (k = 0; k < 2; k++) {
+            float mx;
+            if (mm[k] < 0 || mm[k] >= n) continue;
+            mx = track.x + (track.w - 3.0f) * ((float)mm[k] / (float)(n - 1));
+            nk_fill_rect(cv, nk_rect(mx, track.y - 3.0f, 3.0f, track.h + 6.0f),
+                         1.0f, mark[k]);
+        }
+    }
     knob.w = kw; knob.h = 12.0f;
     knob.x = track.x + ratio * (track.w - kw);
     knob.y = b.y + (b.h - knob.h) * 0.5f;
@@ -817,7 +928,8 @@ static void draw(void) {
         nk_layout_row_push(ctx, 356);
         nk_label_colored(ctx, menu ? "NX-KS  /  菜单"
                             : (lut_mode ? (ui_mode == UI_EDIT ? "LUT  /  编辑"
-                                          : ui_mode == UI_MIX ? "LUT  /  混合"
+                                          : ui_mode == UI_MIX ? (mix_focus ? "LUT  /  混合 · B"
+                                                                           : "LUT  /  混合 · A")
                                           : "LUT  /  3D 滤镜")
                                         : (ui_mode == UI_EDIT ? "FILMLAB  /  编辑"
                                           : "FILMLAB  /  滤镜预览")),
@@ -869,7 +981,8 @@ static void draw(void) {
                 nk_bool picked = (idx == selected);
                 /* MIX 模式下在条目上标 [A]/[B]：否则用户看不出混的是哪两张 */
                 snprintf(line, sizeof line, "%s%s%s", idx == selected ? "● " : "",
-                         ui_mode == UI_MIX ? (idx == mix_a ? "[A] " : idx == mix_b ? "[B] " : "") : "",
+                         (lut_mode && idx == mix_a) ? "[A] " :
+                         (lut_mode && idx == mix_b) ? "[B] " : "",
                          recipes[idx].label);
                 /* A tap always applies, including on the highlighted row: the
                  * camera or the legacy menu may have changed ISP state since
@@ -895,10 +1008,16 @@ static void draw(void) {
              * 用户不用学第二套操作，也不多占一行高度。 */
             nk_layout_row_dynamic(ctx, 16, 1);
             if (ui_mode == UI_MIX) {
-                int want = scrollbar_row(ctx, mix_pct, 101);
-                if (want >= 0 && want != mix_pct) { mix_pct = want; dirty = 1; }
+                /* 滑杆调「当前焦点那个」的强度：左右键切焦点，位置不变手感就一致 */
+                int cur = mix_focus ? mix_rb : mix_ra;
+                int want = scrollbar_row(ctx, cur, 101, -1, -1);
+                if (want >= 0 && want != cur) {
+                    if (mix_focus) mix_rb = want; else mix_ra = want;
+                    dirty = 1;
+                }
             } else {
-                int want = scrollbar_row(ctx, selected, count);
+                int want = scrollbar_row(ctx, selected, count,
+                                         lut_mode ? mix_a : -1, lut_mode ? mix_b : -1);
                 if (want >= 0 && want != selected) choose(want);
             }
             if (ui_mode == UI_EDIT) {
@@ -916,21 +1035,13 @@ static void draw(void) {
                 if (b_done) { confirm_del = 0; ui_mode = UI_BROWSE; message("已退出编辑"); }
                 if (b_del)  lib_delete(selected);
             } else if (ui_mode == UI_MIX) {
-                /* A/B 各由一个按钮就地指定（当前选中项），滚条给强度。
-                 * 顺序：设A / 设B / 应用 / 退出 —— 应用留第三列，远离退出。 */
+                /* 四个格子全给强度 —— 选择 A/B 是浏览态长按的事，混合态不再管它。
+                 * 点哪个按钮就把焦点挪到那张表，按钮与滑杆/拨盘始终指同一个对象。 */
                 nk_layout_row_dynamic(ctx, 26, 4);
-                if (nk_button_label(ctx, "设为A") && count > 0) {
-                    mix_a = selected;
-                    snprintf(mix_key_a, sizeof mix_key_a, "%s", recipes[selected].key);
-                    snprintf(status, sizeof status, "A = %s", recipes[selected].label); dirty = 1;
-                }
-                if (nk_button_label(ctx, "设为B") && count > 0) {
-                    mix_b = selected;
-                    snprintf(mix_key_b, sizeof mix_key_b, "%s", recipes[selected].key);
-                    snprintf(status, sizeof status, "B = %s", recipes[selected].label); dirty = 1;
-                }
-                if (nk_button_label(ctx, "应用混合")) mix_apply();
-                if (nk_button_label(ctx, "退出")) { ui_mode = UI_BROWSE; message("已退出混合"); }
+                if (nk_button_label(ctx, "A -5")) { mix_focus = 0; bump_strength(-5); }
+                if (nk_button_label(ctx, "A +5")) { mix_focus = 0; bump_strength(+5); }
+                if (nk_button_label(ctx, "B -5")) { mix_focus = 1; bump_strength(-5); }
+                if (nk_button_label(ctx, "B +5")) { mix_focus = 1; bump_strength(+5); }
             } else if (lut_mode) {
                 /* LUT 面板：apply 本身就是"保存"（写槽 + 登记表），所以
                  * "保存并关闭"只等队列里最后一张 drain 完再退出，没有额外 commit。
@@ -1000,9 +1111,11 @@ static void draw(void) {
          * 123/149 按钮行位置被测试钉死，多一行 16px + 5px 间距会把按钮行
          * 推出面板底部（旧版就这样静默丢掉过整行按钮）。 */
         if (ui_mode == UI_MIX && count > 0) {
-            snprintf(line, sizeof line, "A:%s   B:%s   强度 %d%% · 选条目后设为A/B，滚条或右上拨盘调强度",
-                mix_a >= 0 && mix_a < count ? recipes[mix_a].label : "—",
-                mix_b >= 0 && mix_b < count ? recipes[mix_b].label : "—", mix_pct);
+            int rr, ss;
+            mix_ratio(&rr, &ss);
+            snprintf(line, sizeof line,
+                "A %d%%   B %d%%   -> 比例 %d%% / 强度 %d%%   退出即应用",
+                mix_ra, mix_rb, rr, ss);
             nk_label_colored(ctx, line, NK_TEXT_LEFT, accent);
         } else {
             nk_label_colored(ctx, live ? status : "演示模式 · 未连接相机", NK_TEXT_LEFT, nk_rgb(171, 182, 190));
@@ -1522,7 +1635,12 @@ int main(int argc, char **argv) {
          * motion 超过 12px 时 press_active 已在上面的分支里清掉。 */
         if (press_active && !child && now_ms() - press_at >= 550) {
             press_active = 0;
-            if (ui_mode == UI_BROWSE) do_action(ACT_EDIT);
+            if (ui_mode == UI_BROWSE) {
+                /* LUT 库：长按 = 标记 A/B（翻到哪标到哪，不用先进混合态）。
+                 * 编辑态改由播放键 / F1 进 —— 那里是删除与排序，低频且危险。 */
+                if (lut_mode) mark_cycle(selected);
+                else do_action(ACT_EDIT);
+            }
         }
         if (confirm_del && now_ms() - confirm_del_at > 3000) { confirm_del = 0; dirty = 1; }
         refresh_services(0);
