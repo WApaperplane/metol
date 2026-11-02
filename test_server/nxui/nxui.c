@@ -46,7 +46,7 @@ static long long draw_total_ms; static int draw_calls;
  * nothing and cost the operator the look on the most natural exit paths
  * ("save and close", OK). Restoring is now an explicit button. */
 static int lut_mode = 0;
-static int touch_x, touch_active, close_after_child;
+static int close_after_child;   /* 触屏滑动手势已于 11-02 删除，touch_x/active 随之作废 */
 /* ── 库管理 / 混合 / 输入（2026-11-01）───────────────────────────────
  * 三个 UI 状态共用一个滤镜条，只换下面那排按钮 —— 720×208 里没有第二个
  * 面板的位置，而"换掉按钮行"比新开一层窗口更不容易挡住取景器：
@@ -658,17 +658,16 @@ static int reload_recipes_file(void) {
 
 /* 混合态进出：键盘（F2，仅桌面）与顶栏按钮共用。进态时给 A/B 一个可用起点，
  * 否则用户要先想「设成哪两张」才敢动滚条。 */
-/* 进出混合态。★ 退出即应用 —— 混合态里没有「应用」按钮，腾出来的四个格子
- * 全给 A-/A+/B-/B+。这要求用户知道「退出就是生效」，所以进入时的提示必须写清。 */
+/* 进出混合态。退出**不**自动应用 —— 应用是按钮行第三格的事，用户可能只是想
+ * 进去看一眼两个强度、再退回浏览。 */
 static void toggle_mix(void) {
     if (!lut_mode) { message("混合只在 LUT 面板可用"); return; }
     if (ui_mode == UI_MIX) {
         ui_mode = UI_BROWSE;
         mix_focus = 0;
         confirm_del = 0;
+        message("已退出混合（未应用）");
         dirty = 1;
-        if (mix_a >= 0 && mix_b >= 0 && mix_a != mix_b) mix_apply();
-        else message("已退出混合");
         return;
     }
     ui_mode = UI_MIX;
@@ -684,36 +683,7 @@ static void toggle_mix(void) {
         if (mix_b == mix_a) mix_b = (mix_a + 1) % count;
         snprintf(mix_key_b, sizeof mix_key_b, "%s", recipes[mix_b].key);
     }
-    message("左右键切 A/B · 滚条或拨盘调强度 · 退出即应用");
-    dirty = 1;
-}
-
-/* 浏览态长按：在 A / B / 清空之间循环。比起「进混合态再翻 60 项去按设为B」，
- * 这样标记就是一次普通浏览，翻到哪标到哪。 */
-static void mark_cycle(int idx) {
-    char nm[96];
-    if (!lut_mode || idx < 0 || idx >= count) return;
-    snprintf(nm, sizeof nm, "%s", recipes[idx].key);
-    if (mix_a >= 0 && !strcmp(mix_key_a, nm)) {
-        mix_a = -1; mix_key_a[0] = 0;
-        snprintf(status, sizeof status, "已取消 A 标记（%s）", recipes[idx].label);
-    } else if (mix_b >= 0 && !strcmp(mix_key_b, nm)) {
-        mix_b = -1; mix_key_b[0] = 0;
-        snprintf(status, sizeof status, "已取消 B 标记（%s）", recipes[idx].label);
-    } else if (mix_a < 0) {
-        mix_a = idx;
-        snprintf(mix_key_a, sizeof mix_key_a, "%s", nm);
-        snprintf(status, sizeof status, "A = %s · 再长按另一个标 B", recipes[idx].label);
-    } else if (mix_b < 0) {
-        mix_b = idx;
-        snprintf(mix_key_b, sizeof mix_key_b, "%s", nm);
-        snprintf(status, sizeof status, "B = %s · Fn 或顶栏进混合", recipes[idx].label);
-    } else {
-        /* 两个都满了：替换 B（用户更可能是想换掉刚标的那个），A 保持不动 */
-        mix_b = idx;
-        snprintf(mix_key_b, sizeof mix_key_b, "%s", nm);
-        snprintf(status, sizeof status, "B 改为 %s（A 不变）", recipes[idx].label);
-    }
+    message("左右键切 A/B · 滑杆或拨盘调强度 · 设好按应用混合");
     dirty = 1;
 }
 
@@ -1035,13 +1005,17 @@ static void draw(void) {
                 if (b_done) { confirm_del = 0; ui_mode = UI_BROWSE; message("已退出编辑"); }
                 if (b_del)  lib_delete(selected);
             } else if (ui_mode == UI_MIX) {
-                /* 四个格子全给强度 —— 选择 A/B 是浏览态长按的事，混合态不再管它。
-                 * 点哪个按钮就把焦点挪到那张表，按钮与滑杆/拨盘始终指同一个对象。 */
+                /* A/B 在这里设（长按已还给编辑态）。翻页靠滚条一次跨全库，
+                 * 所以「跨度大」不是问题；强度靠滑杆 + 右上拨盘 + 左右键切焦点。 */
                 nk_layout_row_dynamic(ctx, 26, 4);
-                if (nk_button_label(ctx, "A -5")) { mix_focus = 0; bump_strength(-5); }
-                if (nk_button_label(ctx, "A +5")) { mix_focus = 0; bump_strength(+5); }
-                if (nk_button_label(ctx, "B -5")) { mix_focus = 1; bump_strength(-5); }
-                if (nk_button_label(ctx, "B +5")) { mix_focus = 1; bump_strength(+5); }
+                if (nk_button_label(ctx, "设为A") && count > 0) { mix_a = selected; mix_focus = 0;
+                    snprintf(mix_key_a, sizeof mix_key_a, "%s", recipes[selected].key);
+                    snprintf(status, sizeof status, "A = %s", recipes[selected].label); dirty = 1; }
+                if (nk_button_label(ctx, "设为B") && count > 0) { mix_b = selected; mix_focus = 1;
+                    snprintf(mix_key_b, sizeof mix_key_b, "%s", recipes[selected].key);
+                    snprintf(status, sizeof status, "B = %s", recipes[selected].label); dirty = 1; }
+                if (nk_button_label(ctx, "应用混合")) mix_apply();
+                if (nk_button_label(ctx, "退出")) { ui_mode = UI_BROWSE; mix_focus = 0; message("已退出混合"); }
             } else if (lut_mode) {
                 /* LUT 面板：apply 本身就是"保存"（写槽 + 登记表），所以
                  * "保存并关闭"只等队列里最后一张 drain 完再退出，没有额外 commit。
@@ -1114,7 +1088,7 @@ static void draw(void) {
             int rr, ss;
             mix_ratio(&rr, &ss);
             snprintf(line, sizeof line,
-                "A %d%%   B %d%%   -> 比例 %d%% / 强度 %d%%   退出即应用",
+                "A %d%%   B %d%%   -> 比例 %d%% / 强度 %d%%",
                 mix_ra, mix_rb, rr, ss);
             nk_label_colored(ctx, line, NK_TEXT_LEFT, accent);
         } else {
@@ -1593,21 +1567,10 @@ int main(int argc, char **argv) {
                     logline(b);
                 }
             }
-            /* 左右滑动手势：超阈值切换选中；release 移出控件避免被当成点击 */
-            /* 左右滑动手势只在滤镜条（y < 100）生效：滚动条本身也是一次
-             * 按住拖动，Release 时若再按位移切一次，会把刚拖到的项改掉。 */
-            if (event.type == ButtonPress && !menu && event.xbutton.y < 100) { touch_x = event.xbutton.x; touch_active = 1; }
-            if (event.type == ButtonRelease && touch_active) {
-                int dx = event.xbutton.x - touch_x;
-                int step = (dx >= 0 ? dx : -dx) / 45;   /* 每 45px 切一项：滑得远切得快 */
-                touch_active = 0;
-                if (step < 1 && (dx >= 30 || dx <= -30)) step = 1;   /* 轻扫阈值 30px */
-                if (!menu && step > 0) {
-                    choose(selected + (dx < 0 ? step : -step));
-                    nk_input_motion(ctx, -10000, -10000);
-                    dirty = 1;
-                }
-            }
+            /* ★ 2026-11-02 删掉左右滑动手势（原为「滑得远切得快」）。
+             * 理由：它和「选中即居中」的重排叠在一起，手指刚落下整排就平移，
+             * 滑动再切一次会把目标甩掉，长按也稳不住。翻页现在只有三条路：
+             * 滚条拖动（跨全库最快）、上下键 / EV 拨盘、右上拨盘。够用。 */
             nk_xlib_handle_event(display, screen, window, &event);
             /* Keep press/release transitions in separate frames, even when a
              * complete short tap was queued while the camera was busy. */
@@ -1632,15 +1595,14 @@ int main(int argc, char **argv) {
             }
         }
         /* 长按（550ms 不动）进编辑态。触摸屏和鼠标共用这一条：
-         * motion 超过 12px 时 press_active 已在上面的分支里清掉。 */
+         * motion 超过 12px 时 press_active 已在上面的分支里清掉。
+         * ★ 2026-11-02 试过把长按改作「标记 A/B」，实机上一按就跳：列表是
+         *   「选中项居中」的 5 项窗口（first = selected - win/2），press 选中
+         *   的那一瞬间整排会平移，手指底下换成了另一条，长按根本对不准。
+         *   所以长按还给编辑态，A/B 仍然在混合态里用按钮设。 */
         if (press_active && !child && now_ms() - press_at >= 550) {
             press_active = 0;
-            if (ui_mode == UI_BROWSE) {
-                /* LUT 库：长按 = 标记 A/B（翻到哪标到哪，不用先进混合态）。
-                 * 编辑态改由播放键 / F1 进 —— 那里是删除与排序，低频且危险。 */
-                if (lut_mode) mark_cycle(selected);
-                else do_action(ACT_EDIT);
-            }
+            if (ui_mode == UI_BROWSE) do_action(ACT_EDIT);
         }
         if (confirm_del && now_ms() - confirm_del_at > 3000) { confirm_del = 0; dirty = 1; }
         refresh_services(0);

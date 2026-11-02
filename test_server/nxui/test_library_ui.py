@@ -1,15 +1,16 @@
-"""库管理 / 双强度混合 / 长按标记：真窗口 + 真 X 事件，引擎用 shell 桩。
+"""库管理 / 双强度混合：真窗口 + 真 X 事件，引擎用 shell 桩。
 
-11-02 起交互分家：
-  · 浏览态长按 = 标记 A/B（不再进编辑态），翻到哪标到哪
-  · 编辑态只由播放键 / F1 进，管删除与排序
-  · 混合态只管两个强度，按钮行是 A-/A+/B-/B+，**退出即应用**
+交互（2026-11-02 定稿）：
+  · 浏览态长按 = 进编辑态（删除 / 排序）。11-02 中途试过改成「标记 A/B」，
+    实机一按整排就跳（列表是选中项居中的 5 项窗口），已回退。
+  · 左右滑动切项也一并删了，翻页只走滚条 / 上下键 / 拨盘。
+  · A/B 在混合态里用「设为A / 设为B」按钮设；强度靠滑杆（调当前焦点）与
+    右上拨盘；「应用混合」才真正下发。
 
 被验的是面板与引擎之间的协议，不是观感：
-  1. 编辑态的两段式删除、左移，仍走 del / move
-  2. 长按能把两项分别标成 A、B
-  3. 混合态把两个强度换算成 `blend A r B s`，退出时自动下发
-  4. 顶栏按钮与 F2 两条入口等价
+  1. 长按进编辑态、两段式删除、左移，仍走 del / move
+  2. 混合态把两个强度换算成 `blend A r B s`
+  3. 顶栏按钮与 F2 两条入口等价
 
 表本身怎么混合由 test_lutmix.py / test_dual_strength.py 在 qemu 下验；
 库怎么增删由 test_lut_lib.sh 验；这里只验面板这一侧。
@@ -103,12 +104,12 @@ def run_library_ui(prefix, env, label):
             send("key", "KP_Left")
             wait_calls("apply portra400", 1)
 
-            # ── 1. 编辑态（F1 —— 长按已改成标记，不能再当编辑入口）──
-            send("key", "F1")
-            time.sleep(.4)
+            # ── 1. 长按进编辑态；两段式删除 ──
+            send("click", str(COL2), str(STRIP_Y), "700")
+            time.sleep(.5)
 
             before = calls.read_text() if calls.exists() else ""
-            send("click", str(COL1), str(BTN_Y), "30")     # 删除：第一次只提示
+            send("click", str(COL1), str(BTN_Y), "30")     # 第一次只提示
             time.sleep(.4)
             after_one = calls.read_text() if calls.exists() else ""
             assert after_one == before, "第一次点删除就调用了引擎：%r" % after_one
@@ -130,22 +131,18 @@ def run_library_ui(prefix, env, label):
             send("click", str(COL4), str(BTN_Y), "30")     # 完成
             time.sleep(.4)
 
-            # ── 2. 长按标记 A / B（浏览态，翻到哪标到哪）──
-            send("click", str(COL1), str(STRIP_Y), "700")
-            time.sleep(.5)
-            send("click", str(COL3), str(STRIP_Y), "700")
-            time.sleep(.5)
-
-            # ── 3. 混合态：滑杆 + 按钮调两个强度，退出即应用 ──
+            # ── 2. 混合态：设为A / 设为B / 滑杆调焦点 / 应用 ──
             send("key", "F2")
             time.sleep(.4)
-            send("drag", "160", str(BAR_Y), "450", str(BAR_Y), "10")  # 焦点 A 的强度
+            send("click", str(COL1), str(BTN_Y), "30")     # 设为A
+            time.sleep(.3)
+            send("key", "Down")                            # 换一项（混合态左右键是切 A/B 焦点）
+            time.sleep(.3)
+            send("click", str(COL2), str(BTN_Y), "30")     # 设为B
+            time.sleep(.3)
+            send("drag", "160", str(BAR_Y), "450", str(BAR_Y), "10")  # 调当前焦点（B）
             time.sleep(.4)
-            send("click", str(COL3), str(BTN_Y), "30")     # B -5（顺带把焦点挪到 B）
-            time.sleep(.3)
-            send("click", str(COL4), str(BTN_Y), "30")     # B +5
-            time.sleep(.3)
-            send("key", "F2")                              # 退出 = 应用
+            send("click", str(COL3), str(BTN_Y), "30")     # 应用混合
             blends = wait_calls("blend ", 1)
             parts = blends[-1].split()
             assert len(parts) == 5, "blend 参数个数不对：%r" % parts
@@ -155,10 +152,13 @@ def run_library_ui(prefix, env, label):
             assert r.isdigit() and 0 <= int(r) <= 100, "比例越界：%s" % r
             assert s.isdigit() and 0 <= int(s) <= 100, "强度越界：%s" % s
 
-            # ── 4. 顶栏入口等价：进一次、退一次，应当再下发一条 blend ──
+            send("click", str(COL4), str(BTN_Y), "30")     # 退出混合
+            time.sleep(.4)
+
+            # ── 3. 顶栏入口等价：进一次、应用一次 ──
             send("click", str(TOP_MIX_X), str(TOP_Y), "30")
             time.sleep(.5)
-            send("click", str(TOP_MIX_X), str(TOP_Y), "30")   # 退出即应用
+            send("click", str(COL3), str(BTN_Y), "30")     # 应用混合
             blends = wait_calls("blend ", 2)
             assert blends[-1].split()[1] in looks, blends
 
