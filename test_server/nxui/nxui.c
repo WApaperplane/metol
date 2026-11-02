@@ -367,10 +367,11 @@ static void poll_child(void) {
  * 所以这里做一张可覆盖的表：默认够用，量到新键就写进 keys.conf，
  * 不必为了一个按键改二进制。 */
 enum { ACT_NONE = 0, ACT_PREV, ACT_NEXT, ACT_OK, ACT_CLOSE, ACT_EDIT, ACT_MIX,
-       ACT_DEL, ACT_MOVE_L, ACT_MOVE_R };
+       ACT_DEL, ACT_MOVE_L, ACT_MOVE_R, ACT_INC, ACT_DEC };
 static const char *const act_names[] = { "none", "prev", "next", "ok", "close",
-    "edit", "mix", "del", "movel", "mover" };
-#define KEYMAP_MAX 24
+    "edit", "mix", "del", "movel", "mover", "inc", "dec" };
+/* 24 条不够了：桌面 10 + 机身实测 14，正好卡满，再加一个就静默丢键。 */
+#define KEYMAP_MAX 32
 static struct { KeySym sym; int act; } keymap[KEYMAP_MAX];
 static int keymap_n;
 
@@ -400,11 +401,26 @@ static KeySym parse_keysym(const char *s) {
     }
     return XStringToKeysym(s);
 }
+/* 注册一个 keysym→动作。**同名 keysym 是覆盖，不是追加**：默认表先装载，
+ * keys.conf 后装载，若只追加则「改动一个已有键的含义」永远无效（keymap_action
+ * 取第一个匹配，默认条目排在前面）。act == ACT_NONE 表示解绑 —— keys.conf
+ * 里写 `KP_Enter none` 就能把一个键摘掉，采数时正需要这个。 */
 static void keymap_add(const char *name, int act) {
     KeySym k;
-    if (keymap_n >= KEYMAP_MAX || act == ACT_NONE) return;
+    int i;
+    if (!name || !*name || keymap_n >= KEYMAP_MAX) return;
     k = parse_keysym(name);
     if (k == NoSymbol) { fprintf(stderr, "KEYMAP unknown keysym %s\n", name); return; }
+    for (i = 0; i < keymap_n; i++) {
+        if (keymap[i].sym != k) continue;
+        if (act == ACT_NONE) {
+            memmove(&keymap[i], &keymap[i + 1],
+                    (size_t)(keymap_n - i - 1) * sizeof keymap[0]);
+            keymap_n--;
+        } else keymap[i].act = act;
+        return;
+    }
+    if (act == ACT_NONE) return;          /* 本来就没注册，解绑是空操作 */
     keymap[keymap_n].sym = k; keymap[keymap_n].act = act; keymap_n++;
 }
 static void keymap_defaults(void) {
@@ -418,11 +434,32 @@ static void keymap_defaults(void) {
     keymap_add("F1", ACT_EDIT);    /* 仅桌面；机身靠长按进编辑态 */
     keymap_add("F2", ACT_MIX);     /* 仅桌面；机身上另有顶栏「混合」按钮 */
 
-    /* 2026-11-02 用户按实体 Left，当前面板采到 KP_Left / keycode 83。
-     * 这推翻了 10-17 对所有方向键均无事件的概括；其余实体键仍需逐个采数。
-     * 半按快门另由 evdev 处理，不占此表。旧 XF86 两键保留兼容。 */
-    keymap_add("KP_Left", ACT_PREV);
-    keymap_add("XF86Reload", ACT_PREV);
+    /* ★ 机身键位实测（2026-11-02，LUT 面板 + --inputlog，用户逐键按）：
+     *     上 KP_Up(80)      下 KP_Down(88)
+     *     左 KP_Left(83)    右 KP_Right(85)
+     *     OK KP_Enter(104)  MENU Menu(135)   BACK KP_Delete(91)
+     *     播放 XF86Tools(191)   Fn XF86HomePage(180)
+     *     EV 拨盘 左 XF86AudioPrev(173) / 右 XF86AudioNext(171)
+     *     右上拨盘 左 XF86ScrollDown(186) / 右 XF86ScrollUp(185)
+     *     模式拨盘 F8(74) / F9(75)
+     * ⇒ 10-17 那条「方向键 / 转盘在 X11 无事件」是**错的**：那次用
+     *   override-redirect 探针窗口，没抢到 XSetInputFocus，键被别的窗口吃了。
+     *   面板自己抢焦点，16 个键一个不缺，**转盘也是每格一个 KeyPress**，
+     *   不是滚轮事件 —— 所以能当连续调节器用。
+     * 模式拨盘的 F8/F9 刻意不绑：相机切模式时自己要用，误触代价高。
+     * 半按快门 = X11 的 Super_L = evdev code 125(KEY_LEFTMETA)，由 evdev 那条
+     * 路径处理（半按关闭面板），不占键位表。 */
+    keymap_add("KP_Up", ACT_PREV);    keymap_add("KP_Left", ACT_PREV);
+    keymap_add("KP_Down", ACT_NEXT);  keymap_add("KP_Right", ACT_NEXT);
+    keymap_add("XF86AudioPrev", ACT_PREV);   /* EV 拨盘 ← */
+    keymap_add("XF86AudioNext", ACT_NEXT);   /* EV 拨盘 → */
+    keymap_add("Menu", ACT_CLOSE);           /* MENU 键当退出 */
+    keymap_add("KP_Delete", ACT_CLOSE);      /* BACK 键当退出 */
+    keymap_add("XF86Tools", ACT_EDIT);       /* 播放键 = 进编辑态，省掉长按 */
+    keymap_add("XF86HomePage", ACT_MIX);     /* Fn = 进混合态 */
+    keymap_add("XF86ScrollDown", ACT_DEC);   /* 右上拨盘 ← */
+    keymap_add("XF86ScrollUp", ACT_INC);     /* 右上拨盘 → */
+    keymap_add("XF86Reload", ACT_PREV);      /* 10-17 采到过，留兼容 */
     keymap_add("XF86Favorites", ACT_NEXT);
 }
 static void keymap_load(void) {
@@ -599,7 +636,7 @@ static void toggle_mix(void) {
             snprintf(mix_key_a, sizeof mix_key_a, "%s", recipes[mix_a].key);
         if (mix_b >= 0 && mix_b < count)
             snprintf(mix_key_b, sizeof mix_key_b, "%s", recipes[mix_b].key);
-        message("混合：选条目后设为 A / B，滚条调强度");
+        message("混合：选条目后设为 A / B，滚条或右上拨盘调强度");
     } else message("已退出混合");
     dirty = 1;
 }
@@ -621,6 +658,15 @@ static void do_action(int act) {
     case ACT_DEL:    if (ui_mode == UI_EDIT) lib_delete(selected); break;
     case ACT_MOVE_L: if (ui_mode == UI_EDIT) lib_move(selected, -1); break;
     case ACT_MOVE_R: if (ui_mode == UI_EDIT) lib_move(selected, +1); break;
+    /* 右上拨盘（XF86ScrollUp/Down）：混合态调强度，其余态当翻页。
+     * 步进 5% 是刻意的 —— 转盘每格一个 KeyPress，1% 步进要拧 100 格才走完，
+     * 5% 是「拧三下能看出差别、又不至于跳过头」的折中（可辨粒度约 10%）。 */
+    case ACT_INC:
+        if (ui_mode == UI_MIX) { mix_pct = mix_pct + 5 > 100 ? 100 : mix_pct + 5; break; }
+        choose(selected + 1); break;
+    case ACT_DEC:
+        if (ui_mode == UI_MIX) { mix_pct = mix_pct - 5 < 0 ? 0 : mix_pct - 5; break; }
+        choose(selected - 1); break;
     case ACT_OK:
         if (ui_mode == UI_MIX) { mix_apply(); break; }
         if (ui_mode == UI_EDIT) { ui_mode = UI_BROWSE; message("已退出编辑"); break; }
@@ -954,7 +1000,7 @@ static void draw(void) {
          * 123/149 按钮行位置被测试钉死，多一行 16px + 5px 间距会把按钮行
          * 推出面板底部（旧版就这样静默丢掉过整行按钮）。 */
         if (ui_mode == UI_MIX && count > 0) {
-            snprintf(line, sizeof line, "A:%s   B:%s   强度 %d%% · 选条目后设为A/B，滚条调强度",
+            snprintf(line, sizeof line, "A:%s   B:%s   强度 %d%% · 选条目后设为A/B，滚条或右上拨盘调强度",
                 mix_a >= 0 && mix_a < count ? recipes[mix_a].label : "—",
                 mix_b >= 0 && mix_b < count ? recipes[mix_b].label : "—", mix_pct);
             nk_label_colored(ctx, line, NK_TEXT_LEFT, accent);
@@ -1183,7 +1229,7 @@ int main(int argc, char **argv) {
     keymap_load();        /* keys.conf 覆盖默认值；没有这个文件就是默认 */
     /* 无条件打一行：相机那份 libX11 的 keysym 名字表比桌面小，XF86* 若解析
      * 不出来会变成 "KEYMAP unknown keysym"，键位表就静默少几项。verify_display
-     * 断言这个数等于 keymap_defaults 的条目数（当前 13），且没有 unknown；
+     * 断言这个数等于 keymap_defaults 的条目数（当前 24），且没有 unknown；
      * 这份断言只有跑在相机 ABI（qemu + rootfs-112 的 libX11）上才算数。 */
     fprintf(stderr, "KEYMAP entries=%d\n", keymap_n);
     if (inputlog_path && *inputlog_path && (inputlog = fopen(inputlog_path, "a")))
@@ -1398,6 +1444,17 @@ int main(int argc, char **argv) {
                     logline(b);
                 }
                 do_action(keymap_action(key));
+            }
+            /* 采数时按钮事件也要记：机身转盘有可能以 X 的滚轮形式（button 4/5）
+             * 到达，只记 KeyPress 会把它整条漏掉。触摸的 tap 也会落这里，但
+             * 采数的前提是「别碰屏幕」，多出来的 BTN 行本身就是信息。
+             * MotionNotify 刻意不记 —— 手指一拖就是几百行。 */
+            if (inputlog && (event.type == ButtonPress || event.type == ButtonRelease)) {
+                char b[192];
+                snprintf(b, sizeof b, "%s button=%u x=%d y=%d",
+                         event.type == ButtonPress ? "BTN" : "BTNUP",
+                         event.xbutton.button, event.xbutton.x, event.xbutton.y);
+                logline(b);
             }
             if (event.type == ButtonPress && !menu && (event.xbutton.button == 4 || event.xbutton.button == 5))
                 choose(selected + (event.xbutton.button == 4 ? -1 : 1));

@@ -13,6 +13,8 @@
 3. nxui.sh：缓存只关注 looks 目录时间，排序只改 state/order，重开仍旧序。加入 order 的时间失效条件；机上以惰性假二进制和隔离状态验证真实启动器。
 4. recipelib.sh/restore：原先直接 cp JSON，没有 export，恢复删除前快照后 TXT 仍少一条。改走 commit 校验与重新导出，并在备份轮转前暂存所选快照。
 5. recipelib.sh/backup_now：机上同秒连续操作覆盖备份。使用同秒递增、补零序号；轮转到上限后仍保留最新回滚点。
+6. keys.conf 语义：原先只做**追加**，而 `keymap_action()` 取数组第一个匹配、默认条目在前，所以「改一个已有键的含义」永远无效。改成同名 keysym **覆盖**，`none` 表示解绑（采数时靠 `KP_Enter none` 让 OK 不再关面板，才把剩下的键采完）。
+7. 新增 `inc`/`dec` 两个动作给右上拨盘：混合态调强度 ±5%，其他态翻页。`KEYMAP_MAX` 24 → 32（再加一个键就会静默丢）。
 
 ## 验证证据
 - LUT 原 33 项通过；新增整库替换复现 35 PASS / 1 FAIL；修后 36 PASS / 0 FAIL。
@@ -24,12 +26,13 @@
 - 已读 A17 导出 /mnt/mmc/looks/_stock_A17.bin（19,712 字节），供 strength 0% 基准使用；未强制硬件 reload。
 - 最终面板机上 READY：recipes=68，panel=720x208，KEYMAP entries=13（含 KP_Left）。用户确认长按编辑成功、顶栏混合及拖动比例成功。新增 KP_Left 回归后重新构建并复跑 19/19，通过后再次同步面板双副本。
 - 实际面板日志出现 OK applied style_matte 等操作成功；不能用此代替混合后的成像验收。
+- 键位表定稿后机上 `KEYMAP entries=24`（桌面 10 + 机身 14），无 `unknown keysym`；`verify_display` 的 ARM 目标断言同步为 24。用户实测四项交互全部通过：BACK 关闭、播放键进编辑态、Fn 进混合态、右上拨盘在混合态把强度按 5% 步进拧动。
 
 ## 剩余工作与约束
 三条主线均为局部已验证；不能把本轮部署验收算成全部功能完成。
 1. 机内新增：目前无 LUT 导入/混合另存和 FilmLab 新建配方触屏入口。已有文件加入 looks 后可收编，不等于机内创建完成。
 2. 混合：已验真实 ARM 数学与触屏入口；混合应用→半按→实拍照片、强度端点和同一次半按能否完成关闭与 reload 尚未闭环。
-3. 键位：重新开启 inputlog 后用户按实体 Left，明确采到 KP_Left / keycode83，已加入默认 prev 绑定。旧“方向键均无事件”结论被推翻；其余实体键与转盘需分别采数。日志 left-key.log。新增真实 X 事件回归：Right→velvia50，再 KP_Left→portra400。
+3. 键位：**已采全**。重新开启 inputlog 后逐键采数，16 个实体键全部到位 —— 上/下/左/右 = `KP_Up`(80)/`KP_Down`(88)/`KP_Left`(83)/`KP_Right`(85)，OK = `KP_Enter`(104)，MENU = `Menu`(135)，BACK = `KP_Delete`(91)，播放 = `XF86Tools`(191)，Fn = `XF86HomePage`(180)，EV 拨盘 = `XF86AudioPrev`(173)/`XF86AudioNext`(171)，右上拨盘 = `XF86ScrollDown`(186)/`XF86ScrollUp`(185)，模式拨盘 = `F9`(75)/`F8`(74)（刻意不绑）。**旧「方向键均无事件」结论被彻底推翻**——那次的 override-redirect 探针没抢到 `XSetInputFocus`，键被别的窗口吃了。**转盘每格一个 `KeyPress`，不是滚轮事件**，所以能当连续调节器。半按快门 = X11 `Super_L`(133) = evdev `event0 code 125`。证据 keys.log / keys-halfpress.log，完整表见 `LUT_LIBRARY_AND_MIX_2026-11-01.md` §4.2。
 4. 本轮库写操作均使用 /tmp 副本，真实用户库的下架/删除没有用于试验；触屏手感结论来自用户实际操作。
 5. 优先逐键采 X11 事件，不尝试私有 GPIO/IPCC；不调用强制 LUT reload，不重启 di-camera-app。
 

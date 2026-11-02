@@ -140,6 +140,12 @@ def run_library_ui(prefix, env, label):
             time.sleep(.3)
             send("drag", "160", str(BAR_Y), "450", str(BAR_Y), "10")   # 强度 20% -> 60%
             time.sleep(.4)
+            # 右上拨盘 = XF86ScrollDown(左) / XF86ScrollUp(右)，机身实测每格一个
+            # KeyPress。dec 步进 5%，拧四下应当从 ~60% 掉到 ~40%。
+            for _ in range(4):
+                send("key", "XF86ScrollDown")
+                time.sleep(.15)
+            time.sleep(.4)
             send("click", str(COL3), str(BTN_Y), "30")   # 应用混合
             mixes = wait_calls("mix ", 1)
             parts = mixes[-1].split()
@@ -147,7 +153,8 @@ def run_library_ui(prefix, env, label):
             a, b, pct = parts[1], parts[2], parts[3]
             assert a in looks and b in looks, parts
             assert a != b, "A 与 B 不能是同一张：%r" % parts
-            assert pct.isdigit() and 30 <= int(pct) <= 90, "滑杆位置没被读进来：%s" % pct
+            assert pct.isdigit(), "滑杆位置没被读进来：%s" % pct
+            assert 30 <= int(pct) <= 52, "拨盘 dec 没把强度拧下来（应约 40%%）：%s" % pct
 
             # ── 6. 尚未测到机身 F2 等价键，
             #        所以混合态的**唯一**入口是顶栏那个按钮。这里两次点击把它
