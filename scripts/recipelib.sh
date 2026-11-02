@@ -136,14 +136,24 @@ surgery() {
 backup_now() {
     $BB mkdir -p "$BAKDIR"
     ts=$($BB date +%Y%m%d-%H%M%S 2>/dev/null || echo manual)
-    cp "$RECIPE" "$BAKDIR/recipes-$ts.json" || die "backup failed"
+    seq=0
+    for existing in "$BAKDIR/recipes-$ts-"*.json; do
+        [ -f "$existing" ] || continue
+        n=${existing##*-}; n=${n%.json}
+        n=$(printf '%s' "$n" | $BB sed 's/^0*//')
+        case "$n" in *[!0-9]*) continue ;; esac
+        [ "${n:-0}" -lt "$seq" ] || seq=$((${n:-0} + 1))
+    done
+    suffix=$(printf '%06d' "$seq")
+    dest=$BAKDIR/recipes-$ts-$suffix.json
+    cp "$RECIPE" "$dest" || die "backup failed"
     # 只留最近 KEEP 份
     n=0
     for f in $($BB ls -r "$BAKDIR"/recipes-*.json 2>/dev/null); do
         n=$((n + 1))
         [ $n -gt $KEEP ] && $BB rm -f "$f"
     done
-    echo "$BAKDIR/recipes-$ts.json"
+    echo "$dest"
 }
 
 # 条目数：走同一个块解析器。别用 grep 数 `"key": {` —— 那会把
@@ -242,9 +252,14 @@ restore)
     [ -n "$f" ] || die "usage: recipelib.sh restore <recipes-YYYYmmdd-HHMMSS.json>"
     case "$f" in */*|*..*) die "只有 _backup/ 下的文件名可以恢复" ;; esac
     [ -f "$BAKDIR/$f" ] || die "not found: $BAKDIR/$f"
-    before=$(count_keys)
+    # Stage before backup pruning; the selected snapshot may be the oldest.
+    cand=$BAKDIR/.restore
+    cp "$BAKDIR/$f" "$cand" || die "cannot stage restore"
+    expect=$(RECIPE="$cand"; count_keys)
+    [ "$expect" -gt 0 ] || die "invalid restore snapshot"
     cur=$(backup_now)
-    cp "$BAKDIR/$f" "$RECIPE" || die "restore failed"
+    commit "$cand" "$expect" "$cur"
+    $BB rm -f "$cand"
     echo "OK restored $f (previous state kept at $cur)"
     ;;
 

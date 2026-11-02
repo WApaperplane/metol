@@ -55,7 +55,7 @@ def run_library_ui(prefix, env, label):
         stream = log.open("w")
         p = subprocess.Popen(
             prefix + ["--live", "--lut", "--root", str(root), "--engine", str(engine),
-                      "--recipes", str(rec), "--lifetime-ms", "9000"],
+                      "--recipes", str(rec), "--lifetime-ms", "12000"],
             env=env, stdout=stream, stderr=subprocess.STDOUT)
         try:
             for _ in range(60):
@@ -93,6 +93,12 @@ def run_library_ui(prefix, env, label):
                                      % (word, len([l for l in text.splitlines()
                                                    if l.startswith(word)]), n,
                                         text, log.read_text()[-1200:]))
+
+            # 机身 11-02 实测 Left=KP_Left：真 X 事件必须回到前一项。
+            send("key", "Right")
+            wait_calls("apply velvia50", 1)
+            send("key", "KP_Left")
+            wait_calls("apply portra400", 1)
 
             # ── 1. 长按进编辑态：700ms 按住，远超 550ms 阈值 ──
             send("click", str(COL2), str(STRIP_Y), "700")
@@ -143,8 +149,7 @@ def run_library_ui(prefix, env, label):
             assert a != b, "A 与 B 不能是同一张：%r" % parts
             assert pct.isdigit() and 30 <= int(pct) <= 90, "滑杆位置没被读进来：%s" % pct
 
-            # ── 6. 机身没有 F2（2026-10-17 实测：只有 XF86Reload/XF86Favorites
-            #        能到 X11，方向键与转盘在 X11 和 evdev 里都没有事件），
+            # ── 6. 尚未测到机身 F2 等价键，
             #        所以混合态的**唯一**入口是顶栏那个按钮。这里两次点击把它
             #        验全：先「退出混合」回浏览态，再「混合」重新进入。
             #        顶栏几何：padding 12/8，行 24 高，四格 356+104+104+104。

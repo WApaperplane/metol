@@ -1,5 +1,7 @@
 # LUT / FilmLab 库管理与机内混合（2026-11-01）
 
+> **11-02 机上复查更正**：实体 Left 已明确采到 KP_Left/keycode83；本文“方向键无事件”结论已被推翻，其他键仍需逐个采数。库索引、排序缓存、BusyBox 精确匹配、恢复导出和备份冲突修复见 [11-02 复查](NXWA_ONDEVICE_REVIEW_2026-11-02.md)。
+
 > 承接 [`LUT_STRENGTH_MIX`](LUT_STRENGTH_MIX_2026-10-31.md)（数学等价性）与
 > [`LUT_ONDEVICE_PIPELINE`](LUT_ONDEVICE_PIPELINE_2026-11-01.md)（链路现状）。
 > 上一轮只回答了「能不能」，这一轮把「强度 / 混合」做成机内可执行的动词，

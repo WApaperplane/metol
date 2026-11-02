@@ -24,6 +24,7 @@ rm -rf "$LAB"; mkdir -p "$LAB" "$D"
 cat > "$D/busybox" <<'EOF'
 #!/bin/sh
 if [ "$1" = sleep ]; then exit 0; fi
+if [ "$1" = date ]; then echo 20261102-000000; exit 0; fi
 exec "$@"
 EOF
 chmod +x "$D/busybox"
@@ -59,6 +60,7 @@ check "删不存在的键返回错误" '[ $? -ne 0 ]'
 $L del _note > /dev/null 2>&1
 check "拒绝删除内部键" '[ $? -ne 0 ]'
 victim=$($L list | tail -1)
+cp "$LAB/recipes.json" "$LAB/_backup/recipes-original.json"
 $L del "$victim" > /dev/null
 check "删除后条数 -1" '[ "$($L list | wc -l | tr -d " ")" = "$((before - 1))" ]'
 check "被删的键不在列表里" '! $L list | grep -qx "$victim"'
@@ -73,8 +75,9 @@ check "落盘顺序：原第一变成第二" '[ "$($L list | sed -n 2p)" = "$fir
 check "原第二升到第一" '[ "$($L list | head -1)" = "$second" ]'
 
 # ---- 5. 恢复 ----
-bak=$(ls -r "$LAB/_backup"/recipes-*.json | head -1 | xargs -n1 basename)
+bak=recipes-original.json
 $L restore "$bak" > /dev/null
+check "restore 恢复被删条目" '[ "$($L list | wc -l | tr -d " ")" = "$total" ]'
 check "restore 成功且 verify 通过" '$L verify | grep -qx OK'
 $L restore ../etc/passwd > /dev/null 2>&1
 check "拒绝路径穿越恢复" '[ $? -ne 0 ]'
@@ -83,9 +86,15 @@ check "拒绝路径穿越恢复" '[ $? -ne 0 ]'
 check "filmlab.sh lib list 与直调一致" '[ "$(sh "$D/filmlab.sh" lib list | head -1)" = "$($L list | head -1)" ]'
 
 # ---- 7. 备份上限 ----
+b1=$($L backup)
+b2=$($L backup)
+check "同秒备份不覆盖" '[ "$b1" != "$b2" ]'
 i=0; while [ $i -lt 12 ]; do $L backup > /dev/null; i=$((i + 1)); done
 nb=$(ls "$LAB/_backup"/recipes-*.json | wc -l | tr -d ' ')
 check "备份只保留最近 10 份" '[ "$nb" -le 10 ]' "$nb"
+latest=$($L backup)
+latest=${latest#OK }
+check "保留上限后新备份仍可回滚" '[ -s "$latest" ]'
 
 rm -rf "$LAB"
 printf '\n%d PASS / %d FAIL\n' "$pass" "$fail"

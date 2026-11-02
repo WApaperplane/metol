@@ -418,15 +418,10 @@ static void keymap_defaults(void) {
     keymap_add("F1", ACT_EDIT);    /* 仅桌面；机身靠长按进编辑态 */
     keymap_add("F2", ACT_MIX);     /* 仅桌面；机身上另有顶栏「混合」按钮 */
 
-    /* ★ 机身实测（2026-10-17，上机双探针：keysym_probe.c + evdev_probe.c）：
-     *   · 能到 X11 的**只有** XF86Reload(181) 与 XF86Favorites(164) 两个 keysym
-     *   · 方向键 / 转盘在 X11 **和** evdev 都没有事件 —— 它们走
-     *     /dev/gpiodev.3 + /dev/d5_ipcc 的 GPIO 私有通道，被 di-camera-app 独占
-     *   · 半按快门有事件：/dev/input/event0 code 125 (KEY_LEFTMETA)，
-     *     已用于「半按关闭面板」，不占键位表
-     * 所以机身导航的**主**通道是触摸（点选 / 拖滚条 / 长按），这两个键是补充。
-     * 它们各自对应哪个物理按键还没和用户对过：按反了就把下面两行对调，
-     * 或在 keys.conf 里覆盖，不必改二进制。 */
+    /* 2026-11-02 用户按实体 Left，当前面板采到 KP_Left / keycode 83。
+     * 这推翻了 10-17 对所有方向键均无事件的概括；其余实体键仍需逐个采数。
+     * 半按快门另由 evdev 处理，不占此表。旧 XF86 两键保留兼容。 */
+    keymap_add("KP_Left", ACT_PREV);
     keymap_add("XF86Reload", ACT_PREV);
     keymap_add("XF86Favorites", ACT_NEXT);
 }
@@ -1188,7 +1183,8 @@ int main(int argc, char **argv) {
     keymap_load();        /* keys.conf 覆盖默认值；没有这个文件就是默认 */
     /* 无条件打一行：相机那份 libX11 的 keysym 名字表比桌面小，XF86* 若解析
      * 不出来会变成 "KEYMAP unknown keysym"，键位表就静默少几项。verify_display
-     * 断言这行是 entries=12 且没有 unknown，跑在相机 ABI 上才算数。 */
+     * 断言这个数等于 keymap_defaults 的条目数（当前 13），且没有 unknown；
+     * 这份断言只有跑在相机 ABI（qemu + rootfs-112 的 libX11）上才算数。 */
     fprintf(stderr, "KEYMAP entries=%d\n", keymap_n);
     if (inputlog_path && *inputlog_path && (inputlog = fopen(inputlog_path, "a")))
         fprintf(inputlog, "=== nxui inputlog %s ===\n", lut_mode ? "lut" : "filmlab");

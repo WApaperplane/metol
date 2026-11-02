@@ -30,6 +30,8 @@ rm -rf "$LAB" "$ST"; mkdir -p "$LAB" "$ST" "$D/lut" "$TRASH"
 # busybox 垫片：把 $BB applet 直接交给系统的同名命令
 cat > "$D/busybox" <<'EOF'
 #!/bin/sh
+# Camera BusyBox -x is broken; do not let a host grep mask that dependency.
+if [ "$1" = grep ] && [ "${2:-}" = -qx ]; then exit 1; fi
 exec "$@"
 EOF
 chmod +x "$D/busybox"
@@ -152,6 +154,15 @@ check "拒绝竖线" '[ $? -ne 0 ]'
 $L apply alpha >/dev/null 2>&1
 $L del alpha >/dev/null 2>&1
 check "下架当前 look 时自动还原" '[ ! -f "$ST/current" ]'
+
+# ---- 10. 整库替换与空库（旧 order 没有任何存活条目） ----
+for f in "$LAB"/*.bin "$LAB"/*.cube; do rm -f "$f"; done
+head -c 19712 /dev/zero > "$LAB/replacement.bin"
+check "整库替换仍收编新条目" '[ "$($L list)" = replacement ]'
+rm -f "$LAB/replacement.bin"
+check "空库清掉旧 order" '[ -z "$($L list)" ] && [ ! -s "$ST/order" ]'
+head -c 19712 /dev/zero > "$LAB/reborn.bin"
+check "清空后再加入可见" '[ "$($L list)" = reborn ]'
 
 rm -rf "$LAB" "$ST" /tmp/lutlib-*.log /tmp/lutlib-cache1
 printf '\n%d PASS / %d FAIL\n' "$pass" "$fail"

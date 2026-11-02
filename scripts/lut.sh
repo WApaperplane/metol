@@ -120,15 +120,17 @@ order_sync() {
         | $BB sed 's/\.[^.]*$//' | $BB grep -v '^_' | $BB sort -u > "$ST/.names"
     if [ -s "$ORD" ]; then
         $BB awk '
-            FNR==NR { have[$0]=1; next }
+            FILENAME==ARGV[1] { have[$0]=1; next }
             { k=$0; sub(/^\*/,"",k)
               if (!(k in have) || (k in seen)) next
               seen[k]=1; print }
         ' "$ST/.names" "$ORD" > "$ST/.order.1"
         $BB awk '
-            FNR==NR { k=$0; sub(/^\*/,"",k); seen[k]=1; next }
+            FILENAME==ARGV[1] { k=$0; sub(/^\*/,"",k); seen[k]=1; next }
             { if (($0 in seen) || ($0 ~ /^_/)) next; print }
-        ' "$ST/.order.1" "$ST/.names" >> "$ST/.order.1"
+        ' "$ST/.order.1" "$ST/.names" > "$ST/.order.new"
+        $BB cat "$ST/.order.new" >> "$ST/.order.1"
+        $BB rm -f "$ST/.order.new"
     else
         : > "$ST/.order.1"
         while IFS= read -r n; do
@@ -144,6 +146,11 @@ order_sync() {
 order_fav_count() {
     [ -f "$ORD" ] || { echo 0; return 0; }
     $BB grep -c '^\*' "$ORD" 2>/dev/null || echo 0
+}
+
+# Camera BusyBox 1.20.2 grep -x fails on exact lines; compare literal keys.
+order_has() {
+    $BB awk -v k="$1" '$0==k {found=1} END {exit !found}' "$ORD"
 }
 
 # ---------- 表路径解析（.cube 走缓存） ----------
@@ -250,7 +257,7 @@ fav)
     valid_name "$name" || die "bad name"
     [ -d "$LAB" ] || die "no $LAB"
     order_sync
-    if $BB grep -qx "\*$name" "$ORD" 2>/dev/null; then
+    if order_has "*$name"; then
         # 取消收藏：去掉星标，留在原位（不做位置回弹，用户调过的顺序不被打乱）
         $BB awk -v k="$name" '{ if ($0 == "*" k) print k; else print }' "$ORD" > "$ST/.o"
         $BB mv -f "$ST/.o" "$ORD"
@@ -268,7 +275,7 @@ move)
     name=${2:-}; dir=${3:-up}
     valid_name "$name" || die "bad name"
     order_sync
-    $BB grep -qx "$name" "$ORD" 2>/dev/null || $BB grep -qx "\*$name" "$ORD" 2>/dev/null \
+    order_has "$name" || order_has "*$name" \
         || die "not in library: $name"
     $BB awk -v k="$name" -v dir="$dir" '
         { line[NR]=$0; key[NR]=$0; sub(/^\*/,"",key[NR]) }

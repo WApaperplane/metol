@@ -94,7 +94,7 @@ if [ "$MODE" = lut ]; then
     # updates the directory mtime, so a second open costs one stat instead of
     # another pass over the exFAT folder.
     LU=/tmp/nxui-look
-    if [ ! -s "$LU.rec" ] || [ "$LOOKS" -nt "$LU.stamp" ]; then
+    if [ ! -s "$LU.rec" ] || [ "$LOOKS" -nt "$LU.stamp" ] || [ /mnt/mmc/lut/state/order -nt "$LU.stamp" ]; then
         sh "$D/lut.sh" list > "$LU.names" 2>/dev/null || exit 1
         # 9 字段配方格式：key|label|7 个占位值（LUT 不使用 PW 分量）。
         # Done with shell builtins: the old awk cost another process.
