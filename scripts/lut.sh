@@ -24,6 +24,7 @@
 #   lut.sh begin                预检 + 备份（不写相机内存）
 #   lut.sh off                  还原
 #   lut.sh status               当前状态
+#   lut.sh video on|off|status  录像 LUT 状态/诊断（正常随 apply/off 联动）
 #   lut.sh fav <name>           收藏/取消收藏（新收藏排到最前）
 #   lut.sh move <name> up|down|top   调整顺序
 #   lut.sh del <name>           移到 _trash/（不物理删除）
@@ -232,11 +233,24 @@ commit_table() {
     #   p7 只在自己的事件（半按/切档）里重新读取登记表，所以这里只改表与指针，
     #   由用户半按一次完成装载。半按在 LUT 模式下不会关闭面板。
     printf '%s\n' "$label" > "$ST/current"
+    # Applying a look is the one user-facing switch for photo and video LUTs.
+    # The watcher is per-boot and stops with LUT off; no second UI entry needed.
+    if [ -x "$D/lut_video.sh" ]; then
+        sh "$D/lut_video.sh" on 0 > "$ST/video.log" 2>&1 || {
+            cat "$ST/video.log"
+            die "LUT applied, but video auto-load could not start"
+        }
+    fi
     echo "OK applied $label"
     echo "NEXT half-press once (panel stays open)"
 }
 
 case "${1:-status}" in
+video)
+    shift
+    [ -x "$D/lut_video.sh" ] || die "missing lut_video.sh"
+    sh "$D/lut_video.sh" "$@"
+    ;;
 list)
     [ -d "$LAB" ] || die "no $LAB"
     order_sync
@@ -463,6 +477,9 @@ apply)
 
 off)
     need_tools
+    if [ -x "$D/lut_video.sh" ]; then
+        sh "$D/lut_video.sh" off || die "could not stop video LUT watcher"
+    fi
     if [ ! -f "$ST/a18_orig.bin" ]; then
         echo "OK nothing to restore"
         exit 0
@@ -508,12 +525,14 @@ status)
         echo "ENGINE $ENG  (3DLUT 当前表指针)"
         echo "NOTE   apply 之后若没半按过快门，画面可能仍是上一张表"
     fi
+    if [ -x "$D/lut_video.sh" ]; then sh "$D/lut_video.sh" status; fi
     ;;
 
 *)
     echo "usage: lut.sh list [--fav]|begin|apply <name>|off|status"
     echo "       lut.sh fav <name>|move <name> up|down|top|del <name>|index"
     echo "       lut.sh mix <A> <B> <0-100>|strength <name> <0-100>|stock"
+    echo "       lut.sh video on [seconds]|off|status"
     exit 2
     ;;
 esac
