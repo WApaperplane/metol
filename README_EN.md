@@ -37,7 +37,7 @@ The camera menu also has `IP: x.x.x.x [Telnet关]` (tap to toggle 23/21), `远�
 | Capability | In one line |
 | --- | --- |
 | Film recipes | 68 (negative / slide / B&W / cinema / stylised); all seven PW dimensions pushed into the ISP at once |
-| 3D LUT | `.cube` converted on-camera in one command; **edit a 4-byte registry entry + write 19,712 B into a spare slot + half-press** to retarget; live view and stills are independent chains |
+| 3D LUT | `.cube` converted on-camera in one command; **edit a 4-byte registry entry + write 19,712 B into a spare slot + half-press** to retarget; live view and stills are independent chains; **video follows `apply` — just press record** |
 | NXUI | Nuklear (MIT) on the camera's own X11/Xft — **no EFL**, no viewfinder capture or blit |
 | Web gallery | Collapsed directories + live `dirlist` (new photos appear instantly) + thumbnail pre-warm + over-the-air push |
 | Original NX-KS modules | Video bitrate, HDR, batch recording, zoom, resolution tweaks, shooting-parameter API … |
@@ -68,6 +68,7 @@ The camera menu also has `IP: x.x.x.x [Telnet关]` (tap to toggle 23/21), `远�
 | Registry tables | `View4` (4 entries, colour space × screen colour) + `Still6` (6) + `BV12` (12) — **none may be skipped**, or you get "viewfinder filtered, photo not" |
 | Import | `.cube → 19,712 B slot table` via on-camera `cube2lut.arm`, or host-side `test_server/isp/nx3dlut.py` |
 | Live view / stills | Live view reads only `View4`; stills have **two mutually exclusive branches** (screen colour on → `BV12`, off → `Still6`) and both must be retargeted |
+| Video | After `apply`, just press record — the same table is loaded when the recording starts (detected from the real MP4 write handle, then waits for the EP completion interrupt). `off` stops the watcher. **The first frame is not guaranteed**, long takes and other frame rates are untested |
 | Limits | Pure memory operations — **power cycle restores stock** (boot-persistent needs an image patch). Colour is trustworthy in sRGB; AdobeRGB only guarantees "it applies" |
 | No-go | ⛔ Writing `+0x00C` yourself and pulsing the config register makes the ISP read out-of-sequence addresses ⇒ **severe colour corruption**. The only safe reload is **half-press** |
 
@@ -79,6 +80,7 @@ The camera menu also has `IP: x.x.x.x [Telnet关]` (tap to toggle 23/21), `远�
 | Cross-fade | `lut.sh mix <A> <B> <0-100>` |
 | Strength of one look | `lut.sh strength <name> <0-100>` (0-end = stock A17; run `lut.sh stock` once first) |
 | **Two looks, two strengths** | `lut.sh blend <A> <r 0-100> <B> <s 0-100>` — `r` = A/B ratio, `s` = total strength |
+| Video LUT | No separate switch: starts with a successful `apply`, stops on `off`. Diagnose with `lut.sh video on\|off\|status` (`on` takes an optional second count) |
 
 Order and favourites live in `lut/state/order` on the card (one name per line, `*` = favourite).
 Removal is a **move to `looks/_trash/`**, never an `rm` — deleting a duplicated name on exFAT
@@ -108,6 +110,7 @@ swap A/B. See [`docs/current/DUAL_STRENGTH_2026-11-02.md`](docs/current/DUAL_STR
 
 ```sh
 sh /opt/usr/nx-ks/lut.sh list | begin | apply <name> | off | status   # looks live in /mnt/mmc/looks/
+sh /opt/usr/nx-ks/lut.sh video on|off|status                          # recording watcher; normally automatic
 ```
 
 Details: [`docs/current/LUT_RETARGET_LIVE_2026-10-18.md`](docs/current/LUT_RETARGET_LIVE_2026-10-18.md) · panel design: [`docs/current/LUT_UI_2026-10-18.md`](docs/current/LUT_UI_2026-10-18.md)
@@ -120,7 +123,8 @@ Details: [`docs/current/LUT_RETARGET_LIVE_2026-10-18.md`](docs/current/LUT_RETAR
 | `scripts/` | All modules → synced to the camera's `/opt/usr/nx-ks/` |
 | `scripts/filmlab.sh` · `scripts/filmlab/recipes.json` | FilmLab engine / authoritative recipe library (68) |
 | `scripts/EV_AEL.sh` · `scripts/EV_MOBILE.sh` | The two key-combo entry points (`EV+AEL` strip / `EV+WiFi` LUT panel) |
-| `scripts/lut.sh` · `scripts/lut/` | 3D LUT entry + toolset (`cube2lut` / `nx_slotwrite` / `nx_regtabwrite` / `nx_regtabdump`) |
+| `scripts/lut.sh` · `scripts/lut/` | 3D LUT entry + toolset (`cube2lut` / `nx_slotwrite` / `nx_regtabwrite` / `nx_regtabdump` / `nx_lutload`) |
+| `scripts/lut_video.sh` | Recording LUT watcher (starts with `apply`, stops on `off`; locks and state in `/tmp`) |
 | `scripts/nx-rc/` | Web remote: `web_root/` `thumb/` `capdtm/` `push/` |
 | `test_server/` | Host-side development environment (simulated API, toolchain, gates) |
 | `uninstall_pkg/` | Camera-menu uninstall entry |
@@ -144,7 +148,7 @@ Stated plainly — every row below maps to an on-camera or static verification, 
 |---|---|---|
 | Platform | NX500 firmware **1.12** (everything verified on device) | NX1 1.41 installs, but LUT / FilmLab are **not verified on NX1**; other firmware versions are rejected by the installer |
 | Colour | Colour is trustworthy in **sRGB** for both live view and JPEG (baseline of the 45 bundled tables) | **AdobeRGB applies but is not colour-calibrated** (tables are built in sRGB coordinates); the camera's Smart Filter enum 14–18 takes a separate 24-slot dynamic path that this mod does not cover |
-| Carrier | **JPEG stills + viewfinder** | **RAW (`.SRW`) is not promised to be baked**; video is out of scope |
+| Carrier | **JPEG stills + viewfinder + video** | **RAW (`.SRW`) is not promised to be baked**; video gets the LUT but **the first frame is not guaranteed**, and the ground is 8-bit 4:2:0 only (no log, no 10-bit) |
 | Taking effect | Memory write takes effect immediately (half-press once to load) | **No boot persistence** — a power cycle restores stock; that needs a firmware image patch |
 | Trigger | **Half-press** is the only reliable reload | No software trigger found for making p7 re-read the table (`st cap iq af afsta/afsto` is a no-op) |
 | Shape | No reflash, no partition writes, fully reversible | No firmware-partition change means a reboot restores stock (LUT writes are RAM-only) |

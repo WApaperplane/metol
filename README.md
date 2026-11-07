@@ -37,7 +37,7 @@ Samsung NX500 / NX1（Tizen / DRIMe5）增强固件 mod，基于社区上游
 | 能力 | 一句话 |
 | --- | --- |
 | 胶片配方 | 68 条（负片 / 反转 / 黑白 / 电影 / 风格），PW 七维一次直进 ISP |
-| 3D LUT | `.cube` 机身一条命令转成原生表；**改四张登记表 + 写 19,712 B 空闲槽 + 半按快门**即换表；**两张表可以各带一个强度混着用**；滤镜库可在机身内增删、排序、收藏 |
+| 3D LUT | `.cube` 机身一条命令转成原生表；**改四张登记表 + 写 19,712 B 空闲槽 + 半按快门**即换表；**两张表可以各带一个强度混着用**；滤镜库可在机身内增删、排序、收藏；**录像随 apply 联动，直接按录像键就带同一条表** |
 | NXUI 界面 | Nuklear（MIT）+ 相机自带 X11/Xft 重写，**不链接 EFL**、不抓取/重绘取景帧 |
 | Web 相册 | 折叠目录 + `dirlist` 实时目录（新拍照片立即可见）+ 缩略图预热 + WiFi 在线 push |
 | 原 NX-KS 模块 | 视频码率、HDR、批量录制、变焦缩放、分辨率修改、拍摄参数 API 等 |
@@ -68,6 +68,7 @@ Samsung NX500 / NX1（Tizen / DRIMe5）增强固件 mod，基于社区上游
 | 登记表 | `View4` 四项（色彩空间×屏幕色彩）+ `Still6` 六项 + `BV12` 十二项 —— **一项都不能漏**，漏了就是"取景有、照片没有" |
 | 导入 | `.cube → 19,712 B 槽表`：机身 `cube2lut.arm` 一条命令，或 PC 端 `test_server/isp/nx3dlut.py` |
 | 取景 / 成片 | 取景只认 `View4`；成片有**两条互斥分支**（屏幕色彩开→`BV12`，关→`Still6`），两条都要指过去 |
+| 视频 | `apply` 之后直接按录像键就带同一条表，`off` 自动停监视。开录时按真实 MP4 写句柄识别、等 EP 完成中断再返回。**首帧不保证带 LUT**，长录与更多帧率尚未覆盖 |
 | 边界 | 全是内存操作，**断电即回原状**（「开机即生效」仍需改固件镜像）；sRGB 颜色可信，AdobeRGB 只保证生效 |
 | 禁区 | ⛔ 自己写 `+0x00C` 再脉冲配置寄存器 ⇒ ISP 读到原厂时序外地址 ⇒ **严重偏色花屏**。唯一安全重载 = **半按快门** |
 
@@ -79,6 +80,7 @@ Samsung NX500 / NX1（Tizen / DRIMe5）增强固件 mod，基于社区上游
 | 交叉混合 | `lut.sh mix <A> <B> <0-100>` |
 | 单表强度 | `lut.sh strength <名> <0-100>`（0 端 = 原厂 A17，先跑一次 `lut.sh stock` 导出来） |
 | 双表各自强度 | `lut.sh blend <A> <r 0-100> <B> <s 0-100>` —— `r` 是 A/B 比例，`s` 是总强度 |
+| 录像 LUT | 不用单独开：`apply` 成功自动启动、`off` 自动停。诊断用 `lut.sh video on\|off\|status`（`on` 带秒数可限时） |
 
 顺序与收藏落在 SD 卡 `looks/../lut/state/order`，一行一条、`*` 前缀表示收藏。
 下架是**移到 `looks/_trash/`**，不是删除（exFAT 上删同名文件会释放簇链，见现场纪律）。
@@ -114,6 +116,7 @@ Samsung NX500 / NX1（Tizen / DRIMe5）增强固件 mod，基于社区上游
 
 ```sh
 sh /opt/usr/nx-ks/lut.sh list | begin | apply <名> | off | status   # 滤镜库 /mnt/mmc/looks/
+sh /opt/usr/nx-ks/lut.sh video on|off|status                       # 录像监视，通常不用手动调
 ```
 
 细节：[`docs/current/LUT_RETARGET_LIVE_2026-10-18.md`](docs/current/LUT_RETARGET_LIVE_2026-10-18.md)　面板设计：[`docs/current/LUT_UI_2026-10-18.md`](docs/current/LUT_UI_2026-10-18.md)
@@ -126,7 +129,8 @@ sh /opt/usr/nx-ks/lut.sh list | begin | apply <名> | off | status   # 滤镜库
 | `scripts/` | 全部模块母本 → 同步到相机 `/opt/usr/nx-ks/` |
 | `scripts/filmlab.sh` · `scripts/filmlab/recipes.json` | FilmLab 引擎 / 权威配方库（68 条） |
 | `scripts/EV_AEL.sh` · `scripts/EV_MOBILE.sh` | 两个组合键入口（`EV+AEL` 滤镜条 / `EV+WiFi` LUT 面板） |
-| `scripts/lut.sh` · `scripts/lut/` | 3D LUT 入口 + 四件套（`cube2lut` / `nx_slotwrite` / `nx_regtabwrite` / `nx_regtabdump`） |
+| `scripts/lut.sh` · `scripts/lut/` | 3D LUT 入口 + 工具集（`cube2lut` / `nx_slotwrite` / `nx_regtabwrite` / `nx_regtabdump` / `nx_lutload`） |
+| `scripts/lut_video.sh` | 录像 LUT 监视器（随 `apply`/`off` 联动，锁与状态都在 `/tmp`） |
 | `scripts/nx-rc/` | Web 遥控：`web_root/` `thumb/` `capdtm/` `push/` |
 | `test_server/` | PC 端开发验证环境（模拟 API、工具链、门控） |
 | `uninstall_pkg/` | 相机菜单卸载入口 |
@@ -150,7 +154,7 @@ sh /opt/usr/nx-ks/lut.sh list | begin | apply <名> | off | status   # 滤镜库
 |---|---|---|
 | 平台 | NX500 固件 **1.12**（全部功能实机验证） | NX1 1.41 可装，但 LUT / FilmLab 未在 NX1 上验证；其它固件版本拒绝安装 |
 | 色彩 | **sRGB** 输出下取景与 JPEG 成片颜色可信（45 张随包表的基准） | **AdobeRGB 会生效但颜色未标定**（表按 sRGB 坐标生成）；相机智能滤镜（枚举 14–18）走另一条动态 24 档路径，不覆盖 |
-| 载体 | **JPEG 成片 + 取景器** | **RAW（`.SRW`）不承诺被 LUT 烘焙**；视频不在本 mod 范围 |
+| 载体 | **JPEG 成片 + 取景器 + 录像** | **RAW（`.SRW`）不承诺被 LUT 烘焙**；录像有 LUT 但**不保证首帧**，地基只有 8bit 4:2:0（无 log、无 10bit） |
 | 生效 | 写内存即生效（apply 后半按一次装载） | **开机即生效做不到** —— 断电/重启回原厂，要持久化得改固件镜像 |
 | 触发 | **半按快门**是唯一可靠的重载点 | 软件触发 p7 重读表的入口尚未找到（`st cap iq af afsta/afsto` 无效） |
 | 形态 | 不刷机、不改分区，可双向回滚 | 不改固件分区 ⇒ 重启即回原厂（LUT 写入是内存操作） |
