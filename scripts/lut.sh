@@ -233,6 +233,16 @@ commit_table() {
     #   p7 只在自己的事件（半按/切档）里重新读取登记表，所以这里只改表与指针，
     #   由用户半按一次完成装载。半按在 LUT 模式下不会关闭面板。
     printf '%s\n' "$label" > "$ST/current"
+    # ★ 录像首帧：p7 开录时把 3DLUT 的 LUT0 指向它自己的档位表（实测在
+    #   0x81158C00 / 0x8113BE00 之间随场景变），不是 A18。把这张 23 项指针表
+    #   整体指到 A18，录像一开始读到的就是我们的表，不再需要开录后补写。
+    #   失败不阻断 apply：照片与取景走 View4/Still6，不依赖这张表。
+    if [ -x "$D/lut/nx_lutptr.arm" ]; then
+        "$D/lut/nx_lutptr.arm" save "$ST/lutptr.bak" > "$ST/lutptr.log" 2>&1 || true
+        if ! "$D/lut/nx_lutptr.arm" set "$SLOT" >> "$ST/lutptr.log" 2>&1; then
+            echo "WARN lutptr: video first frame may not carry the LUT (see $ST/lutptr.log)"
+        fi
+    fi
     # Applying a look is the one user-facing switch for photo and video LUTs.
     # The watcher is per-boot and stops with LUT off; no second UI entry needed.
     if [ -x "$D/lut_video.sh" ]; then
@@ -480,6 +490,10 @@ off)
     if [ -x "$D/lut_video.sh" ]; then
         sh "$D/lut_video.sh" off || die "could not stop video LUT watcher"
     fi
+    # 指针表先于登记表恢复：让 p7 的档位选择回到内置表，再还原 View4/Still6/A18
+    if [ -x "$D/lut/nx_lutptr.arm" ] && [ -f "$ST/lutptr.bak" ]; then
+        "$D/lut/nx_lutptr.arm" restore "$ST/lutptr.bak" > "$ST/off-lutptr.log" 2>&1 || true
+    fi
     if [ ! -f "$ST/a18_orig.bin" ]; then
         echo "OK nothing to restore"
         exit 0
@@ -524,6 +538,13 @@ status)
     if [ -n "$ENG" ]; then
         echo "ENGINE $ENG  (3DLUT 当前表指针)"
         echo "NOTE   apply 之后若没半按过快门，画面可能仍是上一张表"
+    fi
+    if [ -x "$D/lut/nx_lutptr.arm" ]; then
+        if "$D/lut/nx_lutptr.arm" check "$SLOT" >/dev/null 2>&1; then
+            echo "VIDEOPTR 23 slots -> A18 (recording starts with the LUT)"
+        else
+            echo "VIDEOPTR not redirected (first frames may miss the LUT)"
+        fi
     fi
     if [ -x "$D/lut_video.sh" ]; then sh "$D/lut_video.sh" status; fi
     ;;

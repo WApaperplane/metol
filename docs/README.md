@@ -32,6 +32,7 @@ docs/
 
 | 文档 | 定位 |
 |---|---|
+| [`VIDEO_LUT_FIRSTFRAME_2026-11-07.md`](current/VIDEO_LUT_FIRSTFRAME_2026-11-07.md) | ★★★★★ **开录首帧就带 LUT**：p7 的 23 项档位指针表（VA `0x80383A28`）全指 A18；预置单槽为何失败；0334/0335 对照证据 |
 | [`VIDEO_LUT_AND_2K_2026-11-07.md`](current/VIDEO_LUT_AND_2K_2026-11-07.md) | ★★★★★ **视频 LUT 自动联动 + 2.5K 实测**：完成中断加载协议、`nx_lutload` watch 模式、真实 MP4 写句柄识别、灰帧缺陷、FOV 配准 |
 | [`VIDEO_10BIT_FEASIBILITY_2026-11-07.md`](current/VIDEO_10BIT_FEASIBILITY_2026-11-07.md) | ★★★★ **10bit 不可行的逐项证据**：`hvcC` 8bit/4:2:0、全固件 Main10 零命中 ⇒ log 不可达 |
 | [`GAMMA_LOG_VERDICT_2026-11-07.md`](current/GAMMA_LOG_VERDICT_2026-11-07.md) | ★★★★ **内置 gamma/log 判死**：`IQ[180]` 恒 NORMAL，app 侧 393 条 MOVIE 字符串零 gamma |
