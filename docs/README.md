@@ -36,7 +36,7 @@ docs/
 | [`VIDEO_10BIT_FEASIBILITY_2026-11-07.md`](current/VIDEO_10BIT_FEASIBILITY_2026-11-07.md) | ★★★★ **10bit 不可行的逐项证据**：`hvcC` 8bit/4:2:0、全固件 Main10 零命中 ⇒ log 不可达 |
 | [`GAMMA_LOG_VERDICT_2026-11-07.md`](current/GAMMA_LOG_VERDICT_2026-11-07.md) | ★★★★ **内置 gamma/log 判死**：`IQ[180]` 恒 NORMAL，app 侧 393 条 MOVIE 字符串零 gamma |
 | [`LUT_INPUT_CALIBRATION_2026-11-07.md`](current/LUT_INPUT_CALIBRATION_2026-11-07.md) | ★★★★ **输入曲线怎么测**：3DLUT 在 JPEG 编码器之前 ⇒ 拍 JPG 即测输入端；`measure_tone.py` 反解 gamma/肩部/趾部 |
-| [`RES25K_TOGGLE_2026-11-07.md`](current/RES25K_TOGGLE_2026-11-07.md) | ★★★ 2.5K 双向开关与菜单纠错（原判断「取消勾选无恢复动作」已被推翻） |
+| [`RES25K_TOGGLE_2026-11-07.md`](current/RES25K_TOGGLE_2026-11-07.md) | ★★★ **原版 2.5K 映射的核对**（功能属上游 NX-KS，非本项目新增）：视角实测 + 菜单纠错（原判断「取消勾选无恢复动作」已撤回） |
 | [`LUT_LIBRARY_AND_MIX_2026-11-01.md`](current/LUT_LIBRARY_AND_MIX_2026-11-01.md) | ★★★★★ **机内混合 + 库管理 + 面板三态**：`lutmix.arm` 契约与逐字节验证；`order`/`_trash` 语义；`recipelib.sh` 块级手术与双校验；BROWSE/EDIT/MIX 与键位表；含 `nk_spacing` 撑行坑 |
 | [`LUT_ONDEVICE_PIPELINE_2026-11-01.md`](current/LUT_ONDEVICE_PIPELINE_2026-11-01.md) | ★★★★ 机内 LUT 链路现状：三条转换路径与格式契约；缺口只剩「文件怎么进卡」（FTP 即可） |
 | [`LUT_STRENGTH_MIX_2026-10-31.md`](current/LUT_STRENGTH_MIX_2026-10-31.md) | ★★★★ 强度混合的数学：逐节点插值 = 输出域混合；可辨粒度；三个必须先定的语义 |
