@@ -68,7 +68,7 @@ The camera menu also has `IP: x.x.x.x [Telnet关]` (tap to toggle 23/21), `远�
 | Registry tables | `View4` (4 entries, colour space × screen colour) + `Still6` (6) + `BV12` (12) — **none may be skipped**, or you get "viewfinder filtered, photo not" |
 | Import | `.cube → 19,712 B slot table` via on-camera `cube2lut.arm`, or host-side `test_server/isp/nx3dlut.py` |
 | Live view / stills | Live view reads only `View4`; stills have **two mutually exclusive branches** (screen colour on → `BV12`, off → `Still6`) and both must be retargeted |
-| Video | After `apply`, just press record — the same table is loaded when the recording starts (detected from the real MP4 write handle, then waits for the EP completion interrupt). `off` stops the watcher. **The first frame is not guaranteed**, long takes and other frame rates are untested |
+| Video | After `apply`, just press record — **the very first frame already carries the table** (p7's 23-entry slot pointer table is redirected to A18); `off` stops the watcher. Long takes and other frame rates are untested |
 | Limits | Pure memory operations — **power cycle restores stock** (boot-persistent needs an image patch). Colour is trustworthy in sRGB; AdobeRGB only guarantees "it applies" |
 | No-go | ⛔ Writing `+0x00C` yourself and pulsing the config register makes the ISP read out-of-sequence addresses ⇒ **severe colour corruption**. The only safe reload is **half-press** |
 
@@ -148,7 +148,7 @@ Stated plainly — every row below maps to an on-camera or static verification, 
 |---|---|---|
 | Platform | NX500 firmware **1.12** (everything verified on device) | NX1 1.41 installs, but LUT / FilmLab are **not verified on NX1**; other firmware versions are rejected by the installer |
 | Colour | Colour is trustworthy in **sRGB** for both live view and JPEG (baseline of the 45 bundled tables) | **AdobeRGB applies but is not colour-calibrated** (tables are built in sRGB coordinates); the camera's Smart Filter enum 14–18 takes a separate 24-slot dynamic path that this mod does not cover |
-| Carrier | **JPEG stills + viewfinder + video** | **RAW (`.SRW`) is not promised to be baked**; video gets the LUT but **the first frame is not guaranteed**, and the ground is 8-bit 4:2:0 only (no log, no 10-bit) |
+| Carrier | **JPEG stills + viewfinder + video (LUT from frame 1)** | **RAW (`.SRW`) is not promised to be baked**; the ground is 8-bit 4:2:0 only (no log, no 10-bit); long takes and other frame rates untested |
 | Taking effect | Memory write takes effect immediately (half-press once to load) | **No boot persistence** — a power cycle restores stock; that needs a firmware image patch |
 | Trigger | **Half-press** is the only reliable reload | No software trigger found for making p7 re-read the table (`st cap iq af afsta/afsto` is a no-op) |
 | Shape | No reflash, no partition writes, fully reversible | No firmware-partition change means a reboot restores stock (LUT writes are RAM-only) |
