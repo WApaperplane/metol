@@ -232,3 +232,8 @@ tools/lutgen/audit_out/
 # ===== G'MIC 外部 LUT 暂存（web_import.py --stage 可重建，不入库）=====
 tools/lutgen/webstage/
 tools/lutgen/webcache/
+
+# ===== 2026-11-07：本地 AI 工作目录与分析产物（可再生，不入库）=====
+/.ai-memory/
+/Plan/
+test_server/af_static/out/
