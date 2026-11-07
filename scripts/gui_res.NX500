@@ -1,14 +1,13 @@
-checkbox|DC映射为UHD|res_DCUHD.sh
-checkbox|UHD映射为DC|res_UHDDC.sh
+checkbox|UHD档 → 2.5K全宽（2560×1440）|res_UHD2K.sh
+checkbox|UHD档 → DC 4K（4096×2160）|res_UHDDC.sh
+checkbox|UHD档 → FHD（1920×1080）|res_UHDHD.sh
 
-checkbox|DC映射为2.5K|res_DC2K.sh
-checkbox|UHD映射为2.5K|res_UHD2K.sh
+checkbox|DC档 → 2.5K（2560×1440）|res_DC2K.sh
+checkbox|DC档 → UHD（3840×2160）|res_DCUHD.sh
+checkbox|DC档 → FHD（1920×1080）|res_DCHD.sh
 
-checkbox|DC映射为1080p|res_DCHD.sh
-checkbox|UHD映射为1080p|res_UHDHD.sh
-
-checkbox|VGA映射为DC|res_VGADC.sh
-checkbox|VGA映射为UHD|res_VGAUHD.sh
+checkbox|VGA档 → UHD（3840×2160）|res_VGAUHD.sh
+checkbox|VGA档 → DC 4K（4096×2160）|res_VGADC.sh
 
 button|返回|@/opt/usr/nx-ks/gui_func.NX500
 button|取消|/opt/usr/nx-ks/gui_exit.sh
