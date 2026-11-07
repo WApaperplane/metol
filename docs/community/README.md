@@ -72,7 +72,7 @@
 
 | 文件 | 内容 | 平台 |
 |---|---|---|
-| [`REDDIT_2026-11-07_en.md`](REDDIT_2026-11-07_en.md) | 英文技术贴：视频 LUT 首帧带表（含「预置单槽」的第一次失败）+ 2.5K 视角实测（明确写功能属上游）+ 8bit 无 log 的墙 | r/SamsungNX · r/VintageDigitalCameras · r/cameras |
+| [`REDDIT_2026-11-07_en.md`](REDDIT_2026-11-07_en.md) | 英文技术贴：一条 LUT 同时进取景/JPEG/视频且**视频首帧就带**；2.5K 视角实测（明确功能属上游）；8bit 硬限制 | r/SamsungNX · r/VintageDigitalCameras · r/cameras |
 
-叙事骨架是**先讲猜错**：量到 DSP 用的槽是 `0x81158C00`，写进去，下一次它换成了 `0x8113BE00` ——
-由此才找到 23 项指针表。2.5K 那节开门就写「not my feature」，只交付实测数据。
+写法按用户要求：**只讲功能与数据，不讲踩坑过程**（第一次预置单槽失败、指针表怎么找到的，
+都不进正文，留评论区预案）。2.5K 一节开门就写「upstream mod's work, not mine」。
