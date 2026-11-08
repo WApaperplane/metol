@@ -735,7 +735,7 @@ static void do_action(int act) {
         if (ui_mode == UI_MIX) { mix_apply(); break; }
         if (ui_mode == UI_EDIT) { ui_mode = UI_BROWSE; message("已退出编辑"); break; }
         if (!child && count > 0) {
-            nx_queue_select(&queue, selected, now_ms() - NXUI_DEBOUNCE_MS);
+            nx_queue_select_now(&queue, selected, now_ms());
             queue.commit_requested = 1; queue.close_requested = 1;
         }
         break;
@@ -1053,7 +1053,7 @@ static void draw(void) {
                         close_after_child = 1;
                         if (!start_child(2, -1, "prefman save 0")) { close_after_child = 0; message("保存启动失败"); }
                     } else {
-                        nx_queue_select(&queue, selected, now_ms()-NXUI_DEBOUNCE_MS);
+                        nx_queue_select_now(&queue, selected, now_ms());
                         queue.commit_requested = 1;
                         queue.close_requested = 1;
                     }
@@ -1307,6 +1307,9 @@ int main(int argc, char **argv) {
     if (setpriority(PRIO_PROCESS, 0, 19) != 0)
         fprintf(stderr, "setpriority failed errno=%d\n", errno);
     nx_queue_init(&queue);
+    /* LUT 每次 apply 都要写 19,712 B 槽再触发一次 DMA，逐格落地就是连续闪屏；
+     * 停手 450 ms 再落一次。FILMLAB 的 PW 预览只是标量直推，保持 150 ms 跟手。 */
+    if (lut_mode) queue.debounce_ms = NXUI_LUT_DEBOUNCE_MS;
     count = nx_load_recipes(recipe_path, recipes, NXUI_MAX_RECIPES);
     if (count < 0) count = 0;
     recipes_path_global = recipe_path;
@@ -1623,6 +1626,8 @@ int main(int argc, char **argv) {
          * the old drop-on-close behaviour: its preview is not a commitment. */
         if (queue.close_requested && !queue.commit_requested && !child &&
             (!lut_mode || queue.desired < 0 || queue.desired == queue.applied)) break;
+        /* 关闭是用户的明确确认，不必再等 LUT 那 450 ms 去抖窗口。 */
+        if (lut_mode && queue.close_requested && queue.desired >= 0) queue.due = 0;
         if (!child && (index = nx_queue_take(&queue, now_ms())) >= 0) {
             if (lut_mode && queue.close_requested) drain_on_close = 1;
             if (!start_child(1, index, NULL)) {

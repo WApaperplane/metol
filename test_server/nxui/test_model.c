@@ -42,6 +42,16 @@ int main(void) {
     assert(nx_queue_take(&q, 2250) == 3); assert(q.committing);
     nx_queue_done(&q, 1); assert(q.applied == 3);
     assert(nx_queue_take(&q, 3000) == -1); /* no idle reapply */
+    /* LUT 模式：同一串快速选择在 450 ms 内都不该落地，只留最后一次 */
+    nx_queue_init(&q);
+    assert(q.debounce_ms == NXUI_DEBOUNCE_MS);
+    q.debounce_ms = NXUI_LUT_DEBOUNCE_MS;
+    nx_queue_select(&q, 0, 1000); assert(nx_queue_take(&q, 1400) == -1);
+    nx_queue_select(&q, 1, 1300); assert(nx_queue_take(&q, 1700) == -1); /* due=1750 */
+    assert(nx_queue_take(&q, 1750) == 1);
+    nx_queue_done(&q, 1);
+    /* 显式确认（OK / 保存并关闭）跳过去抖 */
+    nx_queue_select_now(&q, 2, 2000); assert(nx_queue_take(&q, 2000) == 2);
     unlink(path); puts("PASS recipe/menu parsing, traversal rejection, debounce, serialization, failure/retry, commit");
     return 0;
 }

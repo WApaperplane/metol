@@ -127,9 +127,13 @@ int nx_menu_path(const char *root, const char *source, char *out, size_t size) {
 }
 void nx_queue_init(struct nx_queue *q) {
     memset(q, 0, sizeof *q); q->desired = q->running = q->applied = -1;
+    q->debounce_ms = NXUI_DEBOUNCE_MS;
 }
 void nx_queue_select(struct nx_queue *q, int index, long long now) {
-    q->desired = index; q->due = now + NXUI_DEBOUNCE_MS;
+    q->desired = index; q->due = now + q->debounce_ms;
+}
+void nx_queue_select_now(struct nx_queue *q, int index, long long now) {
+    q->desired = index; q->due = now;
 }
 int nx_queue_take(struct nx_queue *q, long long now) {
     if (q->running >= 0 || q->desired < 0 || now < q->due ||
