@@ -32,6 +32,12 @@ cat > "$D/busybox" <<'EOF'
 #!/bin/sh
 # Camera BusyBox -x is broken; do not let a host grep mask that dependency.
 if [ "$1" = grep ] && [ "${2:-}" = -qx ]; then exit 1; fi
+# 秒切前置检查：真机上 di-camera-app 一定在跑（否则 ISP 不取景、DMA 中断不来）。
+# 测试树里没有这个进程，桩一份，否则 kick 会走"App 不在"的降级分支。
+if [ "$1" = ps ]; then
+    [ "${NX_TEST_NO_CAM:-0}" = 1 ] && exit 1
+    echo "  1 root 0 S di-camera-app"; exit 0
+fi
 exec "$@"
 EOF
 chmod +x "$D/busybox"
@@ -219,6 +225,11 @@ NX_TEST_KICK_FAIL=1 $L apply reborn > /tmp/lutlib-k3.log 2>&1
 check "kick 失败仍算 apply 成功" 'grep -q "OK applied" /tmp/lutlib-k3.log'
 check "kick 失败给出后备提示" 'grep -q "WARN instant switch failed" /tmp/lutlib-k3.log'
 check "kick 失败时不谎报秒切" '! grep -q "OK instant switch" /tmp/lutlib-k3.log'
+
+rm -f /tmp/lutlib-kick.log
+NX_TEST_NO_CAM=1 $L apply reborn > /tmp/lutlib-k4.log 2>&1
+check "相机 App 不在时不调用 nx_lutload" '[ ! -s /tmp/lutlib-kick.log ]'
+check "相机 App 不在时说明下次 load 生效" 'grep -q "camera app not running" /tmp/lutlib-k4.log'
 
 rm -rf "$LAB" "$ST" /tmp/lutlib-*.log /tmp/lutlib-cache1
 printf '\n%d PASS / %d FAIL\n' "$pass" "$fail"

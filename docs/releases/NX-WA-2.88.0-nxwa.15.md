@@ -112,7 +112,7 @@ OK DMA_RD_FINISH and processing mode verified
 
 ## 八、测试
 
-`test_server/lutpipe/test_lut_lib.sh` 新增 14 项秒切断言，总 **55 PASS / 0 FAIL**：
+`test_server/lutpipe/test_lut_lib.sh` 新增 16 项秒切断言，总 **57 PASS / 0 FAIL**：
 
 - apply 调用一次 `nx_lutload once 0x81119F00`
 - 输出必须含 `OK instant switch`

@@ -161,7 +161,7 @@ ec8d58e1da930f70b39bc871d7b0a802  nx_lutload.arm
 
 ## 7. 测试
 
-`test_server/lutpipe/test_lut_lib.sh` 新增 14 项，总 55 PASS / 0 FAIL：
+`test_server/lutpipe/test_lut_lib.sh` 新增 16 项，总 57 PASS / 0 FAIL：
 
 - apply 调用一次 `nx_lutload`，动词 `once`，目标是 `0x81119F00`
 - 输出必须含 `OK instant switch`
