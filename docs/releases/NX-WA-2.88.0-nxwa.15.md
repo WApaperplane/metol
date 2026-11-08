@@ -45,7 +45,7 @@ p7 自己的 Load 入口是 `FUN_004a5c44` → `FUN_004a5e30`，QEMU 逐条实�
 
 | 位置 | 改动 |
 |---|---|
-| 新增 `kick_slot` | 3 次重试；成功 `OK instant switch (no half-press)`；失败只 WARN，**不阻断** apply |
+| 新增 `kick_slot` | 先判 `di-camera-app` 在跑（息屏/退出时中断必不来）；再 3 次重试；成功 `OK instant switch (no half-press)`；失败只 WARN，**不阻断** apply |
 | 新增 `kick_current` | 读 `0x2082b00c` 按硬件当前登记的槽 kick（`off` 用） |
 | `commit_table` | 写完登记表 + `lutptr` 后 kick，且在起录像 watcher **之前**（避免抢锁） |
 | `off` | `oled_restore` 之后 kick 当前槽 |
@@ -86,7 +86,9 @@ OK DMA_RD_FINISH and processing mode verified
 
 ## 六、边界
 
-- 切换瞬间有约 1 帧过渡：19,712 B 要从 DRAM 搬进硬件 SRAM，物理上不为零。等中断把它从"好几帧"压到几乎不可见。
+- **切换瞬间有约 1 帧花屏**：19,712 B 要从 DRAM 搬进硬件 SRAM，DMA 期间 ISP 读到半写好的表。这是硬件固有行为 —— p7 自己 `View::_load`（半按、切档）走同一段硬件，同样会花，只是半按伴随对焦、平时注意不到。`+0x008` 只有 Load/Save 两个脉冲位，EP 没有 VSYNC 中断，ARM 侧无法把加载对齐到消隐期。**1 帧是这个方案的物理下限。**
+- **息屏时不生效**：DMA 完成中断只有 ISP 在取景时才产生。`lut.sh` 会先判 `di-camera-app` 是否在跑，不在就提示而不是白等；屏幕亮着时正常。
+- **`OnOff=0` 遮盖过渡是死路**：实测清零后调用，工具报 OK、寄存器全对，但画面完全没变、必须半按 —— 模块关闭时根本不执行 DMA。`nx_lutload.c` 里留了注释防回退。
 - `off` 的 kick 目标是硬件当前登记的槽，所以 `oled_restore` 若已让 p7 切到 A13/A17，就 kick 那一档，观感仍是原厂。
 - Cfg 必须是 `0x100` 或 `0`（`nx_lutload` 的护栏）。其它分支会被拒 → 退回半按，不会写坏。
 - 照片链路不受影响：Still 走 `Still6`/`BV12`，拍照时 p7 本来就自己 Load。
@@ -96,8 +98,8 @@ OK DMA_RD_FINISH and processing mode verified
 
 | 文件 | md5 |
 |---|---|
-| `scripts/lut.sh` | `d27db4f5320bf10eab8f6f4802f48193` |
-| `scripts/lut/nx_lutload.arm` | `89d8cfed60d2e723bd3a86bd8d9e5920` |
+| `scripts/lut.sh` | `cd722928b0c9bb23f96eb31875ff6cb3` |
+| `scripts/lut/nx_lutload.arm` | `ec8d58e1da930f70b39bc871d7b0a802` |
 
 三处安装点必须同步（漏 SD 母本会被 `install.sh` 打回旧版）：
 

@@ -195,9 +195,16 @@ table_of() {
 kick_slot() {
     [ "${LUT_NOKICK:-0}" = 1 ] && { echo "NOTE kick disabled (LUT_NOKICK=1); half-press once"; return 0; }
     [ -n "$KICK" ] && [ -x "$KICK" ] || { echo "NOTE nx_lutload.arm missing; half-press once"; return 0; }
+    # 3DLUT 的 DMA 完成中断只有 ISP 在跑时才会来。di-camera-app 退出/息屏时
+    # 等它等于白等（还会让面板卡住），先判一次——这种情况下登记表已经写对，
+    # App 起来后 p7 自己的 Load 会拿到新表。
+    if ! $BB ps 2>/dev/null | $BB grep -q '[d]i-camera-app'; then
+        echo "NOTE camera app not running; the look applies on its next load"
+        return 0
+    fi
     for try in 1 2 3; do
         "$KICK" once "$1" > "$ST/kick.log" 2>&1 && { echo "OK instant switch (no half-press)"; return 0; }
-        sleep 0.3
+        sleep 0.2
     done
     $BB tail -3 "$ST/kick.log" 2>/dev/null
     echo "WARN instant switch failed; half-press once (registry is already correct)"

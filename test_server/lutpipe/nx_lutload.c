@@ -64,7 +64,11 @@ static int load_main(int argc,char **argv) {
     fd=open("/dev/drime5_ep",O_RDWR);
     if(fd<0) {perror("EP open");goto out;}
     if(ioctl(fd,EP_IOCTL_ACC_INTR_ENABLE,&irq)<0) {perror("IRQ enable");goto out;}
-    memset(&wq,0,sizeof(wq));wq.timeout_ms=wait_only?120:500;wq.intr=irq;
+    /* 500 ms was tuned for the video watcher; a preview-mode table load
+     * finishes in well under 20 ms. Keeping the timeout short matters because
+     * lut.sh retries: with di-camera-app gone the DMA never starts and the
+     * interrupt never arrives, so a long timeout turns into visible UI lag. */
+    memset(&wq,0,sizeof(wq));wq.timeout_ms=wait_only?120:150;wq.intr=irq;
     if(ioctl(fd,EP_IOCTL_ACC_INTR_WAIT_QUEUE_INIT,&wq)<0) {perror("IRQ queue");goto out;}
     if(!wait_only) {
         mem=open("/dev/mem",O_RDWR|O_SYNC);
@@ -77,6 +81,11 @@ static int load_main(int argc,char **argv) {
         started=1;r[0]|=1;r[2]&=~1u;r[2]|=1u;
         r[3]=addr;r[1]=(r[1]&~0x30u)|0x100u;barrier();
         r[2]|=0x100u;barrier();r[2]&=~0x100u;barrier();
+        /* Do NOT bypass around the transfer: with OnOff=0 the block does not
+         * run the DMA at all (2026-11-08 on-device test -- the call reported
+         * OK, the finder never changed, and a half-press was still needed to
+         * apply the table). The ~16 ms of table-fetch tearing is unavoidable
+         * from this side; the only clean fix would be loading during vblank. */
     }
     t=now_ms();errno=0;wr=ioctl(fd,EP_IOCTL_ACC_INTR_WAIT,&wq);err=errno;
     printf("WAIT rc=%d errno=%d elapsed_ms=%.3f jpeg_err=%u irq=%d trigger=%d\n",

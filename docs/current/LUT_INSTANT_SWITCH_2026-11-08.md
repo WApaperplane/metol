@@ -118,13 +118,30 @@ OK restored (view=4 factory, still=BV12+Still6 factory, A18=original)
 
 | # | 边界 | 说明 |
 |---|---|---|
-| 1 | 切换瞬间有约 1 帧的过渡 | DMA 要把 19,712 B 从 DRAM 搬进硬件 SRAM，物理上无法为零。等中断让窗口从"好几帧"降到"几乎不可见" |
+| 1 | 切换瞬间有约 1 帧的过渡 | DMA 要把 19,712 B 从 DRAM 搬进硬件 SRAM，物理上无法为零。等中断让窗口从"好几帧"降到"几乎不可见"；连续快速切换时仍能看到花屏彩条 |
 | 2 | `off` 的 kick 目标是 `0x2082b00c` 的**当前值** | 若 `oled_restore` 已让 p7 切到 A13/A17，就 kick 那一档；若还没切，kick A18（内容已是原厂备份）。两条都能回到原厂观感 |
 | 3 | Cfg 必须是 `0x100` 或 `0` | `nx_lutload` 的护栏。AdobeRGB 等其它分支若 Cfg 不同会被拒 → 退回半按，不会写坏 |
 | 4 | 照片链路不受影响 | Still 走 `Still6`/`BV12`，拍照时 p7 本来就自己 Load，秒切只是让取景器提前一致 |
 | 5 | 全部仍是 RAM-only | 断电回镜像原厂表 |
+| 6 | **息屏 / `di-camera-app` 不在时不会生效** | DMA 完成中断只有 ISP 在取景时才产生。`wait-test` 在息屏下一次也拿不到中断（`errno=110`）。因此 `lut.sh` 会在 kick 前用 `ps` 判一次 App 是否在跑，不在就直接提示而不是白等 |
+| 7 | **不能靠 `OnOff=0` 遮盖过渡** | 实测（2026-11-08）：把 `+0x000` 清零后调用 `once`，工具报 `OK`、寄存器校验全过，但画面完全没变、必须半按 —— 模块被关掉时根本不执行 DMA。所以"先旁路再加载"这条路是死路，`nx_lutload.c` 里留了注释防回退 |
+
+### 5.1 过渡期花屏为什么消不掉
+
+取景器在 3DLUT 之后合成，DMA 期间 ISP 读到半写好的表，输出就是彩条/撕裂。p7 自己
+`View::_load`（半按、切档）走的是同一段硬件，同样会花 —— 只是因为半按伴随对焦动作、
+画面本来就在变，所以平时注意不到。
+
+`+0x008` 只有 `bit8 = Load 启动`、`bit4 = Save 启动` 两个脉冲，EP 也没有 VSYNC 中断，
+所以 ARM 侧无法把加载对齐到消隐期。**1 帧过渡是这个方案的物理下限**。
+
+要彻底消除只有两条路，都不在这次范围内：
+
+1. 让 p7 自己走 `View::_load`——需要找到非半按的触发事件（10-19 试过 OLED 设置事件，不能让 ISP 重读槽内容）
+2. 在 ISP 侧做双缓冲——需要改 p7 代码
 
 ## 6. 三处安装点（改动后必核）
+
 
 | 路径 | 说明 |
 |---|---|
@@ -136,8 +153,8 @@ OK restored (view=4 factory, still=BV12+Still6 factory, A18=original)
 本次部署 md5：
 
 ```
-d27db4f5320bf10eab8f6f4802f48193  lut.sh
-89d8cfed60d2e723bd3a86bd8d9e5920  nx_lutload.arm
+cd722928b0c9bb23f96eb31875ff6cb3  lut.sh
+ec8d58e1da930f70b39bc871d7b0a802  nx_lutload.arm
 ```
 
 回滚：`/mnt/mmc/lut/_bak_20261108/` 里有 `lut.sh.prev`、`lut.sh.sdcard_prev`、`nx_lutload.arm.prev`。
