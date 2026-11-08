@@ -54,6 +54,22 @@ p7 自己的 Load 入口是 `FUN_004a5c44` → `FUN_004a5e30`，QEMU 逐条实�
 `nx_lutload.arm` 唯一改动：地址白名单 3 槽 → 6 槽（A12/A13/A14/A17/A18/A19），
 让 `off` 能 kick p7 刚选中的原厂槽。仍是硬编码白名单，不接受任意地址。
 
+## 三之二、面板去抖：快速滑动只落地最后一次
+
+一次 apply 要写 19,712 B 槽再触发一次 DMA，逐格落地在快速滑动时就是
+「一帧花屏 × 格数」。所以去抖改成队列属性，而不是全局常量：
+
+| 模式 | 去抖 | 理由 |
+|---|---:|---|
+| FILMLAB | 150 ms（不变） | PW 七维只是标量直推，不写槽不 Load，越快越跟手 |
+| **LUT** | **450 ms（新）** | 每次落地要写槽 + DMA，等用户停手再落一次 |
+
+配套两处不再依赖常量：`nx_queue_select_now()` 让 OK / 保存并关闭跳过去抖
+（原先写 `now - NXUI_DEBOUNCE_MS`，常量一改就失准）；关闭面板时 `due = 0`，
+用户已经用关闭动作确认了这一张，不空等。
+
+实机：快速连滑 3–5 格只切一次，单点一格慢半拍。
+
 ## 四、后备开关
 
 ```sh
@@ -100,6 +116,7 @@ OK DMA_RD_FINISH and processing mode verified
 |---|---|
 | `scripts/lut.sh` | `cd722928b0c9bb23f96eb31875ff6cb3` |
 | `scripts/lut/nx_lutload.arm` | `ec8d58e1da930f70b39bc871d7b0a802` |
+| `scripts/nxui/nxui.arm` | `53cea9925529b08a391c25d75c92f6b5` |
 
 三处安装点必须同步（漏 SD 母本会被 `install.sh` 打回旧版）：
 
@@ -108,6 +125,9 @@ OK DMA_RD_FINISH and processing mode verified
 /mnt/mmc/lut/lut.sh
 /mnt/mmc/scripts/lut.sh
 以及三处的 lut/nx_lutload.arm
+
+/opt/usr/nx-ks/nxui/nxui.arm
+/mnt/mmc/scripts/nxui/nxui.arm
 ```
 
 ## 八、测试

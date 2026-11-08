@@ -140,6 +140,26 @@ OK restored (view=4 factory, still=BV12+Still6 factory, A18=original)
 1. 让 p7 自己走 `View::_load`——需要找到非半按的触发事件（10-19 试过 OLED 设置事件，不能让 ISP 重读槽内容）
 2. 在 ISP 侧做双缓冲——需要改 p7 代码
 
+### 5.2 面板侧的缓解：LUT 模式去抖 450 ms
+
+LUT 的一次 apply 要写 19,712 B 槽再触发一次 DMA，逐格落地在快速滑动时就是
+「一帧花屏 × 格数」。所以把去抖做成队列属性而不是全局常量：
+
+| 模式 | 去抖 | 理由 |
+|---|---:|---|
+| FILMLAB | 150 ms | PW 七维只是标量直推，不写槽、不 Load，越快越跟手 |
+| **LUT** | **450 ms** | 每次落地要写槽 + DMA，等用户停手再落一次 |
+
+`nx_queue.debounce_ms` 默认 `NXUI_DEBOUNCE_MS`，LUT 模式在 `nx_queue_init` 之后
+改成 `NXUI_LUT_DEBOUNCE_MS`。另外两条路径不再依赖常量：
+
+- `nx_queue_select_now()`：OK / 保存并关闭是明确确认，直接 `due = now` 跳过去抖。
+  原先写的是 `now_ms() - NXUI_DEBOUNCE_MS`，常量一改就会失准。
+- **关闭面板时 `due = 0`**：用户已经用关闭动作确认了这一张，不必再空等 450 ms。
+
+实机：快速连滑 3–5 格只切一次（用户验收「只切一次，可接受」），单点一格
+慢半拍但不难受。
+
 ## 6. 三处安装点（改动后必核）
 
 
@@ -155,6 +175,7 @@ OK restored (view=4 factory, still=BV12+Still6 factory, A18=original)
 ```
 cd722928b0c9bb23f96eb31875ff6cb3  lut.sh
 ec8d58e1da930f70b39bc871d7b0a802  nx_lutload.arm
+53cea9925529b08a391c25d75c92f6b5  nxui/nxui.arm   (LUT 去抖 450 ms)
 ```
 
 回滚：`/mnt/mmc/lut/_bak_20261108/` 里有 `lut.sh.prev`、`lut.sh.sdcard_prev`、`nx_lutload.arm.prev`。
