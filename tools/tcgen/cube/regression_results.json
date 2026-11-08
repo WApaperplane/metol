@@ -1,0 +1,42 @@
+[
+  {
+    "case": "write_lost",
+    "exit": 2,
+    "passed": true
+  },
+  {
+    "case": "restore_wrong",
+    "exit": 90,
+    "passed": true
+  },
+  {
+    "case": "descriptor_missing",
+    "exit": 23,
+    "passed": true
+  },
+  {
+    "case": "record_lost",
+    "exit": 2,
+    "passed": true
+  },
+  {
+    "case": "record_partial",
+    "exit": 2,
+    "passed": true
+  },
+  {
+    "case": "write_restored",
+    "exit": 0,
+    "passed": true
+  },
+  {
+    "case": "write_kept",
+    "exit": 0,
+    "passed": true
+  },
+  {
+    "case": "record_ok",
+    "exit": 0,
+    "passed": true
+  }
+]

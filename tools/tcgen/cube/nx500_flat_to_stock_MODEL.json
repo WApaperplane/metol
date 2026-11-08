@@ -1,0 +1,19 @@
+{
+  "curve": "flat",
+  "size": 65,
+  "sha256": "22f1d814ae99eb8dda41526df6e1c292f640752d1c4a179f50f946400d911358",
+  "direction": "candidate encoded RGB to stock-TC model RGB",
+  "domain": [
+    0,
+    1
+  ],
+  "model": "stock_TC(inverse(candidate_TC(x))) applied equally to encoded RGB channels",
+  "status": "uncalibrated candidate, not a verified colour restoration LUT",
+  "factory_lut_included": false,
+  "limitations": [
+    "TC coordinate domain may differ from decoded RGB",
+    "existing ISP/3DLUT may already transform or clip colour",
+    "no colour-chart validation",
+    "does not recover clipped or quantized information"
+  ]
+}

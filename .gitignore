@@ -237,3 +237,6 @@ tools/lutgen/webcache/
 /.ai-memory/
 /Plan/
 test_server/af_static/out/
+
+# TC 技术还原 LUT（65³，给剪辑软件用；与 looks/ 的相机 17³ 表不是一类）
+!tools/tcgen/cube/*.cube

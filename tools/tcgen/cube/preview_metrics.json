@@ -1,0 +1,21 @@
+{
+  "clips": [
+    "SAM_0384.MP4",
+    "SAM_0385.MP4"
+  ],
+  "sample_frames": 75,
+  "pts_window": [
+    2,
+    5
+  ],
+  "resolution_per_panel": [
+    640,
+    360
+  ],
+  "mean_absolute_RGB_difference_before": 35.389270505401235,
+  "mean_absolute_RGB_difference_after": 1.9199205825617287,
+  "cube_interpolation_max_error_codes": 0.2292929056763482,
+  "scope": "Independent A/B recordings; exposure/lighting equality not proven for this pair. Improvement does not establish calibrated colour or DR.",
+  "source_unchanged": true,
+  "factory_lut_applied_again": false
+}

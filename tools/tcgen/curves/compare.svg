@@ -1,0 +1,112 @@
+<svg viewBox="0 0 680 360" width="100%" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>TC 曲线对比：stock, log, flat, hc</title>
+<rect x="56" y="44" width="600" height="268" fill="#FFFFFF" stroke="#D3D1C7" stroke-width="0.5"/>
+<line x1="206.0" y1="44" x2="206.0" y2="312" stroke="#F1EFE8" stroke-width="0.5"/>
+<line x1="56" y1="111.0" x2="656" y2="111.0" stroke="#F1EFE8" stroke-width="0.5"/>
+<line x1="356.0" y1="44" x2="356.0" y2="312" stroke="#F1EFE8" stroke-width="0.5"/>
+<line x1="56" y1="178.0" x2="656" y2="178.0" stroke="#F1EFE8" stroke-width="0.5"/>
+<line x1="506.0" y1="44" x2="506.0" y2="312" stroke="#F1EFE8" stroke-width="0.5"/>
+<line x1="56" y1="245.0" x2="656" y2="245.0" stroke="#F1EFE8" stroke-width="0.5"/>
+<line x1="56" y1="312" x2="656" y2="312" stroke="#888780" stroke-width="0.5"/>
+<line x1="56" y1="44" x2="56" y2="312" stroke="#888780" stroke-width="0.5"/>
+<polyline points="56.0,312.0 57.2,307.8 58.7,302.6 61.1,295.2 64.5,284.5 69.4,271.1 76.1,253.6 85.7,232.1 98.8,208.0 116.9,181.0 141.6,153.2 174.8,127.6 218.5,106.1 275.0,86.7 345.1,71.5 428.8,60.5 526.2,52.4 637.3,45.0 656.0,44.0" fill="none" stroke="#5F5E5A" stroke-width="1.5"/>
+<circle cx="56.0" cy="312.0" r="2" fill="#5F5E5A"/>
+<circle cx="57.2" cy="307.8" r="2" fill="#5F5E5A"/>
+<circle cx="58.7" cy="302.6" r="2" fill="#5F5E5A"/>
+<circle cx="61.1" cy="295.2" r="2" fill="#5F5E5A"/>
+<circle cx="64.5" cy="284.5" r="2" fill="#5F5E5A"/>
+<circle cx="69.4" cy="271.1" r="2" fill="#5F5E5A"/>
+<circle cx="76.1" cy="253.6" r="2" fill="#5F5E5A"/>
+<circle cx="85.7" cy="232.1" r="2" fill="#5F5E5A"/>
+<circle cx="98.8" cy="208.0" r="2" fill="#5F5E5A"/>
+<circle cx="116.9" cy="181.0" r="2" fill="#5F5E5A"/>
+<circle cx="141.6" cy="153.2" r="2" fill="#5F5E5A"/>
+<circle cx="174.8" cy="127.6" r="2" fill="#5F5E5A"/>
+<circle cx="218.5" cy="106.1" r="2" fill="#5F5E5A"/>
+<circle cx="275.0" cy="86.7" r="2" fill="#5F5E5A"/>
+<circle cx="345.1" cy="71.5" r="2" fill="#5F5E5A"/>
+<circle cx="428.8" cy="60.5" r="2" fill="#5F5E5A"/>
+<circle cx="526.2" cy="52.4" r="2" fill="#5F5E5A"/>
+<circle cx="637.3" cy="45.0" r="2" fill="#5F5E5A"/>
+<circle cx="656.0" cy="44.0" r="2" fill="#5F5E5A"/>
+<line x1="560" y1="60" x2="582" y2="60" stroke="#5F5E5A" stroke-width="1.5"/>
+<text x="588" y="64" font-family="system-ui,sans-serif" font-size="12" fill="#2C2C2A">stock</text>
+<polyline points="56.0,312.0 57.2,304.4 58.7,295.8 61.1,284.2 64.5,270.9 69.4,255.4 76.1,238.9 85.7,220.8 98.8,202.2 116.9,183.1 141.6,163.7 174.8,144.3 218.5,125.5 275.0,107.1 345.1,90.1 428.8,74.1 526.2,59.5 637.3,46.1 656.0,44.0" fill="none" stroke="#185FA5" stroke-width="1.5"/>
+<circle cx="56.0" cy="312.0" r="2" fill="#185FA5"/>
+<circle cx="57.2" cy="304.4" r="2" fill="#185FA5"/>
+<circle cx="58.7" cy="295.8" r="2" fill="#185FA5"/>
+<circle cx="61.1" cy="284.2" r="2" fill="#185FA5"/>
+<circle cx="64.5" cy="270.9" r="2" fill="#185FA5"/>
+<circle cx="69.4" cy="255.4" r="2" fill="#185FA5"/>
+<circle cx="76.1" cy="238.9" r="2" fill="#185FA5"/>
+<circle cx="85.7" cy="220.8" r="2" fill="#185FA5"/>
+<circle cx="98.8" cy="202.2" r="2" fill="#185FA5"/>
+<circle cx="116.9" cy="183.1" r="2" fill="#185FA5"/>
+<circle cx="141.6" cy="163.7" r="2" fill="#185FA5"/>
+<circle cx="174.8" cy="144.3" r="2" fill="#185FA5"/>
+<circle cx="218.5" cy="125.5" r="2" fill="#185FA5"/>
+<circle cx="275.0" cy="107.1" r="2" fill="#185FA5"/>
+<circle cx="345.1" cy="90.1" r="2" fill="#185FA5"/>
+<circle cx="428.8" cy="74.1" r="2" fill="#185FA5"/>
+<circle cx="526.2" cy="59.5" r="2" fill="#185FA5"/>
+<circle cx="637.3" cy="46.1" r="2" fill="#185FA5"/>
+<circle cx="656.0" cy="44.0" r="2" fill="#185FA5"/>
+<line x1="560" y1="78" x2="582" y2="78" stroke="#185FA5" stroke-width="1.5"/>
+<text x="588" y="82" font-family="system-ui,sans-serif" font-size="12" fill="#2C2C2A">log</text>
+<polyline points="56.0,312.0 57.2,292.4 58.7,275.1 61.1,256.2 64.5,238.1 69.4,220.3 76.1,202.8 85.7,185.7 98.8,169.2 116.9,153.0 141.6,137.0 174.8,121.5 218.5,106.6 275.0,92.5 345.1,79.1 428.8,66.8 526.2,55.8 637.3,45.6 656.0,44.0" fill="none" stroke="#0F6E56" stroke-width="1.5"/>
+<circle cx="56.0" cy="312.0" r="2" fill="#0F6E56"/>
+<circle cx="57.2" cy="292.4" r="2" fill="#0F6E56"/>
+<circle cx="58.7" cy="275.1" r="2" fill="#0F6E56"/>
+<circle cx="61.1" cy="256.2" r="2" fill="#0F6E56"/>
+<circle cx="64.5" cy="238.1" r="2" fill="#0F6E56"/>
+<circle cx="69.4" cy="220.3" r="2" fill="#0F6E56"/>
+<circle cx="76.1" cy="202.8" r="2" fill="#0F6E56"/>
+<circle cx="85.7" cy="185.7" r="2" fill="#0F6E56"/>
+<circle cx="98.8" cy="169.2" r="2" fill="#0F6E56"/>
+<circle cx="116.9" cy="153.0" r="2" fill="#0F6E56"/>
+<circle cx="141.6" cy="137.0" r="2" fill="#0F6E56"/>
+<circle cx="174.8" cy="121.5" r="2" fill="#0F6E56"/>
+<circle cx="218.5" cy="106.6" r="2" fill="#0F6E56"/>
+<circle cx="275.0" cy="92.5" r="2" fill="#0F6E56"/>
+<circle cx="345.1" cy="79.1" r="2" fill="#0F6E56"/>
+<circle cx="428.8" cy="66.8" r="2" fill="#0F6E56"/>
+<circle cx="526.2" cy="55.8" r="2" fill="#0F6E56"/>
+<circle cx="637.3" cy="45.6" r="2" fill="#0F6E56"/>
+<circle cx="656.0" cy="44.0" r="2" fill="#0F6E56"/>
+<line x1="560" y1="96" x2="582" y2="96" stroke="#0F6E56" stroke-width="1.5"/>
+<text x="588" y="100" font-family="system-ui,sans-serif" font-size="12" fill="#2C2C2A">flat</text>
+<polyline points="56.0,312.0 57.2,310.2 58.7,308.1 61.1,304.4 64.5,299.9 69.4,293.4 76.1,284.8 85.7,273.8 98.8,259.9 116.9,242.8 141.6,222.7 174.8,199.9 218.5,175.0 275.0,148.5 345.1,121.8 428.8,95.9 526.2,71.0 637.3,47.7 656.0,44.0" fill="none" stroke="#BA7517" stroke-width="1.5"/>
+<circle cx="56.0" cy="312.0" r="2" fill="#BA7517"/>
+<circle cx="57.2" cy="310.2" r="2" fill="#BA7517"/>
+<circle cx="58.7" cy="308.1" r="2" fill="#BA7517"/>
+<circle cx="61.1" cy="304.4" r="2" fill="#BA7517"/>
+<circle cx="64.5" cy="299.9" r="2" fill="#BA7517"/>
+<circle cx="69.4" cy="293.4" r="2" fill="#BA7517"/>
+<circle cx="76.1" cy="284.8" r="2" fill="#BA7517"/>
+<circle cx="85.7" cy="273.8" r="2" fill="#BA7517"/>
+<circle cx="98.8" cy="259.9" r="2" fill="#BA7517"/>
+<circle cx="116.9" cy="242.8" r="2" fill="#BA7517"/>
+<circle cx="141.6" cy="222.7" r="2" fill="#BA7517"/>
+<circle cx="174.8" cy="199.9" r="2" fill="#BA7517"/>
+<circle cx="218.5" cy="175.0" r="2" fill="#BA7517"/>
+<circle cx="275.0" cy="148.5" r="2" fill="#BA7517"/>
+<circle cx="345.1" cy="121.8" r="2" fill="#BA7517"/>
+<circle cx="428.8" cy="95.9" r="2" fill="#BA7517"/>
+<circle cx="526.2" cy="71.0" r="2" fill="#BA7517"/>
+<circle cx="637.3" cy="47.7" r="2" fill="#BA7517"/>
+<circle cx="656.0" cy="44.0" r="2" fill="#BA7517"/>
+<line x1="560" y1="114" x2="582" y2="114" stroke="#BA7517" stroke-width="1.5"/>
+<text x="588" y="118" font-family="system-ui,sans-serif" font-size="12" fill="#2C2C2A">hc</text>
+<text x="56" y="32" font-family="system-ui,sans-serif" font-size="13" font-weight="500" fill="#2C2C2A">TC 曲线（X 0–16383 / Y 0–1023）</text>
+<text x="48" y="316.0" font-family="system-ui,sans-serif" font-size="11" fill="#5F5E5A" text-anchor="end">0</text>
+<text x="48" y="248.9" font-family="system-ui,sans-serif" font-size="11" fill="#5F5E5A" text-anchor="end">256</text>
+<text x="48" y="181.9" font-family="system-ui,sans-serif" font-size="11" fill="#5F5E5A" text-anchor="end">512</text>
+<text x="48" y="114.8" font-family="system-ui,sans-serif" font-size="11" fill="#5F5E5A" text-anchor="end">768</text>
+<text x="48" y="48.0" font-family="system-ui,sans-serif" font-size="11" fill="#5F5E5A" text-anchor="end">1023</text>
+<text x="56.0" y="330" font-family="system-ui,sans-serif" font-size="11" fill="#5F5E5A" text-anchor="middle">0</text>
+<text x="206.0" y="330" font-family="system-ui,sans-serif" font-size="11" fill="#5F5E5A" text-anchor="middle">4096</text>
+<text x="356.0" y="330" font-family="system-ui,sans-serif" font-size="11" fill="#5F5E5A" text-anchor="middle">8192</text>
+<text x="506.0" y="330" font-family="system-ui,sans-serif" font-size="11" fill="#5F5E5A" text-anchor="middle">12288</text>
+<text x="656.0" y="330" font-family="system-ui,sans-serif" font-size="11" fill="#5F5E5A" text-anchor="middle">16383</text>
+<text x="356.0" y="346" font-family="system-ui,sans-serif" font-size="11" fill="#888780" text-anchor="middle">14bit 输入节点 X</text>
+</svg>

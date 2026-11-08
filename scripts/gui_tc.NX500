@@ -1,0 +1,16 @@
+#=====================================================================
+# gui_tc.NX500 —— 录像 TC 曲线（p7 内部 19 节点表）
+#=====================================================================
+# 格式：button|标签|命令，标签 ≤6 全角字符
+# 曲线来自 /opt/usr/nx-ks/tc/*.tcy；切换由 tc.sh 完成（写表 + 回读校验）
+# 改的是运行态内存；照片路径影响尚未验证
+# 未做：录像中切换的稳定性验证、与 LUT 的叠加
+#=====================================================================
+
+button|原厂|/opt/usr/nx-ks/tc.sh off
+button|Log|/opt/usr/nx-ks/tc.sh set log
+button|Flat|/opt/usr/nx-ks/tc.sh set flat
+button|高对比|/opt/usr/nx-ks/tc.sh set hc
+
+button|返回|@/opt/usr/nx-ks/gui_func.NX500
+button|取消|/opt/usr/nx-ks/gui_exit.sh

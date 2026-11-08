@@ -13,3 +13,6 @@
 raw8/gates/lut/memory_audit_2026-10-17/** -text -whitespace
 raw8/gates/lut/ondevice_selection_2026-10-17/** -text -whitespace
 raw8/gates/lut/verifier_offline_2026-10-17/** -text -whitespace
+
+# 65^3 文本 LUT：禁止换行符转换，保持生成字节
+*.cube -text
