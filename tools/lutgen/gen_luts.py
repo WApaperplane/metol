@@ -24,6 +24,22 @@ from native_codec import compile_rgb, record_native
 
 N = 17
 GRID = [16 * i for i in range(16)] + [255]
+
+# 实测输入域重映射（2026-11-08）：相机码值 → sRGB。默认关闭，--input-regen 启用。
+# 中段斜率 0.809（实测）对 sRGB 0.45；肩部 6 档 ISO 扫描，EV+2 起压缩。
+H17_REGEN = [2, 34, 55, 71, 85, 97, 107, 117, 128, 142, 157, 174, 190, 205, 222, 240, 255]
+H_REGEN = None
+
+
+def _mk_regen():
+    out = []
+    for v in range(256):
+        for i in range(1, 17):
+            if v <= GRID[i]:
+                t = (v - GRID[i - 1]) / (GRID[i] - GRID[i - 1])
+                out.append(round(H17_REGEN[i - 1] * (1 - t) + H17_REGEN[i] * t))
+                break
+    return out
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(HERE))          # tools/lutgen → 仓库根
 OUT_BIN = os.path.join(REPO, 'looks')                  # 直接写发布物目录
@@ -465,20 +481,23 @@ def apply_film(rgb8, p):
     return bytes(out) + b'\0'
 
 
-def build_rgb(p):
+def build_rgb(p, remap=None):
     """Legacy RGB design grid for colour design only; never load into the camera."""
     buf = bytearray()
     for bi in range(N):
         for gi in range(N):
             for ri in range(N):
-                buf += apply_film((GRID[ri], GRID[gi], GRID[bi]), p)
+                rgb = (GRID[ri], GRID[gi], GRID[bi])
+                if remap:
+                    rgb = (remap[rgb[0]], remap[rgb[1]], remap[rgb[2]])
+                buf += apply_film(rgb, p)
     buf += b'\0' * 60          # 槽尾 pad：19652B 表 + 60B = 19712B（步长 0x4D00）
     return bytes(buf)
 
 
-def build(p):
+def build(p, remap=None):
     """Compile RGB design into the native Cr,Cb,Y input AND output coordinates."""
-    return compile_rgb(build_rgb(p))
+    return compile_rgb(build_rgb(p, remap))
 
 
 # ---------- 自检 ----------
@@ -609,8 +628,11 @@ def load_films():
 
 
 def main():
-    global OUT_BIN, OUT_CUBE, WARM_GUARD
+    global OUT_BIN, OUT_CUBE, WARM_GUARD, H_REGEN
     argv = sys.argv[1:]
+    if '--input-regen' in argv:
+        H_REGEN = _mk_regen()
+        print('input-regen ON: %d..%d -> %d..%d' % (0, 255, H_REGEN[0], H_REGEN[255]))
     if '--out' in argv:
         d = argv[argv.index('--out') + 1]
         OUT_BIN = os.path.join(d, 'bin')
@@ -636,7 +658,7 @@ def main():
         else:
             p2, gap = fit_gray(p, limit)
         p2 = auto_warm(p2)
-        data = build(p2)
+        data = build(p2, H_REGEN)
         assert len(data) == 19712, (name, len(data))
         with open(os.path.join(OUT_BIN, name + '.bin'), 'wb') as f:
             f.write(data)

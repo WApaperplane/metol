@@ -11,7 +11,7 @@
     },
     "film_faded.bin": {
       "space": "CrCbY-BT601-full-v1",
-      "sha256": "7e6a57d3e4fa3fc641543ad5aff652b9bbe9caa1807f727dbed64dd050cb0acf"
+      "sha256": "e170936d01ba5359982bb5d3f7f63a7f8278de215c5cff120d14ec806cf27aa0"
     },
     "fuji_classicchrome.bin": {
       "space": "CrCbY-BT601-full-v1",
@@ -19,7 +19,7 @@
     },
     "fuji_eterna500.bin": {
       "space": "CrCbY-BT601-full-v1",
-      "sha256": "5d29a346ccd64d9f61c42c0654f1cc42c2a91dde5ebec587877a6f9c8a595366"
+      "sha256": "63c5c75827475e292398a25631c233e2f8ae6eb07187798579d93a5f953048cd"
     },
     "fuji_provia100f.bin": {
       "space": "CrCbY-BT601-full-v1",
@@ -43,7 +43,7 @@
     },
     "kodak_gold200.bin": {
       "space": "CrCbY-BT601-full-v1",
-      "sha256": "a3b93d69375dedd833a5a44162bfe0a875ad1e766cd0226a0c8d2406f8580b03"
+      "sha256": "3b91456de9f53dbe6bf639233af0a7dbb7bf8b37d6b31d4f71b3a7503075f850"
     },
     "kodak_kchrome25.bin": {
       "space": "CrCbY-BT601-full-v1",
@@ -71,27 +71,27 @@
     },
     "pentax_bleach.bin": {
       "space": "CrCbY-BT601-full-v1",
-      "sha256": "fdf1fa31828f2f3551368ad0b31163ddef1352d4cfc5d10a036d33199d52f95d"
+      "sha256": "173dc60a00ae302d5fc700acbc1da63a2b12de37664720f4a4e6454210b5e62f"
     },
     "pentax_gold.bin": {
       "space": "CrCbY-BT601-full-v1",
-      "sha256": "aa56658a965597cb5002e07612d52c240a6a359a41805e844ab765cf0d183e81"
+      "sha256": "3a64749ab964101b6e637bbb9fd4d2f6510dab78526b9c16ed48cecccf21d970"
     },
     "pentax_vibrant.bin": {
       "space": "CrCbY-BT601-full-v1",
-      "sha256": "141fa59f33ab03d1daa79d9d5765ea50fa79d63a4b31f30f7a7ffce7cfc13659"
+      "sha256": "380d888826438f0f8fd690d460ce3b423ca16616afc55904fb97da17f12d1373"
     },
     "polaroid_600.bin": {
       "space": "CrCbY-BT601-full-v1",
-      "sha256": "554939bed9f2b8af35cdc687bab349d8c738676ea06c97a994126d603d434e4b"
+      "sha256": "4d3b3194dca14cb13021207314001c03aa82b8f15727f284b23ffb0f88c1a158"
     },
     "ricoh_bleach.bin": {
       "space": "CrCbY-BT601-full-v1",
-      "sha256": "915b0960c59d45302b3e134466d827405375fe75d59a4192df618d0f9b9b5ae6"
+      "sha256": "57cd17beb03eed2dac9bd716349f65ee0c299de5883745f36e67f41f0bd53b54"
     },
     "ricoh_retro.bin": {
       "space": "CrCbY-BT601-full-v1",
-      "sha256": "162385cec03f267155dd206b202cc772ce6a03c96681e68b6632d58934774f5c"
+      "sha256": "76cf0e8a6596d997f2f1f756d7f9ebf07281663e099b5abdfdceadd886b85041"
     },
     "samsung_a00.bin": {
       "space": "CrCbY-BT601-full-v1",
