@@ -337,6 +337,11 @@ eptest_open.arm
 
 ## 8. ★★ p7 会抢回指针
 
+> **2026-11-08 更新**：本节描述的是 p7 的正常行为，不是限制。ARM 侧**可以**主动触发 Load ——
+> 用 `nx_lutload.arm once <slot>` 复刻 `FUN_004a5c44` 写序并等 `ACC_3DLUT_RD_FINISH`，
+> 换表不再需要半按。另注意 `+0x008` 的 **bit0 必须在写序末尾复位**，否则画面停在异常
+> （QEMU 记录的 `0x001` 终态不可信）。详见 [LUT 秒切](LUT_INSTANT_SWITCH_2026-11-08.md)。
+
 实测（20 次连续采样，1 秒间隔）：
 ```
 [1-6]  LUT0 = 0x8f808000   ← 我灌的地址
@@ -395,9 +400,11 @@ telnet/ssh: /opt/usr/nx-ks/cmapick2.arm 1024 32
 ### 回滚
 
 ```sh
-/opt/usr/nx-ks/lutload.arm restore    # 只改指针回 0x81115200，不触发 DMA
-然后半按快门对焦                     # 让 p7 重新灌表
+/opt/usr/nx-ks/lut.sh off          # 登记表 + 槽 + 秒切，一步到位（2026-11-08 起）
 ```
+
+> 早期做法是 `/opt/usr/nx-ks/lutload.arm restore`（只改指针不触发 DMA）+ 半按快门。
+> 现在 `lut.sh off` 会在还原后自己 kick 一次，不需要半按。
 
 ### 排错
 

@@ -9,8 +9,8 @@ Samsung NX500 / NX1（Tizen / DRIMe5）增强固件 mod，基于社区上游
 
 > English version: [README_EN.md](README_EN.md)
 
-**最新 v2.88.0-nxwa.14**（2026-11-08）— 录像 TC 曲线可切换（原厂 / Log / Flat / 高对比）；
-68 张随包 LUT 中 34 张按实测相机输入域重生成。
+**最新 v2.88.0-nxwa.15**（2026-11-08）— LUT 秒切：换滤镜不再需要半按快门，
+面板上点一张取景器立刻变；`lut.sh apply/off` 自己完成 Load 并等 DMA 完成中断。
 
 ## 安装
 

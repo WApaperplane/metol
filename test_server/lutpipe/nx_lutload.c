@@ -47,8 +47,13 @@ static int load_main(int argc,char **argv) {
     if(argc==2 && !strcmp(argv[1],"wait-test"))wait_only=1;
     else if(argc==3 && !strcmp(argv[1],"once")) {
         wait_only=0;errno=0;addr=strtoul(argv[2],&end,0);
+        /* Six factory/working slots only. A12/A14 are the AdobeRGB view slots,
+         * A13 the sRGB+screen-color one, A17 the factory sRGB one; A18/A19 are
+         * the working slots lut.sh writes. off() needs A12..A17 so it can kick
+         * whichever slot p7 has just selected instead of only the working one. */
         if(errno || !*argv[2] || *end ||
-           !(addr==0x81115200u || addr==0x81119f00u || addr==0x8111ec00u)) {
+           !(addr==0x810fd100u || addr==0x81101e00u || addr==0x81106b00u ||
+             addr==0x81115200u || addr==0x81119f00u || addr==0x8111ec00u)) {
             fprintf(stderr,"REFUSE unsupported slot\n");return 2;
         }
     } else {fprintf(stderr,"usage: nx_lutload.arm once <slot> | wait-test\n");return 2;}

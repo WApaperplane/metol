@@ -60,6 +60,7 @@ SLOTW=$(pick_tool nx_slotwrite.arm)
 REGT=$(pick_tool nx_regtabwrite.arm)
 CUBE=$(pick_tool cube2lut.arm)
 MIX=$(pick_tool lutmix.arm)
+KICK=$(pick_tool nx_lutload.arm)
 
 die() { echo "ERR $*"; exit 1; }
 
@@ -182,13 +183,44 @@ table_of() {
     return 0
 }
 
+# ---------- 秒切：让 ISP 立刻重读槽（取代"半按一次"） ----------
+# 历史结论「不能从 ARM 侧强制 reload」只对"裸写 +0x00c + 脉冲"成立：
+#   · 漏写 +0x008 bit0（Acc）与 +0x004 的通道位 ⇒ 硬件收不到完整 Load ⇒ 花屏
+#   · 不复位 bit0 ⇒ 加载完画面停在异常，必须再清一次才恢复
+# nx_lutload.arm 复刻的是 p7 自己的 FUN_004a5c44 写序（OnOff → Acc → 地址 →
+# Cfg → bit8 置/清 → 收尾清 Acc），并用 EP 中断 ACC_3DLUT_RD_FINISH 等 DMA
+# 真正完成 ⇒ 实测可连续切换、切换瞬间无撕裂（2026-11-08 实机定案）。
+#
+# 失败不阻断：登记表此时已经写对了，用户半按一次仍然生效。
+kick_slot() {
+    [ "${LUT_NOKICK:-0}" = 1 ] && { echo "NOTE kick disabled (LUT_NOKICK=1); half-press once"; return 0; }
+    [ -n "$KICK" ] && [ -x "$KICK" ] || { echo "NOTE nx_lutload.arm missing; half-press once"; return 0; }
+    for try in 1 2 3; do
+        "$KICK" once "$1" > "$ST/kick.log" 2>&1 && { echo "OK instant switch (no half-press)"; return 0; }
+        sleep 0.3
+    done
+    $BB tail -3 "$ST/kick.log" 2>/dev/null
+    echo "WARN instant switch failed; half-press once (registry is already correct)"
+    return 0
+}
+
+# 按硬件此刻登记的地址 kick —— off 之后 p7 可能已经切回 A13/A17，
+# 不能再盲目写 A18（白名单里 A12..A19 都放行，见 nx_lutload.c）。
+kick_current() {
+    cur=$($BB devmem 0x2082b00c 32 2>/dev/null | $BB tr 'A-F' 'a-f')
+    case "$cur" in
+        0x81*) kick_slot "$cur" ;;
+        *)     kick_slot "$SLOT" ;;
+    esac
+}
+
 # ---------- 写槽 + 改三张登记表（apply 与 mix 共用） ----------
 commit_table() {
     label=$1
     table=$2
     $BB mkdir -p "$ST"
 
-    # 关屏幕色彩（理由见 oled_save 注释）。放在写槽之前，保证半按那一刻起 ISP
+    # 关屏幕色彩（理由见 oled_save 注释）。放在写槽之前，保证生效那一刻起 ISP
     # 只受 LUT 一层影响。
     oled_save
     oled_put 0
@@ -226,12 +258,9 @@ commit_table() {
     fi
     $BB grep -q 'READBACK ok' "$ST/bv.log" || { cat "$ST/bv.log"; die "bv12 registry write failed (stale nx_regtabwrite.arm?)"; }
 
-    # ★ 不自动触发硬件 Load。
-    #   从 ARM 侧裸写 +0x00c + 脉冲会让 ISP 读到它"口袋体系"外的地址组合，
-    #   表现为严重偏色花屏（3DLUT_API_GUIDE 的历史结论），且必须靠半按快门
-    #   让 p7 自己走完选表流程才能复位。
-    #   p7 只在自己的事件（半按/切档）里重新读取登记表，所以这里只改表与指针，
-    #   由用户半按一次完成装载。半按在 LUT 模式下不会关闭面板。
+    # ★ 秒切：登记表写完后立刻让 ISP 重读槽，不再要求用户半按快门。
+    #   历史结论「reload 是禁区」针对的是"裸写 +0x00c + 脉冲"——那种写法漏了
+    #   Acc 与 Cfg 通道位、也不复位 bit0，所以花屏。详见 kick_slot 注释。
     printf '%s\n' "$label" > "$ST/current"
     # ★ 录像首帧：p7 开录时把 3DLUT 的 LUT0 指向它自己的档位表（实测在
     #   0x81158C00 / 0x8113BE00 之间随场景变），不是 A18。把这张 23 项指针表
@@ -243,6 +272,8 @@ commit_table() {
             echo "WARN lutptr: video first frame may not carry the LUT (see $ST/lutptr.log)"
         fi
     fi
+    # 秒切放在起 watcher 之前：watcher 的录像补载会抢同一把 nx_lutload 锁。
+    kick_slot "$SLOT"
     # Applying a look is the one user-facing switch for photo and video LUTs.
     # The watcher is per-boot and stops with LUT off; no second UI entry needed.
     if [ -x "$D/lut_video.sh" ]; then
@@ -252,7 +283,6 @@ commit_table() {
         }
     fi
     echo "OK applied $label"
-    echo "NEXT half-press once (panel stays open)"
 }
 
 case "${1:-status}" in
@@ -512,11 +542,12 @@ off)
         echo "ERR restore incomplete; see $ST/off-*.log"
         exit 1
     fi
-    # ★ 同样不自动 reload（理由见 apply 分支）。
-    #   登记表已回原厂，下一次 p7 自己的 Load（半按/切档/拍照）就会取到原厂表。
-    #   若此刻画面仍停在上一张表上，半按一次即可。
+    # ★ 还原也走秒切。先恢复屏幕色彩（这一步本身可能让 p7 重新选表），
+    #   再按硬件当前登记的地址 kick —— off 后 p7 可能已切回 A13/A17，
+    #   盲目 kick A18 会把画面留在"原厂 A18"而不是 p7 认定的那一档。
     $BB rm -f "$ST/ready" "$ST/current" "$ST/keep"
     oled_restore
+    kick_current
     echo "OK restored (view=4 factory, still=BV12+Still6 factory, A18=original)"
     ;;
 
@@ -532,12 +563,12 @@ status)
     echo "LIB    $([ -f "$ORD" ] && $BB grep -c . "$ORD" 2>/dev/null || echo 0) entries, $([ -f "$ORD" ] && order_fav_count || echo 0) fav"
     "$REGT" status 2>/dev/null | $BB sed -n '2,4p'
     # 引擎实际指向哪个槽（0x2082b00c = 3DLUT 表指针）。
-    # 注意：所有表都写在同一个槽 A18，所以指针恒为 A18，**不能**用它判断
-    # "槽内容有没有被 p7 重新读入"——那要靠半按快门触发 View::_load。
+    # apply/off 现在会自己 kick 一次，指针应等于刚写入的槽；若指针与
+    # 登记表不一致，说明 kick 没跑成（LUT_NOKICK=1 或工具缺失）。
     ENG=$($BB devmem 0x2082b00c 32 2>/dev/null | $BB tr 'A-F' 'a-f')
     if [ -n "$ENG" ]; then
         echo "ENGINE $ENG  (3DLUT 当前表指针)"
-        echo "NOTE   apply 之后若没半按过快门，画面可能仍是上一张表"
+        [ "${LUT_NOKICK:-0}" = 1 ] && echo "NOTE   kick disabled (LUT_NOKICK=1): half-press once after apply"
     fi
     if [ -x "$D/lut/nx_lutptr.arm" ]; then
         if "$D/lut/nx_lutptr.arm" check "$SLOT" >/dev/null 2>&1; then

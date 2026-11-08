@@ -56,15 +56,17 @@
    0.5 s / 33³           读回校验              Still6 + BV12）
                               │
                               ▼
-                     半按快门一次 → p7 自己 Load
+              nx_lutload.arm once A18 → 等 DMA_RD_FINISH
+                              ▼
+                   秒切生效（不再需要半按快门）
 ```
 
 | 命令 | 作用 |
 |---|---|
 | `lut.sh list` | 列 `/mnt/mmc/looks` 里的 look（同名 .cube 优先） |
 | `lut.sh begin` | 备份 A18 + 记录还原点（只读，不写寄存器） |
-| `lut.sh apply <名>` | 转（如需）→ 写槽 → 改三张登记表 → 提示半按 |
-| `lut.sh off` | 登记表回原厂 + A18 回备份 |
+| `lut.sh apply <名>` | 转（如需）→ 写槽 → 改三张登记表 → **秒切生效** |
+| `lut.sh off` | 登记表回原厂 + A18 回备份 + 秒切 |
 | `lut.sh status` | 当前 look / 备份状态 / 引擎指针 |
 
 **NXUI 面板**：`nxui.sh lut` 用 `lut.sh list` 填列表、`lut.sh apply/off` 当执行器——所以面板上"实用功能 → LUT 滤镜"已经是这条机内链路。
@@ -136,7 +138,7 @@ wget -O /mnt/mmc/looks/xxx.cube http://<某处>/xxx.cube
 | # | 坑 | 说明 |
 |---|---|---|
 | 1 | **发布包里的旧二进制** | release ≤10 的 `cube2lut.arm` 是 8,880 B RGB 直通版。重装/升级会把它带回来，部署前必核 `b798964d` |
-| 2 | **不能从 ARM 侧强制 reload** | 裸写 `+0x00c` + 脉冲会花屏。`lut.sh` 刻意不自动 reload，只能半按 |
+| 2 | ~~**不能从 ARM 侧强制 reload**~~ **已于 2026-11-08 推翻** | 旧结论「裸写 `+0x00c` + 脉冲会花屏」只对**不完整**的写序成立：漏了 `OnOff`/`Acc`/`Cfg` 通道位，且没复位 `+0x008` bit0。`nx_lutload.arm once` 复刻 p7 的 `FUN_004a5c44` 写序并等 `ACC_3DLUT_RD_FINISH`，现在 apply/off **自己完成 Load**，不再需要半按。见 [秒切记录](LUT_INSTANT_SWITCH_2026-11-08.md) |
 | 3 | **`lut.sh apply` 会关"屏幕色彩"** | 首次记原值，`off` 还原。若进程被 kill，可能停在关闭态 |
 | 4 | **SD 卡 exfat 重复目录项** | 反复覆盖同名 `.cube`（手机 FTP 尤其容易）会积累重复项。上传用新文件名，定期 `tar` 备份→改名重建 |
 | 5 | **同名 .cube/.bin** | `apply` 优先 `.cube`。改了 `.bin` 但目录里还有旧 `.cube`，会被旧 cube 覆盖 |

@@ -67,6 +67,16 @@ printf 'MIX %s %s %s %s\n' "$1" "$2" "$3" "$4" >> /tmp/lutlib-mix.log
 head -c 19712 /dev/zero > "$4"
 echo '=== done ==='
 EOF
+# 秒切引擎桩：记录每次调用，可按 NX_TEST_KICK_FAIL 模拟失败
+cat > "$D/lut/nx_lutload.arm" <<'EOF'
+#!/bin/sh
+printf '%s %s\n' "$1" "$2" >> /tmp/lutlib-kick.log
+if [ "${NX_TEST_KICK_FAIL:-0}" = 1 ]; then
+    echo 'REFUSE unsupported slot'
+    exit 2
+fi
+echo 'OK DMA_RD_FINISH and processing mode verified'
+EOF
 chmod +x "$D"/lut/*.arm "$D/busybox"
 cp "$REPO/scripts/lut.sh" "$D/lut.sh"
 chmod +x "$D/lut.sh"
@@ -190,6 +200,25 @@ rm -f "$LAB/replacement.bin"
 check "空库清掉旧 order" '[ -z "$($L list)" ] && [ ! -s "$ST/order" ]'
 head -c 19712 /dev/zero > "$LAB/reborn.bin"
 check "清空后再加入可见" '[ "$($L list)" = reborn ]'
+
+# ---- 11. 秒切：apply/off 自己触发 Load，不再要求半按快门 ----
+rm -f /tmp/lutlib-kick.log
+$L apply reborn > /tmp/lutlib-k1.log 2>&1
+check "apply 调用了 nx_lutload" '[ "$(wc -l < /tmp/lutlib-kick.log 2>/dev/null)" = 1 ]' "$(cat /tmp/lutlib-kick.log 2>/dev/null)"
+check "kick 的动词是 once" 'grep -q "^once " /tmp/lutlib-kick.log'
+check "kick 的目标是工作槽 A18" 'grep -q "^once 0x81119F00$" /tmp/lutlib-kick.log'
+check "apply 输出秒切成功" 'grep -q "OK instant switch" /tmp/lutlib-k1.log'
+
+rm -f /tmp/lutlib-kick.log
+LUT_NOKICK=1 $L apply reborn > /tmp/lutlib-k2.log 2>&1
+check "LUT_NOKICK=1 时不调用 nx_lutload" '[ ! -s /tmp/lutlib-kick.log ]'
+check "禁用秒切时提示半按" 'grep -q "half-press once" /tmp/lutlib-k2.log'
+
+rm -f /tmp/lutlib-kick.log
+NX_TEST_KICK_FAIL=1 $L apply reborn > /tmp/lutlib-k3.log 2>&1
+check "kick 失败仍算 apply 成功" 'grep -q "OK applied" /tmp/lutlib-k3.log'
+check "kick 失败给出后备提示" 'grep -q "WARN instant switch failed" /tmp/lutlib-k3.log'
+check "kick 失败时不谎报秒切" '! grep -q "OK instant switch" /tmp/lutlib-k3.log'
 
 rm -rf "$LAB" "$ST" /tmp/lutlib-*.log /tmp/lutlib-cache1
 printf '\n%d PASS / %d FAIL\n' "$pass" "$fail"

@@ -9,8 +9,9 @@ An enhancement mod for the **Samsung NX500 / NX1** (Tizen / DRIMe5), built on th
 
 > 中文版见 [README.md](README.md)
 
-**Latest v2.88.0-nxwa.14** (2026-11-08) — switchable video TC curves (Stock / Log / Flat / High contrast);
-34 of the 68 bundled LUTs regenerated against the measured camera input domain.
+**Latest v2.88.0-nxwa.15** (2026-11-08) — instant LUT switching: no more half-press.
+`lut.sh apply/off` loads the table itself and waits for the DMA-complete interrupt,
+so picking a look in the panel updates the finder immediately.
 
 ## Install
 
