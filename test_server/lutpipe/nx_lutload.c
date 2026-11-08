@@ -37,7 +37,19 @@ static void dump(const char *tag,volatile unsigned *r) {
     printf("%s on=%08x cfg=%08x access=%08x lut0=%08x lut1=%08x\n",
            tag,r[0],r[1],r[2],r[3],r[4]);fflush(stdout);
 }
-static int load_main(int argc,char **argv) {
+/* RSZ OUT1 EOF is available in preview on NX500 1.12 (CORE irq 14).
+ * LVR frame interrupts do not arrive in this path. Start the short LUT DMA
+ * after EOF instead of at an arbitrary point in the processing frame.
+ * The video watcher uses a different pipeline and deliberately skips this. */
+static int frame_sync(int fd) {
+    int irq=EP_K_INT_CORE_RSZ_OUT1_EOF;
+    struct ep_k_core_intr_wait_info q;
+    memset(&q,0,sizeof(q));q.timeout_ms=120;q.intr=irq;
+    if(ioctl(fd,EP_IOCTL_CORE_INTR_ENABLE,&irq)<0 ||
+       ioctl(fd,EP_IOCTL_CORE_INTR_WAIT_QUEUE_INIT,&q)<0)return -1;
+    return ioctl(fd,EP_IOCTL_CORE_INTR_WAIT,&q);
+}
+static int load_main(int argc,char **argv,int sync_preview) {
     int fd=-1,mem=-1,lock=-1,rc=1,started=0,wait_only;
     int irq=EP_K_INT_ACC_3DLUT_RD_FINISH,wr,err;
     unsigned addr=0;char *end;
@@ -78,19 +90,27 @@ static int load_main(int argc,char **argv) {
         dump("BEFORE",r);
         if(r[1]!=0 && r[1]!=0x100) {fprintf(stderr,"REFUSE unexpected cfg\n");rc=5;goto out;}
         if(stopping) {rc=7;goto out;}
+        if(sync_preview && frame_sync(fd)<0) {
+            fprintf(stderr,"REFUSE preview frame sync failed\n");rc=9;goto out;
+        }
+        if(stopping) {rc=7;goto out;}
         started=1;r[0]|=1;r[2]&=~1u;r[2]|=1u;
         r[3]=addr;r[1]=(r[1]&~0x30u)|0x100u;barrier();
         r[2]|=0x100u;barrier();r[2]&=~0x100u;barrier();
         /* Do NOT bypass around the transfer: with OnOff=0 the block does not
          * run the DMA at all (2026-11-08 on-device test -- the call reported
          * OK, the finder never changed, and a half-press was still needed to
-         * apply the table). The ~16 ms of table-fetch tearing is unavoidable
-         * from this side; the only clean fix would be loading during vblank. */
+         * apply the table). Any remaining transition artifact needs visual
+         * validation; RD_FINISH alone does not prove a tear-free frame. */
     }
     t=now_ms();errno=0;wr=ioctl(fd,EP_IOCTL_ACC_INTR_WAIT,&wq);err=errno;
+    /* Access mode itself disturbs the finder. Leave it immediately after the
+     * wait, including timeout/error returns: printf/fflush may block on SD or
+     * a slow output sink and must never extend this hardware state. */
+    if(started) {r[2]|=1u;r[2]&=~1u;barrier();}
     printf("WAIT rc=%d errno=%d elapsed_ms=%.3f jpeg_err=%u irq=%d trigger=%d\n",
            wr,err,now_ms()-t,wq.jpeg_err,irq,!wait_only);fflush(stdout);
-    if(started) {r[2]|=1u;r[2]&=~1u;barrier();dump("PROCESS",r);}
+    if(started)dump("PROCESS",r);
     if(wait_only) {rc=(wr<0 && err==ETIMEDOUT)?0:6;goto out;}
     if(wr<0 || wq.jpeg_err || stopping) {rc=6;goto out;}
     if(!(r[0]&1) || r[1]!=0x100 || (r[2]&1) || r[3]!=addr) {rc=8;goto out;}
@@ -178,7 +198,7 @@ static int watch_main(int argc,char **argv) {
             int status;pid_t child;fflush(stdout);child=fork();
             if(child<0){rc=1;goto out;}
             fflush(stdout);
-            if(!child) {char *a[]={argv[0],"once","0x81119f00",0};int result;stopping=0;result=load_main(3,a);fflush(stdout);_exit(result);}
+            if(!child) {char *a[]={argv[0],"once","0x81119f00",0};int result;stopping=0;result=load_main(3,a,0);fflush(stdout);_exit(result);}
             while(waitpid(child,&status,0)<0)if(errno!=EINTR){rc=1;goto out;}
             last_load=now_ms();loads++;
             if(!WIFEXITED(status)||WEXITSTATUS(status)) {
@@ -198,5 +218,5 @@ out:
 }
 int main(int argc,char **argv) {
     if(argc>1 && !strcmp(argv[1],"watch"))return watch_main(argc,argv);
-    return load_main(argc,argv);
+    return load_main(argc,argv,1);
 }

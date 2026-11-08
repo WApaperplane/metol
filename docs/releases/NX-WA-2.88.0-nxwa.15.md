@@ -1,5 +1,7 @@
 # NX-WA 2.88.0-nxwa.15 — LUT 秒切（取消半按快门）
 
+> 同日后续修复：取景加载器新增 CORE RSZ_OUT1_EOF（irq 14）帧结束同步，用户正式面板实测无异常闪屏。下文“一帧是物理下限”的早期归因撤回。最终工具 MD5 `dff55a370f0bf7076fea840111dd15c3`，三副本一致。详见 [最新排查记录](../current/LUT_INSTANT_SWITCH_2026-11-08.md#51-瞬时闪屏帧结束同步修复)。
+
 发布日期：2026-11-08
 性质：体验版本。**换 LUT 不用再半按快门** —— 面板上点一张，取景器立刻变。
 
@@ -51,8 +53,15 @@ p7 自己的 Load 入口是 `FUN_004a5c44` → `FUN_004a5e30`，QEMU 逐条实�
 | `off` | `oled_restore` 之后 kick 当前槽 |
 | `status` | 只在 `LUT_NOKICK=1` 时提示半按 |
 
-`nx_lutload.arm` 唯一改动：地址白名单 3 槽 → 6 槽（A12/A13/A14/A17/A18/A19），
-让 `off` 能 kick p7 刚选中的原厂槽。仍是硬编码白名单，不接受任意地址。
+`nx_lutload.arm` 两处改动：地址白名单 3 槽 → 6 槽（A12/A13/A14/A17/A18/A19），
+让 `off` 能 kick p7 刚选中的原厂槽（仍是硬编码白名单，不接受任意地址）；
+取景路径新增帧结束同步 ——
+
+| 改动 | 说明 |
+|---|---|
+| 新增 `frame_sync()` | 打开 Acc 之前先等 `CORE RSZ_OUT1_EOF`（irq 14，取景约 20 ms 一帧），让 19,712 B 的 DMA 落在帧边界上。超时 120 ms，失败返回 `rc=9` 且不启动 DMA |
+| 复位提前到日志之前 | `printf`/`fflush` 可能被 SD 或慢速输出阻塞，任何情况下都不能让它延长 Acc 访问态 |
+| `watch` 路径显式不同步 | 录像管线与取景不同，watcher 补载沿用原路径 |
 
 ## 三之二、面板去抖：快速滑动只落地最后一次
 
@@ -102,7 +111,7 @@ OK DMA_RD_FINISH and processing mode verified
 
 ## 六、边界
 
-- **切换瞬间有约 1 帧花屏**：19,712 B 要从 DRAM 搬进硬件 SRAM，DMA 期间 ISP 读到半写好的表。这是硬件固有行为 —— p7 自己 `View::_load`（半按、切档）走同一段硬件，同样会花，只是半按伴随对焦、平时注意不到。`+0x008` 只有 Load/Save 两个脉冲位，EP 没有 VSYNC 中断，ARM 侧无法把加载对齐到消隐期。**1 帧是这个方案的物理下限。**
+- **取景切换已增加帧结束同步**：CORE RSZ_OUT1_EOF（irq14）在当前取景路径可用，加载器先等 EOF 再触发 DMA。本轮正式面板用户确认无异常闪屏；旧“一帧是物理下限”归因撤回。所有拍摄模式/帧率和长录尚未覆盖。
 - **息屏时不生效**：DMA 完成中断只有 ISP 在取景时才产生。`lut.sh` 会先判 `di-camera-app` 是否在跑，不在就提示而不是白等；屏幕亮着时正常。
 - **`OnOff=0` 遮盖过渡是死路**：实测清零后调用，工具报 OK、寄存器全对，但画面完全没变、必须半按 —— 模块关闭时根本不执行 DMA。`nx_lutload.c` 里留了注释防回退。
 - `off` 的 kick 目标是硬件当前登记的槽，所以 `oled_restore` 若已让 p7 切到 A13/A17，就 kick 那一档，观感仍是原厂。
@@ -115,7 +124,7 @@ OK DMA_RD_FINISH and processing mode verified
 | 文件 | md5 |
 |---|---|
 | `scripts/lut.sh` | `cd722928b0c9bb23f96eb31875ff6cb3` |
-| `scripts/lut/nx_lutload.arm` | `ec8d58e1da930f70b39bc871d7b0a802` |
+| `scripts/lut/nx_lutload.arm` | `dff55a370f0bf7076fea840111dd15c3` |
 | `scripts/nxui/nxui.arm` | `53cea9925529b08a391c25d75c92f6b5` |
 
 三处安装点必须同步（漏 SD 母本会被 `install.sh` 打回旧版）：

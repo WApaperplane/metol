@@ -10,8 +10,9 @@ An enhancement mod for the **Samsung NX500 / NX1** (Tizen / DRIMe5), built on th
 > 中文版见 [README.md](README.md)
 
 **Latest v2.88.0-nxwa.15** (2026-11-08) — instant LUT switching: no more half-press.
-`lut.sh apply/off` loads the table itself and waits for the DMA-complete interrupt,
-so picking a look in the panel updates the finder immediately.
+`lut.sh apply/off` loads the table itself; preview loads wait for the frame-end event
+(`CORE RSZ_OUT1_EOF`) before starting the DMA, so the switch shows no corruption.
+Fast scrolling lands only the final selection.
 
 ## Install
 
@@ -41,7 +42,7 @@ The camera menu also has four entries: `IP: x.x.x.x [Telnet关]` (tap to toggle 
 | Capability | In one line |
 | --- | --- |
 | Film recipes | 79 (negative / slide / B&W / cinema / stylised / camera-look); all seven PW dimensions pushed into the ISP at once |
-| 3D LUT | `.cube` converted on-camera in one command; **edit a 4-byte registry entry + write 19,712 B into a spare slot + half-press** to retarget; live view and stills are independent chains; **video follows `apply` — just press record** |
+| 3D LUT | `.cube` converted on-camera in one command; **point the registry tables at the work slot + write 19,712 B + auto-load** to retarget (no half-press); live view and stills are independent chains; **video follows `apply` — just press record** |
 | TC curve | Four video tone-curve presets (Stock / Log / Flat / High contrast): write 19 nodes + set dirty, **the ISP consumes it in <50 ms with no keypress**, reboot restores stock |
 | NXUI | Nuklear (MIT) on the camera's own X11/Xft — **no EFL**, no viewfinder capture or blit |
 | Web gallery | Collapsed directories + live `dirlist` (new photos appear instantly) + thumbnail pre-warm + over-the-air push |
@@ -70,14 +71,14 @@ The camera menu also has four entries: `IP: x.x.x.x [Telnet关]` (tap to toggle 
 | Item | Status |
 | --- | --- |
 | Table format | `4913×4B {Cr,Cb,Y,pad}`, index `((Y*17+Cb)*17+Cr)*4`, slot 19,712 B, stride `0x4D00` (closed on-device 10-19; the older RGB naming is retired) |
-| Retarget | Write 19,712 B into the work slot (A18 `0x81119F00`) + point **all four** registry tables at it + **half-press once** |
+| Retarget | Write 19,712 B into the work slot (A18 `0x81119F00`) + point **all four** registry tables at it + **auto-load after frame end** (`nx_lutload.arm`, no half-press) |
 | Registry tables | `View4` (4 entries, colour space × screen colour) + `Still6` (6) + `BV12` (12) — **none may be skipped**, or you get "viewfinder filtered, photo not" |
 | Import | `.cube → 19,712 B slot table` via on-camera `cube2lut.arm`, or host-side `test_server/isp/nx3dlut.py` |
 | Generation basis | Built for the **measured camera input domain**: response slope `log2(code)/EV = 0.809`, not sRGB's 0.45 (a 1.8× gap). Tables built on the sRGB assumption get crushed twice in the shadows; 34 of the 68 bundled tables have been regenerated against the real response (25 G'MIC + 9 recipe tables), the other 34 have no traceable generator and are untouched |
 | Live view / stills | Live view reads only `View4`; stills have **two mutually exclusive branches** (screen colour on → `BV12`, off → `Still6`) and both must be retargeted |
 | Video | After `apply`, just press record — **the very first frame already carries the table** (p7's 23-entry slot pointer table is redirected to A18); `off` stops the watcher. Long takes and other frame rates are untested |
 | Limits | Pure memory operations — **power cycle restores stock** (boot-persistent needs an image patch). Colour is trustworthy in sRGB; AdobeRGB only guarantees "it applies" |
-| No-go | ⛔ Writing `+0x00C` yourself and pulsing the config register makes the ISP read out-of-sequence addresses ⇒ **severe colour corruption**. The only safe reload is **half-press** |
+| Load sequence | ⛔ Writing `+0x00C` yourself requires all 8 steps: `OnOff` → clear/set Acc → address → Cfg channel bits → bit8 pulse → **reset Acc at the end**, plus waiting for the preview frame to end. Address + pulse alone corrupts the picture — that is the real reason behind the 10-08 "no-go" note |
 
 ### Library and blending
 
@@ -193,8 +194,8 @@ Stated plainly — every row below maps to an on-camera or static verification, 
 | Colour | Colour is trustworthy in **sRGB** for both live view and JPEG (baseline of the 68 bundled tables, 34 of them generated against the measured input domain) | **AdobeRGB applies but is not colour-calibrated**; the camera's Smart Filter enum 14–18 takes a separate 24-slot dynamic path that this mod does not cover |
 | Carrier | **JPEG stills + viewfinder + video (LUT from frame 1)** | **RAW (`.SRW`) is not promised to be baked**; the ground is 8-bit 4:2:0 only (10-bit unreachable, the built-in gamma interface has no consumer); long takes and other frame rates untested |
 | Video curve | **Four TC presets, effective in <50 ms and carried into HEVC** | Redistributes 256 code values only — no dynamic range is created; absolute anchor needs a grey card; switching while recording, stacking with the 3D LUT and any effect on the photo path are unverified |
-| Taking effect | LUT needs **one half-press** after the memory write; TC is consumed **within 50 ms with no keypress** | **No boot persistence** — a power cycle restores stock; that needs a firmware image patch |
-| Trigger | **Half-press** is the only reliable reload | No software trigger found for making p7 re-read the table (`st cap iq af afsta/afsto` is a no-op) |
+| Taking effect | LUT **auto-loads** after the memory write (waits for frame end, no keypress); TC is consumed **within 50 ms** | **No boot persistence** — a power cycle restores stock; that needs a firmware image patch |
+| Trigger | `nx_lutload.arm once` replays p7's Load sequence, aligned to the `CORE RSZ_OUT1_EOF` frame event | With the screen off or `di-camera-app` gone the ISP is not streaming and the DMA interrupt never arrives — then fall back to one half-press |
 | Shape | No reflash, no partition writes, fully reversible | No firmware-partition change means a reboot restores stock (LUT writes are RAM-only) |
 
 > It is **not** a colour-management system (no input/output profile conversion), **not** a WYSIWYG promise
