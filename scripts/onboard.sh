@@ -41,6 +41,12 @@ ssh_listening() {
 	echo "telnetd : $([ -x "$DIR/telnetd" ] && echo OK || echo 'MISSING (never shipped: .gitignore bare telnetd)')"
 	echo "busybox : $([ -x "$BB" ] && echo OK || echo 'MISSING(not exec?)')"
 	echo "sdcard  : $([ -d "$SDCARD" ] && echo OK || echo MISSING)"
+	# NXUI 是否可用（用户报「拉不起新版 UI、只出老 popup」时先看这一行）
+	if [ -x "$DIR/nxui.sh" ]; then
+		echo "nxui    : $("$DIR/nxui.sh" diag 2>/dev/null | tr '\n' ' ')"
+	else
+		echo "nxui    : nxui.sh MISSING"
+	fi
 } > "$LOG" 2>&1
 
 # ---- 1) 首选：dropbear ssh（逻辑与菜单共用一套，见 ssh_hint.sh）----

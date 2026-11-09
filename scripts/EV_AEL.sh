@@ -38,7 +38,9 @@ if ! /bin/grep -q '^NX500$' /etc/version.info; then
     exit 0
 fi
 
-# Independent UI, enabled only after the on-camera display/load check.
+# 独立 UI（NXUI）。2026-11-10 起默认可用：旧的「必须 enable 才可用」门禁
+# 从来没进过 release 包，导致用户装完只能看到 mod_gui 的老 popup；现在只有
+# 显式 `nxui.sh disable` 才会落到下面的 mod_gui 分支。排查用 `nxui.sh diag`。
 if [ -x "$D/nxui.sh" ] && "$D/nxui.sh" available; then
     "$D/nxui.sh" filmlab
     exit $?

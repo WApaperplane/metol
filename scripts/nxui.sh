@@ -30,22 +30,34 @@ MODE=${1:-filmlab}
 EXTRAS="$*"
 case "$MODE" in
   disable)
+    # ★ 2026-11-10 语义反转：默认可用，只有显式 disable 才关。
+    #   旧语义是「必须 enable 才可用」，而 enable 只在开发者 SOP 里出现过，
+    #   release 包从来没带过 enabled 标记 ⇒ 用户装完 nxui.sh available 恒假，
+    #   EV+AEL / MENU 全部落到 mod_gui 的原版 popup。见 docs/current/NXUI_ENABLE_GATE_2026-11-10.md
+    : > "$D/nxui/disabled"
     rm -f "$D/nxui/enabled"
     $BB killall -q -TERM nxui.arm 2>/dev/null
     exit 0 ;;
   enable)
     [ -x "$BIN" ] && is_nx500 || exit 1
-    : > "$D/nxui/enabled"
+    rm -f "$D/nxui/disabled" "$D/nxui/enabled"
     exit 0 ;;
   stop)
     $BB killall -q -TERM nxui.arm 2>/dev/null
     exit 0 ;;
   available)
-    [ -x "$BIN" ] && [ -f "$D/nxui/enabled" ] && is_nx500
+    [ -x "$BIN" ] && [ ! -f "$D/nxui/disabled" ] && is_nx500
     exit $? ;;
+  diag)
+    echo "bin      : $([ -x "$BIN" ] && echo OK || echo "MISSING $BIN")"
+    echo "model    : $(is_nx500 && echo NX500 || echo "OTHER ($($BB head -1 /etc/version.info 2>/dev/null))")"
+    echo "disabled : $([ -f "$D/nxui/disabled" ] && echo yes || echo no)"
+    echo "enabled  : $([ -f "$D/nxui/enabled" ] && echo 'yes (legacy flag, ignored)' || echo no)"
+    echo "available: $( [ -x "$BIN" ] && [ ! -f "$D/nxui/disabled" ] && is_nx500 && echo yes || echo no )"
+    exit 0 ;;
   menu|filmlab|lut|demo|list) ;;
   *)
-    echo 'nxui.sh menu|filmlab|lut|demo|list|stop|enable|disable|available [extra...]'
+    echo 'nxui.sh menu|filmlab|lut|demo|list|stop|enable|disable|available|diag [extra...]'
     echo '  extra 透传给 nxui.arm，例：nxui.sh lut --inputlog /mnt/mmc/nxui/keys.log'
     exit 2 ;;
 esac
