@@ -117,4 +117,10 @@ VERSION                    2.88.0-nxwa.15.1
 
 ## 六、校验
 
-（打包后回填）
+| 项 | 值 |
+|---|---|
+| 包 | `NX-WA-2.88.0-nxwa.15.1.zip` |
+| 大小 | 10,152,974 B |
+| md5 | `ecf9b1e74f3e61f9faa50cc2cb41b2c6` |
+| 文件数 | 372 条目 = 368 主树 + 3 个 `patch-a2/` 附件 + manifest |
+| 已含 | `scripts/ssh_hint.sh`、`scripts/pwrlog.sh`（可用 `unzip -l` 核对） |
