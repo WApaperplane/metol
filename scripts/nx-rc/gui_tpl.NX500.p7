@@ -10,4 +10,4 @@ button|P7 固件|@/opt/usr/nx-ks/gui_p7.NX500
 button|休眠|hibernate.sh
 checkbox|远程控制|nx-rc.sh
 
-button|IP: %%IP%% [%%TN%%]|telnet_toggle.sh
+button|IP: %%IP%% [%%TN%%]|ssh_hint.sh --ui

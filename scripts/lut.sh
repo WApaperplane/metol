@@ -64,6 +64,13 @@ KICK=$(pick_tool nx_lutload.arm)
 
 die() { echo "ERR $*"; exit 1; }
 
+# 关机取证（15.1 debug）：每次落地/还原往 SD 记一行，和 pwrlog.sh 的时间轴对齐。
+# 没装 pwrlog.sh 就静默跳过，绝不因为日志影响 apply。
+plog() {
+    [ -x "$D/pwrlog.sh" ] || return 0
+    sh "$D/pwrlog.sh" note "LUT $*" >/dev/null 2>&1 || :
+}
+
 need_tools() {
     [ -n "$SLOTW" ] && [ -x "$SLOTW" ] || die "missing nx_slotwrite.arm (looked in $TD and /mnt/mmc/lut)"
     [ -n "$REGT" ]  && [ -x "$REGT" ]  || die "missing nx_regtabwrite.arm (looked in $TD and /mnt/mmc/lut)"
@@ -225,6 +232,8 @@ kick_current() {
 commit_table() {
     label=$1
     table=$2
+    # 先记"开始"：若日志里只有 start 没有同名的 apply 收尾，就说明断电发生在写表途中。
+    plog "apply start $label"
     $BB mkdir -p "$ST"
 
     # 关屏幕色彩（理由见 oled_save 注释）。放在写槽之前，保证生效那一刻起 ISP
@@ -290,6 +299,7 @@ commit_table() {
         }
     fi
     echo "OK applied $label"
+    plog "apply $label"
 }
 
 case "${1:-status}" in
@@ -556,6 +566,7 @@ off)
     oled_restore
     kick_current
     echo "OK restored (view=4 factory, still=BV12+Still6 factory, A18=original)"
+    plog "off"
     ;;
 
 status)

@@ -9,10 +9,10 @@ An enhancement mod for the **Samsung NX500 / NX1** (Tizen / DRIMe5), built on th
 
 > 中文版见 [README.md](README.md)
 
-**Latest v2.88.0-nxwa.15** (2026-11-08) — instant LUT switching: no more half-press.
-`lut.sh apply/off` loads the table itself; preview loads wait for the frame-end event
-(`CORE RSZ_OUT1_EOF`) before starting the DMA, so the switch shows no corruption.
-Fast scrolling lands only the final selection.
+**Latest v2.88.0-nxwa.15.1** (2026-11-10, debug build) — fixes "no remote access after install":
+release zips never contained `telnetd` (a bare `telnetd` rule in `.gitignore` kept it out of git),
+so the Telnet row did nothing on a fresh install. telnet/FTP are retired; that menu row now shows
+**SSH state** and the login string, plus `pwrlog` power-off forensics (one line every 30 s to SD).
 
 ## Install
 
@@ -23,6 +23,21 @@ Fast scrolling lands only the final selection.
 - Firmware: NX500 **1.12** / NX1 **1.41**; anything else is refused.
 - Inserting the card again = **incremental sync** (overwrite only, never delete, never auto-uninstall); uninstall from the camera menu (`uninstall.sh`).
 - Install / sync / WiFi push / rollback: [SYNC.md](SYNC.md) (bilingual).
+
+## Remote access (SSH)
+
+There is exactly one remote path: **dropbear ssh on port 22** (shipped, started by `init.sh`).
+telnet and FTP were retired on 2026-11-02; the `telnetd` binary is **not in the release zip**
+(2016 Samsung original, intentionally untracked).
+
+| Method | Command | Requirement |
+| --- | --- | --- |
+| Blank password | `ssh root@<camera-ip>` | just press Enter (dropbear `-B`); some clients refuse blank passwords |
+| Public key (recommended) | append your `id_ed25519.pub` to `/opt/usr/nx-ks/dropbear/authorized_keys`, then `sh /opt/usr/nx-ks/ssh_hint.sh --start` | log in once with the blank password first |
+| Menu | camera menu → `IP: 192.168.x.x [SSH on]` | shows state; pressing it pops the login string and starts ssh if it is down |
+
+The host key `dropbear_ed25519_host_key` is generated on first boot (kept on p14, survives reflashing).
+For troubleshooting see `/opt/usr/nx-ks/onboard.log` and `/tmp/db.log`.
 
 ## Key shortcuts
 

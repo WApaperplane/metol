@@ -9,9 +9,15 @@
 #
 # ★ 2026-10-10 提速版（菜单弹出慢的次要来源）：
 #   ① IP 提取：原来 4 个进程（ip|grep|grep|cut|grep）⇒ 合成【1 个 awk】
-#   ② Telnet 状态：原来 `ps -w | grep | grep`（ps 要扫 100+ 进程）⇒ 改 `pidof telnetd`（只读 /proc）
+#   ② 远程状态：原来 `ps -w | grep | grep` ⇒ 改 ssh_hint.sh --status（读 /proc/net/tcp 的监听项）
 #   ③ 生成结果与现有 gui_ini 逐字节相同时【不写盘】（少一次 eMMC 写，且 mtime 稳定）
+#
+# ★ 2026-11-10：`%%TN%%` 的值从「Telnet开/关」改成「SSH开/关」。
+#   telnetd 二进制从未进过 release 包（.gitignore 里裸 `telnetd` 规则），
+#   新装机上那一行只能拉一个不存在的文件；telnet/FTP 已于 2026-11-02 退役，
+#   远程通路是 dropbear ssh(22)。占位符名字保留，用户自定义模板不会失效。
 BB=/opt/usr/nx-ks/busybox
+D=/opt/usr/nx-ks
 
 MODEL=$($BB head -1 /etc/version.info 2>/dev/null)
 case "$MODEL" in
@@ -35,12 +41,11 @@ IP=$($BB ip addr ls 2>/dev/null | $BB awk '
     }')
 [ -z "$IP" ] && IP="WiFi未开"
 
-# Telnet 状态 —— pidof（比 ps -w 便宜一个数量级）
-if $BB pidof telnetd > /dev/null 2>&1; then
-    TN="Telnet开"
-else
-    TN="Telnet关"
+# 远程状态 —— ssh:22 是否在监听（端口比进程名可靠；pidof 在相机 busybox 上坑过）
+if [ -x "$D/ssh_hint.sh" ]; then
+    TN=$("$D/ssh_hint.sh" --status 2>/dev/null)
 fi
+[ -n "${TN:-}" ] || TN="SSH?"
 
 TMP="$DST.tmp"
 $BB sed -e "s/%%IP%%/$IP/g" -e "s/%%TN%%/$TN/g" "$TPL" > "$TMP" 2>/dev/null \

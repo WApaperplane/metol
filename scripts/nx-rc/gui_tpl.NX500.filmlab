@@ -9,4 +9,4 @@ button|胶片配方 FilmLab|@/opt/usr/nx-ks/gui_filmlab.NX500
 button|休眠|hibernate.sh
 checkbox|远程控制|nx-rc.sh
 
-button|IP: %%IP%% [%%TN%%]|telnet_toggle.sh
+button|IP: %%IP%% [%%TN%%]|ssh_hint.sh --ui

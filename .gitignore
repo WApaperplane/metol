@@ -1,6 +1,12 @@
 # ===== 预编译库 / 二进制（非源码） =====
 *.so
 *.so.*
+
+# 相机端 telnetd（2016 年三星原版，2 MB ARM 二进制）——**故意不入库**。
+# ★ 2026-11-10 复盘：这条裸规则同时挡住了 scripts/telnetd，而本地树里恰好也没
+#   这个文件 ⇒ 它从未进过任何 release 包，新装机上 onboard.sh 只能报 MISSING。
+#   telnet/FTP 已于 2026-11-02 退役，远程改走 dropbear ssh(22)，所以保持不入库；
+#   真要恢复时用 `git add -f scripts/telnetd`，别指望改这里就够了。
 telnetd
 
 # ===== 字体（二进制资源） =====

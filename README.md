@@ -9,9 +9,10 @@ Samsung NX500 / NX1（Tizen / DRIMe5）增强固件 mod，基于社区上游
 
 > English version: [README_EN.md](README_EN.md)
 
-**最新 v2.88.0-nxwa.15**（2026-11-08）— LUT 秒切：换滤镜不再需要半按快门。
-面板上点一张取景器立刻变 —— `lut.sh apply/off` 自己完成 Load，取景切换先等
-帧结束（`CORE RSZ_OUT1_EOF`）再触发 DMA，实测无异常闪屏；快速连滑只落地最后一次。
+**最新 v2.88.0-nxwa.15.1**（2026-11-10，debug 版）— 修「装完没有远程通路」：
+zip 包一直缺 `telnetd`（被 `.gitignore` 里一条裸 `telnetd` 规则挡在 git 之外），
+新装机上 telnet 开关点了没反应。telnet/FTP 已退役，菜单那一行现在显示
+**SSH 状态**并给出连接串；另加 `pwrlog` 关机取证（每 30 s 一条，写 SD）。
 
 ## 安装
 
@@ -22,6 +23,20 @@ Samsung NX500 / NX1（Tizen / DRIMe5）增强固件 mod，基于社区上游
 - 固件：NX500 **1.12** / NX1 **1.41**，其它版本拒绝安装。
 - 再插一次卡 = **增量同步**（只覆盖、不删除；永不自动卸载）；卸载走相机菜单里的 `uninstall.sh`。
 - 安装 / 同步 / WiFi push / 回滚：[SYNC.md](SYNC.md)（中英双语）。
+
+## 远程登录（SSH）
+
+远程只有一条路：**dropbear ssh，端口 22**（随包，`init.sh` 开机自启）。telnet 与 FTP
+自 2026-11-02 起退役；`telnetd` 二进制**不在发布包里**（2016 年的三星原件，故意不入库）。
+
+| 方式 | 命令 | 前提 |
+| --- | --- | --- |
+| 空密码 | `ssh root@<相机IP>` | 直接回车（dropbear `-B`）；部分客户端拒绝空密码 |
+| 公钥（推荐） | 把自己的 `id_ed25519.pub` 追加到相机 `/opt/usr/nx-ks/dropbear/authorized_keys`，再 `sh /opt/usr/nx-ks/ssh_hint.sh --start` | 需要先用空密码进去一次 |
+| 菜单 | 相机菜单 → `IP: 192.168.x.x [SSH开]` | 显示状态；按下弹窗给出连接串，没起会顺手拉起 |
+
+主机私钥 `dropbear_ed25519_host_key` 首次开机自动生成（p14 保留，刷机不丢）。
+排障看 `/opt/usr/nx-ks/onboard.log` 与 `/tmp/db.log`。
 
 ## 快捷键
 

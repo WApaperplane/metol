@@ -7,4 +7,4 @@ button|系统设置|@/opt/usr/nx-ks/gui_settings.NX500
 button|休眠|hibernate.sh
 checkbox|远程控制|nx-rc.sh
 
-button|IP: %%IP%% [%%TN%%]|telnet_toggle.sh
+button|IP: %%IP%% [%%TN%%]|ssh_hint.sh --ui
