@@ -9,10 +9,11 @@ Samsung NX500 / NX1（Tizen / DRIMe5）增强固件 mod，基于社区上游
 
 > English version: [README_EN.md](README_EN.md)
 
-**最新 v2.88.0-nxwa.15.1**（2026-11-10，debug 版）— 修「装完没有远程通路」：
-zip 包一直缺 `telnetd`（被 `.gitignore` 里一条裸 `telnetd` 规则挡在 git 之外），
-新装机上 telnet 开关点了没反应。telnet/FTP 已退役，菜单那一行现在显示
-**SSH 状态**并给出连接串；另加 `pwrlog` 关机取证（每 30 s 一条，写 SD）。
+**最新 v2.88.0-nxwa.15.2**（2026-11-10，热修）— **NXUI 默认可用**：
+`available` 以前要求一个从来没随包发过的 `nxui/enabled` 标记，导致新装机按
+EV+AEL / MENU 只会出原版 NX-KS 的 popup。现在默认可用，只有 `nxui.sh disable`
+才回老菜单；排查用 `nxui.sh diag`。同版含 15.1 的远程通路修复（菜单显示 SSH
+状态）与 `pwrlog` 关机取证。
 
 ## 安装
 

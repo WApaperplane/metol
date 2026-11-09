@@ -9,10 +9,11 @@ An enhancement mod for the **Samsung NX500 / NX1** (Tizen / DRIMe5), built on th
 
 > 中文版见 [README.md](README.md)
 
-**Latest v2.88.0-nxwa.15.1** (2026-11-10, debug build) — fixes "no remote access after install":
-release zips never contained `telnetd` (a bare `telnetd` rule in `.gitignore` kept it out of git),
-so the Telnet row did nothing on a fresh install. telnet/FTP are retired; that menu row now shows
-**SSH state** and the login string, plus `pwrlog` power-off forensics (one line every 30 s to SD).
+**Latest v2.88.0-nxwa.15.2** (2026-11-10, hotfix) — **NXUI is now on by default**:
+`available` used to require an `nxui/enabled` marker that no release ever shipped, so a fresh
+install showed the legacy NX-KS popup on EV+AEL / MENU. It is now available unless you run
+`nxui.sh disable`; diagnose with `nxui.sh diag`. Also carries the 15.1 remote-access fix
+(SSH state in the menu) and the `pwrlog` power-off forensics.
 
 ## Install
 
