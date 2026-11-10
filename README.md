@@ -9,11 +9,10 @@ Samsung NX500 / NX1（Tizen / DRIMe5）增强固件 mod，基于社区上游
 
 > English version: [README_EN.md](README_EN.md)
 
-**最新 v2.88.0-nxwa.15.2**（2026-11-10，热修）— **NXUI 默认可用**：
-`available` 以前要求一个从来没随包发过的 `nxui/enabled` 标记，导致新装机按
-EV+AEL / MENU 只会出原版 NX-KS 的 popup。现在默认可用，只有 `nxui.sh disable`
-才回老菜单；排查用 `nxui.sh diag`。同版含 15.1 的远程通路修复（菜单显示 SSH
-状态）与 `pwrlog` 关机取证。
+**最新 v2.88.0-nxwa.15.3**（2026-11-10）— **双语发行**：从这版起同时发布
+`NX-WA-<ver>.zip`（中文）与 `NX-WA-<ver>-EN.zip`（英文：英文菜单 + 英文面板 +
+英文 README），Release 说明中英并列。功能与 15.2 相同（NXUI 默认可用 + 远程通路 +
+pwrlog 关机取证）。
 
 ## 安装
 
@@ -22,6 +21,7 @@ EV+AEL / MENU 只会出原版 NX-KS 的 popup。现在默认可用，只有 `nxu
 3. **手动开一次蓝牙** —— mod 的开机钩子靠它初始化。
 
 - 固件：NX500 **1.12** / NX1 **1.41**，其它版本拒绝安装。
+- 两个包：`NX-WA-<ver>.zip`（中文）与 `NX-WA-<ver>-EN.zip`（英文菜单 + 英文 NXUI 面板 + 英文 README）。功能完全相同，只有文案语言不同。
 - 再插一次卡 = **增量同步**（只覆盖、不删除；永不自动卸载）；卸载走相机菜单里的 `uninstall.sh`。
 - 安装 / 同步 / WiFi push / 回滚：[SYNC.md](SYNC.md)（中英双语）。
 

@@ -1,0 +1,13 @@
+checkbox|UHD as 2.5K|res_UHD2K.sh
+checkbox|UHD as DC4K|res_UHDDC.sh
+checkbox|UHD as 1080p|res_UHDHD.sh
+
+checkbox|DC as 2.5K|res_DC2K.sh
+checkbox|DC as UHD|res_DCUHD.sh
+checkbox|DC as 1080p|res_DCHD.sh
+
+checkbox|VGA as UHD|res_VGAUHD.sh
+checkbox|VGA as DC4K|res_VGADC.sh
+
+button|GO BACK|@/opt/usr/nx-ks/gui_func.NX500
+button|CANCEL|/opt/usr/nx-ks/gui_exit.sh

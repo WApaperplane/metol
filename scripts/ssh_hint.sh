@@ -22,6 +22,10 @@ D=/opt/usr/nx-ks
 BB=$D/busybox
 DB=$D/dropbear
 MODE=${1:-show}
+# 语言：包内 scripts/nxui/lang 一行（zh / en）。EN 包把它覆盖成 en，
+# 这样"生成出来的"文案（SSH 状态、弹窗）也跟着走，不用维护第二份脚本。
+NX_LANG=$($BB head -1 "$D/nxui/lang" 2>/dev/null | $BB tr -d ' \r\n')
+[ -n "${NX_LANG:-}" ] || NX_LANG=zh
 
 ip_addr() {
     $BB ip addr ls 2>/dev/null | $BB awk '
@@ -61,7 +65,11 @@ start_ssh() {
 }
 
 state() {
-    if listening; then echo "SSH开"; else echo "SSH关"; fi
+    if [ "$NX_LANG" = en ]; then
+        if listening; then echo "SSH on"; else echo "SSH off"; fi
+    else
+        if listening; then echo "SSH开"; else echo "SSH关"; fi
+    fi
 }
 
 case "$MODE" in
@@ -84,14 +92,14 @@ esac
 [ "$MODE" = --ui ] && start_ssh
 
 IP=$(ip_addr)
-[ -n "${IP:-}" ] || IP="WiFi未开"
+[ -n "${IP:-}" ] || { [ "$NX_LANG" = en ] && IP="WiFi off" || IP="WiFi未开"; }
 ST=$(state)
 
 if [ "$MODE" = --ui ]; then
-    if [ "$ST" = "SSH开" ]; then
-        MSG="ssh root@$IP  空密码"
+    if listening; then
+        [ "$NX_LANG" = en ] && MSG="ssh root@$IP  (blank password)" || MSG="ssh root@$IP  空密码"
     else
-        MSG="ssh 未启动 · 看 /tmp/db.log"
+        [ "$NX_LANG" = en ] && MSG="ssh not running · see /tmp/db.log" || MSG="ssh 未启动 · 看 /tmp/db.log"
     fi
     if [ -x "$D/popup_timeout" ]; then
         "$D/popup_timeout" "$MSG" 5 >/dev/null 2>&1 &
@@ -102,5 +110,10 @@ fi
 
 echo "state : $ST"
 echo "ip    : $IP"
-echo "login : ssh root@$IP   (端口 22，空密码；或把自己的公钥写进 $DB/authorized_keys)"
-[ "$ST" = "SSH开" ] || echo "hint  : sh $D/ssh_hint.sh --start    # 或看 /tmp/db.log"
+if [ "$NX_LANG" = en ]; then
+    echo "login : ssh root@$IP   (port 22, blank password; or add your public key to $DB/authorized_keys)"
+    listening || echo "hint  : sh $D/ssh_hint.sh --start    # or read /tmp/db.log"
+else
+    echo "login : ssh root@$IP   (端口 22，空密码；或把自己的公钥写进 $DB/authorized_keys)"
+    listening || echo "hint  : sh $D/ssh_hint.sh --start    # 或看 /tmp/db.log"
+fi

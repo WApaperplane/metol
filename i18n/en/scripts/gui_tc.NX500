@@ -1,0 +1,8 @@
+# gui_tc.NX500 (EN) — video TC curve, 19-point table inside p7
+button|Stock|/opt/usr/nx-ks/tc.sh off
+button|Log|/opt/usr/nx-ks/tc.sh set log
+button|Flat|/opt/usr/nx-ks/tc.sh set flat
+button|High Contrast|/opt/usr/nx-ks/tc.sh set hc
+
+button|GO BACK|@/opt/usr/nx-ks/gui_func.NX500
+button|CANCEL|/opt/usr/nx-ks/gui_exit.sh

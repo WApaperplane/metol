@@ -9,11 +9,10 @@ An enhancement mod for the **Samsung NX500 / NX1** (Tizen / DRIMe5), built on th
 
 > 中文版见 [README.md](README.md)
 
-**Latest v2.88.0-nxwa.15.2** (2026-11-10, hotfix) — **NXUI is now on by default**:
-`available` used to require an `nxui/enabled` marker that no release ever shipped, so a fresh
-install showed the legacy NX-KS popup on EV+AEL / MENU. It is now available unless you run
-`nxui.sh disable`; diagnose with `nxui.sh diag`. Also carries the 15.1 remote-access fix
-(SSH state in the menu) and the `pwrlog` power-off forensics.
+**Latest v2.88.0-nxwa.15.3** (2026-11-10) — **bilingual release**: from this version we ship
+both `NX-WA-<ver>.zip` (Chinese) and `NX-WA-<ver>-EN.zip` (English menus, English NXUI panel,
+English README). Release notes are published in Chinese and English side by side. Feature set
+matches 15.2 (NXUI on by default, remote access fix, `pwrlog` power-off forensics).
 
 ## Install
 
@@ -22,6 +21,7 @@ install showed the legacy NX-KS popup on EV+AEL / MENU. It is now available unle
 3. **Turn Bluetooth on once by hand** — the mod's boot hook is initialised by it.
 
 - Firmware: NX500 **1.12** / NX1 **1.41**; anything else is refused.
+- Two packages: `NX-WA-<ver>.zip` (Chinese) and `NX-WA-<ver>-EN.zip` (English menus, English NXUI panel, English README). Identical features, only the wording differs.
 - Inserting the card again = **incremental sync** (overwrite only, never delete, never auto-uninstall); uninstall from the camera menu (`uninstall.sh`).
 - Install / sync / WiFi push / rollback: [SYNC.md](SYNC.md) (bilingual).
 

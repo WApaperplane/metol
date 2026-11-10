@@ -1,0 +1,16 @@
+checkbox|Remote Save|rem.sh
+button|Video Bitrate|@/tmp/gui_br.NX500
+
+button|ZoomZoom|zoomzoom.sh
+button|Resolutions|@/opt/usr/nx-ks/gui_res.NX500
+
+button|Batch Rec|brec.sh
+button|HDR|1HDR.sh
+button|LUT Filter|nxui.sh lut
+button|TC Curve|@/opt/usr/nx-ks/gui_tc.NX500
+
+button| Mod v2.88 |ver.sh
+checkbox|Camcorder|camcorder_mode.sh
+
+button|GO BACK|@/opt/usr/nx-ks/gui_ini.NX500
+button|CANCEL|/opt/usr/nx-ks/gui_exit.sh
