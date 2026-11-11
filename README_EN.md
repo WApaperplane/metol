@@ -24,7 +24,7 @@ README), with release notes in both languages.
 | Key | Opens | Note |
 |---|---|---|
 | **EV + AEL** | FilmLab strip (79 recipes) | tap to preview, `Save & close` persists |
-| **EV + WiFi** | 3D LUT panel (68 tables) | tap to switch, **no half-press needed** |
+| **EV + WiFi** | 3D LUT panel (86 tables) | tap to switch, **no half-press needed** |
 | **Double-tap EV** | Main menu (NXUI paged UI) | items are listed in [Camera menu](#camera-menu) |
 | **Half-press** | Closes the current panel | the applied look **stays** after closing |
 
@@ -205,7 +205,7 @@ Upstream NX-KS capability.
 | Retarget | Write 19,712 B into the work slot (A18 `0x81119F00`) + point **all four** registry tables at it + **auto-load after frame end** (`nx_lutload.arm`, no half-press) |
 | Registry tables | `View4` (4 entries, colour space × screen colour) + `Still6` (6) + `BV12` (12) — **none may be skipped**, or you get "viewfinder filtered, photo not" |
 | Import | `.cube → 19,712 B slot table` via on-camera `cube2lut.arm`, or host-side `test_server/isp/nx3dlut.py` |
-| Generation basis | Built for the **measured camera input domain**: response slope `log2(code)/EV = 0.809`, not sRGB's 0.45 (a 1.8× gap). Tables built on the sRGB assumption get crushed twice in the shadows; 34 of the 68 bundled tables have been regenerated against the real response (25 G'MIC + 9 recipe tables), the other 34 have no traceable generator and are untouched |
+| Generation basis | Built for the **measured camera input domain**: response slope `log2(code)/EV = 0.809`, not sRGB's 0.45 (a 1.8× gap). Tables built on the sRGB assumption get crushed twice in the shadows. Of the 86 frozen tables, 47 carry over from the previous release (34 of them regenerated against the real response: 25 G'MIC + 9 recipe tables) and 39 come from the 2026-11-08 community batch |
 | Live view / stills | Live view reads only `View4`; stills have **two mutually exclusive branches** (screen colour on → `BV12`, off → `Still6`) and both must be retargeted |
 | Video | After `apply`, just press record — **the very first frame already carries the table** (p7's 23-entry slot pointer table is redirected to A18); `off` stops the watcher. Long takes and other frame rates are untested |
 | Panel close | **Does not restore**: `Save & close` / half-press only close the panel, the table stays live. To go back, use `Factory` in the panel or `lut.sh off` |
@@ -225,6 +225,24 @@ Upstream NX-KS capability.
 Order and favourites live in `lut/state/order` on the card (one name per line, `*` = favourite).
 Removal is a **move to `looks/_trash/`**, never an `rm` — deleting a duplicated name on exFAT
 releases the cluster chain and corrupts the siblings.
+
+#### Frozen library and cleaning out old tables
+
+The 86 bundled tables are the **frozen set** (fixed on 2026-11-11 against what was actually kept on the camera); the roster is `looks/MANIFEST.txt` (md5 + size).
+The 80 names from earlier batches are listed in `looks/obsolete.txt` — unzipping only overwrites,
+never deletes, so without this they stay on the card and the panel mixes old and new.
+
+```sh
+sh /opt/usr/nx-ks/lut.sh verify          # against the roster: MISSING / CHANGED / EXTRA
+sh /opt/usr/nx-ks/lut.sh prune --dry-run # see what would move
+sh /opt/usr/nx-ks/lut.sh prune           # move old batches to looks/_trash/ (move, not delete)
+```
+
+`EXTRA` is not necessarily an error — your own looks count as extra. `prune` only touches names
+listed in `obsolete.txt`; anything else is left alone, and mistakes are recoverable from
+`looks/_trash/`. After changing the library (add / remove / edit any table) you must re-run
+`python tools/lutgen/make_manifest.py` and commit it, otherwise `verify` reports `CHANGED` on the
+next machine — deliberately: a library change has to be an explicit act.
 
 Blending is **normalised weighting**: `r = B/(A+B)` picks the mix, `s = min(A+B, 100)` the strength,
 `T = stock + s·(mix(A,B,r) − stock)`. Both at 100% therefore lands on the midpoint instead of
@@ -341,7 +359,7 @@ verification, none is "should work".
 | Dimension | ✅ Works | ❌ Not / unverified |
 |---|---|---|
 | Platform | NX500 firmware **1.12** (all features verified on device) | NX1 1.41 installs, but LUT / FilmLab / NXUI are not enabled there; other firmware versions are refused |
-| Colour | sRGB output: viewfinder and JPEG colours are trustworthy (basis of the 68 bundled tables, 34 of them generated against the measured input domain) | **AdobeRGB applies but is not calibrated**; in-camera smart filters (enum 14–18) take another 24-step dynamic path and are not covered |
+| Colour | sRGB output: viewfinder and JPEG colours are trustworthy (basis of the 86 bundled tables, 34 of them generated against the measured input domain) | **AdobeRGB applies but is not calibrated**; in-camera smart filters (enum 14–18) take another 24-step dynamic path and are not covered |
 | Carriers | **JPEG stills + viewfinder + video (first frame carries the table)** | **RAW (`.SRW`) is not promised to be baked**; the ground is 8-bit 4:2:0 (10-bit unreachable, the built-in gamma interface has no consumer); long takes and other frame rates untested |
 | Video curve | **Four TC presets, effective within 50 ms, reaches the HEVC stream** | Re-allocates 256 code values only, no extra dynamic range; absolute anchor needs a grey card; switching while recording, stacking with 3D LUT, and the photo path are unverified |
 | Activation | LUT auto-loads after a write (waits for frame end, no keypress); TC takes effect in <50 ms | **Not boot-persistent** — power cycle restores stock; persistence needs an image patch |

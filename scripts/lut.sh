@@ -30,6 +30,8 @@
 #   lut.sh del <name>           移到 _trash/（不物理删除）
 #   lut.sh index                重建 order（清掉已消失的条目）
 #   lut.sh mix <A> <B> <0-100>  两表交叉混合：0=A，100=B
+#   lut.sh verify               对照 MANIFEST.txt 检查库是否被动过（missing/changed/extra）
+#   lut.sh prune [--dry-run]    清掉 obsolete.txt 里的旧批次（移到 _trash/，不删除）
 #   lut.sh strength <name> <0-100>   强度混合：0=原厂，100=该 look
 #   lut.sh stock                dump 原厂 A17 到 looks/_stock_A17.bin（强度 0 端）
 #=====================================================================
@@ -523,6 +525,89 @@ begin)
     echo "OK backup written to $ST/a18_orig.bin"
     ;;
 
+verify)
+    # 对照 MANIFEST.txt：库是不是被动过。只读，不写相机、不改库。
+    # 判据三档：MISSING（该有却没有）/ CHANGED（同名不同内容）/ EXTRA（卡上多出来的，
+    # 多半是用户自己加的，不算错 —— 但如果你没加过，就是旧批次没清干净）。
+    [ -d "$LAB" ] || die "no $LAB"
+    [ -f "$LAB/MANIFEST.txt" ] || die "no $LAB/MANIFEST.txt（这个包缺定档清单）"
+    $BB mkdir -p "$ST" || die "cannot create $ST"
+    seen=$ST/.verify-seen
+    lf=$ST/.manifest.lf
+    # 去 CR：Windows 上编辑过的 txt 会带 \r，busybox 的 read 不会自己吃
+    $BB tr -d '\r' < "$LAB/MANIFEST.txt" > "$lf" || die "cannot read MANIFEST.txt"
+    : > "$seen"
+    n=0; miss=0; chg=0; extra=0
+    while read -r sum size name; do
+        case "${sum:-}" in ''|\#*) continue ;; esac
+        [ -n "${name:-}" ] || continue
+        n=$((n + 1))
+        printf '%s\n' "$name" >> "$seen"
+        if [ ! -f "$LAB/$name" ]; then
+            echo "MISSING $name"
+            miss=$((miss + 1))
+            continue
+        fi
+        got=$($BB md5sum "$LAB/$name" 2>/dev/null); got=${got%% *}
+        if [ "$got" != "$sum" ]; then
+            echo "CHANGED $name"
+            chg=$((chg + 1))
+        fi
+    done < "$lf"
+    for f in "$LAB"/*.bin; do
+        [ -f "$f" ] || continue
+        b=${f##*/}
+        # `_` 开头是内部件（_stock_A17 是 lut.sh stock 的 dump，_trash 是目录），不算 EXTRA
+        case "$b" in _*) continue ;; esac
+        # busybox 1.20.2 的 grep -x 不可靠，用 awk 精确比一行（同 order_has）
+        $BB awk -v k="$b" '$0 == k { found = 1 } END { exit !found }' "$seen" && continue
+        echo "EXTRA $b"
+        extra=$((extra + 1))
+    done
+    $BB rm -f "$seen" "$lf"
+    echo "SUMMARY manifest=$n missing=$miss changed=$chg extra=$extra"
+    [ "$miss" = 0 ] && [ "$chg" = 0 ] || exit 1
+    ;;
+
+prune)
+    # 清旧批次：obsolete.txt 里列出、卡上还存在的，移到 _trash/（移动，不删）。
+    # 发布包解压是"覆盖不删除"，旧表会一直赖在卡上 —— 这就是"旧 lut 还在用"的来源。
+    dry=0
+    [ "${2:-}" = --dry-run ] && dry=1
+    [ -d "$LAB" ] || die "no $LAB"
+    [ -f "$LAB/obsolete.txt" ] || die "no $LAB/obsolete.txt（这个包缺旧表清单）"
+    moved=0; kept=0
+    lf=$ST/.obsolete.lf
+    $BB mkdir -p "$ST" || die "cannot create $ST"
+    $BB tr -d '\r' < "$LAB/obsolete.txt" > "$lf" || die "cannot read obsolete.txt"
+    while IFS= read -r name; do
+        case "${name:-}" in ''|\#*) continue ;; esac
+        [ -f "$LAB/$name" ] || { kept=$((kept + 1)); continue; }
+        if [ "$dry" = 1 ]; then
+            echo "WOULD-MOVE $name"
+            moved=$((moved + 1))
+            continue
+        fi
+        $BB mkdir -p "$TRASH" || die "cannot create $TRASH"
+        if $BB mv -f "$LAB/$name" "$TRASH/$name"; then
+            echo "MOVED $name"
+            moved=$((moved + 1))
+        else
+            echo "FAILED $name"
+        fi
+    done < "$lf"
+    if [ "$dry" = 1 ]; then
+        echo "DRY-RUN would-move=$moved (already-clean=$kept)"
+        exit 0
+    fi
+    if [ "$moved" -gt 0 ]; then
+        $BB sync 2>/dev/null
+        plog "prune moved=$moved"
+    fi
+    $BB rm -f "$lf"
+    echo "OK pruned=$moved already-clean=$kept -> $TRASH"
+    ;;
+
 apply)
     name=${2:-}
     [ -n "$name" ] || die "usage: lut.sh apply <name>"
@@ -603,6 +688,7 @@ status)
     echo "       lut.sh fav <name>|move <name> up|down|top|del <name>|index"
     echo "       lut.sh mix <A> <B> <0-100>|strength <name> <0-100>|stock"
     echo "       lut.sh video on [seconds]|off|status"
+    echo "       lut.sh verify | prune [--dry-run]"
     exit 2
     ;;
 esac

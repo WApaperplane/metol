@@ -187,7 +187,7 @@ def main():
     existing = {p.stem: load_native(p) for p in sorted((REPO / 'looks').glob('*.bin'))}
     pts, _ = probe_set()
     ex_lab = {k: rgb_to_lab(apply_slot(pts, v)) for k, v in existing.items()}
-    base = brand_metrics(load_native(REPO / 'looks' / 'identity17.bin'))
+    base = brand_metrics(load_native(REPO / 'tools' / 'lutgen' / 'fixtures' / 'identity17.bin'))
     print('identity baseline: blue C*=%.1f h=%.1f | red C*=%.1f h=%.1f | skin a*=%.1f'
           % (base['blue_chroma'], base['blue_hue'], base['red_chroma'],
              base['red_hue'], base['skin_a']))
