@@ -9,10 +9,70 @@ Samsung NX500 / NX1（Tizen / DRIMe5）增强固件 mod，基于社区上游
 
 > English version: [README_EN.md](README_EN.md)
 
-**最新 v2.88.0-nxwa.15.3**（2026-11-10）— **双语发行**：从这版起同时发布
-`NX-WA-<ver>.zip`（中文）与 `NX-WA-<ver>-EN.zip`（英文：英文菜单 + 英文面板 +
-英文 README），Release 说明中英并列。功能与 15.2 相同（NXUI 默认可用 + 远程通路 +
-pwrlog 关机取证）。
+**最新 v2.88.0-nxwa.15.3**（2026-11-10）— 双语发行：每次发版两个包，
+`NX-WA-<ver>.zip`（中文）与 `NX-WA-<ver>-EN.zip`（英文菜单 / 英文 NXUI 面板 / 英文 README），
+Release 说明中英并列。
+
+---
+
+## 30 秒上手
+
+1. 把 `NX-WA-<ver>.zip` 解压到 **SD 卡根目录** → 插卡 → 屏上「安装完成」→ 自动重启。
+2. **手动开一次蓝牙**（机身菜单 → 系统设置 → 启用蓝牙）—— mod 的开机钩子靠它初始化。
+3. 记住四个按键：
+
+| 按键 | 打开 | 备注 |
+|---|---|---|
+| **EV + AEL** | FilmLab 滤镜条（79 条配方） | 点选即时预览，`保存并关闭` 落盘 |
+| **EV + WiFi** | 3D LUT 面板（68 张表） | 点选即换表，**不用半按** |
+| **双击 EV** | 主菜单（NXUI 分页界面） | 菜单内容见「[相机菜单一览](#相机菜单一览)」 |
+| **半按快门** | 关闭当前面板 | LUT/FilmLab 面板关闭后**保留当前效果** |
+
+> 组合键都是「按住 EV 不放，再按另一个键」；单击 WiFi 仍是相机原生的开/关 WiFi。
+
+装完想看菜单里每一项干什么、出问题该看哪个日志，直接跳
+[相机菜单一览](#相机菜单一览) 和 [排障](#排障先看日志再动手)。
+
+## 排障：先看日志，再动手
+
+### 三条恢复命令（先保命）
+
+```sh
+sh /opt/usr/nx-ks/nxui.sh disable    # UI 出问题 → 回老的 mod_gui 菜单
+sh /opt/usr/nx-ks/lut.sh off         # 颜色不对 → 回原厂 LUT
+sh /opt/usr/nx-ks/tc.sh off          # 录像曲线 → 回原厂
+sh /opt/usr/nx-ks/nxui.sh diag       # 面板能不能用，一次看全
+```
+
+`nxui.sh diag` 会打印 `bin / model / disabled / enabled / available` 五项；
+`available: no` 只有三种原因：二进制没装好、机型是 NX1、或者被 `disable` 过。
+
+### 日志在哪
+
+| 路径 | 谁写 | 断电后还在？ |
+|---|---|---|
+| `/mnt/mmc/nx-ks/pwrlog.txt` | `pwrlog.sh`（15.1+，每 30 s 一条 + 开机记 `BOOT`） | ✅ SD |
+| `/mnt/mmc/lut/state/*.log` | `lut.sh` 每一步（write / view / still / bv / lutptr / kick） | ✅ SD |
+| `/mnt/mmc/filmlab/last.log` | 配方 apply 的最后一次上下文 | ✅ SD |
+| `/opt/usr/nx-ks/onboard.log` | 装机自检（telnet / ssh / nxui diag / IP） | ✅ 机身 p10 |
+| `/tmp/nxui.log` | 面板全部 `READY / ACTION / BACKEND ok=…` | ❌ 关机即失 |
+| `/tmp/db.log` | dropbear（ssh 起没起、为什么没起） | ❌ |
+| `/tmp/nxwa-lut-video/watch.log` | 录像 LUT 监视器 | ❌ |
+
+**相机自己关机/重启**是唯一必须提前取证的问题：`pwrlog.txt` 里最后一条
+（`up=… pwr=… ssh=… ui=… lut=…`）加上 `pwrlog.sh dump 60` 的时间轴就是全部线索，
+`/tmp` 里的东西事后一律拿不到。
+
+### 常见症状对照
+
+| 症状 | 先看 |
+|---|---|
+| 按 EV+AEL 出来的是原版 NX-KS 弹窗 | `nxui.sh diag`；`available: no` 见上 |
+| 面板点了没反应 / 一直"正在发送" | `/tmp/nxui.log` 尾部 `BACKEND ok=0` + 对应 `lut.sh` 的 state 日志 |
+| 换了 LUT 画面不变 | `lut.sh status`；再半按一次快门（p7 自己的 Load 事件） |
+| 颜色偏 / 想确认是不是 LUT 的锅 | `lut.sh off` 前后对比；`lut.sh stock` 导出原厂表 |
+| 相机自己关机 | `/mnt/mmc/nx-ks/pwrlog.txt` → `sh /opt/usr/nx-ks/pwrlog.sh dump 60` |
+| ssh 连不上 | 菜单 `IP: … [SSH on]`；`sh /opt/usr/nx-ks/ssh_hint.sh --start`；`/tmp/db.log` |
 
 ## 安装
 
@@ -21,8 +81,8 @@ pwrlog 关机取证）。
 3. **手动开一次蓝牙** —— mod 的开机钩子靠它初始化。
 
 - 固件：NX500 **1.12** / NX1 **1.41**，其它版本拒绝安装。
-- 两个包：`NX-WA-<ver>.zip`（中文）与 `NX-WA-<ver>-EN.zip`（英文菜单 + 英文 NXUI 面板 + 英文 README）。功能完全相同，只有文案语言不同。
-- 再插一次卡 = **增量同步**（只覆盖、不删除；永不自动卸载）；卸载走相机菜单里的 `uninstall.sh`。
+- 两个包：`NX-WA-<ver>.zip`（中文）与 `NX-WA-<ver>-EN.zip`（英文菜单 + 英文 NXUI 面板 + 英文 README）。功能完全相同，只有文案语言不同。装错语言再装回另一个包即可，`nxui/lang` 随包覆盖。
+- 再插一次卡 = **增量同步**（只覆盖、不删除；永不自动卸载）；卸载走相机菜单里的 `卸载模块`。
 - 安装 / 同步 / WiFi push / 回滚：[SYNC.md](SYNC.md)（中英双语）。
 
 ## 远程登录（SSH）
@@ -39,29 +99,85 @@ pwrlog 关机取证）。
 主机私钥 `dropbear_ed25519_host_key` 首次开机自动生成（p14 保留，刷机不丢）。
 排障看 `/opt/usr/nx-ks/onboard.log` 与 `/tmp/db.log`。
 
-## 快捷键
+---
 
-| 按键 | 打开 | 说明 |
-| --- | --- | --- |
-| **EV + AEL** | **滤镜条**（NXUI，720×208） | 79 条配方横向滚动 + 滚动条拖动/点击定位，点选**即时预览**（约 1.3 s，画布固定「自定义1」）；`保存并关闭` 落盘并把档位还回打开时那一档；再按一次或**半按快门**关闭。**NX500 专属**，NX1 自动回退社区原版 |
-| **EV + WiFi** | **LUT 滤镜面板** | 打开 NXUI 的 LUT 模式（`nxui.sh lut`）；**关闭面板不还原** —— 还原走面板内的「还原原厂」。NXUI 未启用时只弹一句提示 |
-| **双击 EV** | 主菜单（NXUI，720×336） | 分页界面，替代旧的 mod_gui 主菜单 |
-| **半按快门** | 关闭当前面板 | LUT 面板关闭且**保留当前表**，同时让 p7 重载 —— 让开画面拍照，LUT 继续生效 |
+## 相机菜单一览
 
-> **EV + WiFi 是组合键**：按住 EV 不放，再按 WiFi。单击 WiFi 仍是相机原生行为（开/关 WiFi），两者不冲突。
+主页六个入口 + 一行状态；下面把每一页的项写全，标了来源（★ = 本项目新增，
+上游 = 继承 NX-KS 2.88，未改动行为）。
 
-相机菜单内还有四项：`IP: x.x.x.x [Telnet关]`（点击开关 23/21）、`远程控制`（开关 Web 相册）、`LUT 滤镜`（等同 EV+WiFi 的 UI 部分）、`TC 曲线`（实用功能 → 原厂 / Log / Flat / 高对比）。
+### 主页
 
-## 功能
+| 项 | 作用 |
+|---|---|
+| 延时摄影 → | 见「延时摄影」 |
+| 实用功能 → | 见「实用功能」 |
+| 对焦 & 配置文件 → | 见「对焦」 |
+| 系统设置 → | 见「系统设置」 |
+| 休眠 | 立即休眠（`hibernate.sh`，上游） |
+| 远程控制 ☑ | 开关 Web 相册 / 遥控（`nx-rc.sh`，上游） |
+| `IP: x.x.x.x [SSH开]` | ★ 显示 SSH 状态；按下弹连接串，没起会拉起 dropbear |
 
-| 能力 | 一句话 |
-| --- | --- |
-| 胶片配方 | 79 条（负片 / 反转 / 黑白 / 电影 / 风格 / 相机内置风格），PW 七维一次直进 ISP |
-| 3D LUT | `.cube` 机身一条命令转成原生表；**改四张登记表 + 写 19,712 B 工作槽 + 自动装载**即换表（不用半按）；**两张表可以各带一个强度混着用**；滤镜库可在机身内增删、排序、收藏；**录像随 apply 联动，直接按录像键就带同一条表** |
-| TC 曲线 | 录像 tone 曲线四条预设（原厂 / Log / Flat / 高对比）：写 19 节点 + 置 dirty，**<50 ms 自行生效、不用按键**，重启回原厂 |
-| NXUI 界面 | Nuklear（MIT）+ 相机自带 X11/Xft 重写，**不链接 EFL**、不抓取/重绘取景帧 |
-| Web 相册 | 折叠目录 + `dirlist` 实时目录（新拍照片立即可见）+ 缩略图预热 + WiFi 在线 push |
-| 原 NX-KS 模块 | 视频码率、HDR、批量录制、变焦缩放、分辨率修改、拍摄参数 API 等 |
+### 延时摄影
+
+| 项 | 作用 |
+|---|---|
+| 唤醒延时 | 定时唤醒后开拍的延时流程（`wakelapse.sh`，上游） |
+| 渐变曝光 → | 延时里的曝光渐变：总时长 / 间隔 / 曝光起点终点 / 渐变开始与时长 / 延时启动，`开始` 走 `ramping.sh`（上游） |
+| 模块延时 | `mod_lapse`（上游二进制） |
+| 即将推出 | 占位 |
+
+### 实用功能
+
+| 项 | 作用 |
+|---|---|
+| 远程保存 ☑ | 远程保存开关（`rem.sh`，配置 `remote.cfg`，上游） |
+| 视频码率 → | 五档码率（Pro4K / ProHD / Hq4K / HqHD / HqVGA）与当前值，模板 `gui_br.tp`（上游） |
+| 变焦缩放 | 设延迟 → 拍一张 → 镜头回广角，做变焦爆发（`zoomzoom.sh`，上游） |
+| 分辨率修改 → | 见「分辨率映射」 |
+| 批量录制 | 按分钟分批连续录像，可选隐藏录制界面（`brec.sh`，上游） |
+| HDR | M 档五档快门（65 / 92 / 119 / 146 / 200）连拍 5 张，**机身不合成**，后期自己叠（`1HDR.sh`，上游） |
+| LUT 滤镜 | ★ 直接进 NXUI 的 LUT 面板（等同 EV+WiFi） |
+| TC 曲线 → | ★ 录像曲线：原厂 / Log / Flat / 高对比 |
+| `版本 v2.88` | 版本弹窗（`ver.sh`） |
+| 摄像模式 ☑ | 快门键变录像键（`camcorder_mode.sh` → `shutter_to_rec`，上游） |
+
+### 对焦 & 配置文件
+
+| 项 | 作用 |
+|---|---|
+| 对焦堆栈 | 按张数 / 间隔自动移焦（`fstack.sh`，配置在 SD：`/mnt/mmc/scripts/focus_stack.cfg`，上游） |
+| 对焦按钮 | 长按存位置、点击回位置（位置表 `/mnt/mmc/scripts/af_positions.txt`，上游） |
+| 配置文件 → | 保存 / 加载 `EV+UP`、`EV+DN`、完整备份（`save_UP.sh` / `EV_UP.sh` / `FullSave.sh` …，上游） |
+| 对焦速度 | 设拉焦速度 1–255（写 `fps` 环境变量，`fpspeed.sh`，上游） |
+| 自定义选项 / 自定义按钮 | 模板占位，可改成自己的脚本（`cCheckbox.sh` / `cButton.sh`，上游） |
+
+### 系统设置
+
+| 项 | 作用 |
+|---|---|
+| 静音快门 ☑ | 电子快门 `ADJUSTSHUTTERTYPE 0x750001`（`rolling_shutter.sh`，上游） |
+| 禁用菜单键 ☑ | 关掉 MENU 键的默认 OSD 行为（`z_button.sh`，上游） |
+| 无录制限制 ☑ | 解除录像时长限制（`prefman 0xc2d9=1`，上游） |
+| 开机重新对焦 ☑ | 开机按休眠前记录的位置重新对焦（`refocus.sh`，上游） |
+| 无镜头释放 ☑ | 无镜头也能释放快门（`prefman 0xc2dd=1`，上游） |
+| 启用蓝牙 ☑ | 重启蓝牙服务（`bt.sh`，上游） |
+| 叠加显示 ☑ | 打开 `onscreen_ov` 叠加层（上游） |
+| 卸载模块 v2.88 | 卸载 mod（`uninstall.sh`） |
+
+### 分辨率映射
+
+把某个拍摄档位（UHD / DC / VGA）映射成另一种分辨率，八项互斥，**同一档位一次只开一个**：
+
+| 档位 | 可映射到 |
+|---|---|
+| UHD | 2.5K 全宽（2560×1440）/ DC 4K（4096×2160）/ FHD（1920×1080） |
+| DC | 2.5K / UHD / FHD |
+| VGA | UHD / DC 4K |
+
+开关落在机内偏好，改完回取景器确认实际输出。属于上游 NX-KS 能力。
+
+---
 
 ## FilmLab 胶片配方
 
@@ -76,7 +192,7 @@ pwrlog 关机取证）。
 
 - **改配方不用改代码**：编辑 `/mnt/mmc/filmlab/recipes.json` → 拷回 SD → 重开菜单（自动重建）。仓库权威源是 `scripts/filmlab/recipes.json`，上位机一条龙 `test_server/filmlab/flab.py add|edit|rm|lint|deploy`。
 - 配方 = Picture Wizard 七维向量（R/G/B 增益 + HUE/SAT/SHARP/CONTRAST），固定落在「自定义1」槽，位置恒定。
-- **全七维直推需要 A2 固件**（`patch-a2/` 随包提供，含刷入教程与 md5）。官方固件下 R/G/B/HUE 需机身「画面向导 → 自定义1」确认一次 —— 这是 p7 归一化器域界（`0x100–0x12e`）的结构性限制，不是脚本 bug。
+- **全七维直推需要 A2 固件**（`patch-a2/` 随包，刷法见「[A2 p7 补丁](#a2-p7-补丁可选)」）。官方固件下 R/G/B/HUE 需机身「画面向导 → 自定义1」确认一次 —— 这是 p7 归一化器域界（`0x100–0x12e`）的结构性限制，不是脚本 bug。
 - 诚实边界：WB 不在配方内（请用机身白平衡）；配方是全局色彩向量，做不出高光滚降 / 分区曝光；NX1 上不启用（prefman 偏移只在 NX500 1.12 实证）。
 - 判据只认一条：`sh /opt/usr/nx-ks/filmlab.sh check` 直接读 ISP 手上那七维跟配方比对（只读、零风险）。**"值变了" ≠ "被消费"**。
 - 另有 `scripts/nx-rc/MOBILE_MOBILE.sh`（双击 WiFi = 零 UI 轮换下一条配方）——不进安装链，需要时手动放到 `/opt/usr/nx-ks/`。
@@ -92,6 +208,7 @@ pwrlog 关机取证）。
 | 生成依据 | 按**实测相机输入域**：响应斜率 `log2(码值)/EV = 0.809`，不是 sRGB 的 0.45（差 1.8 倍）。按 sRGB 假设做的表会在暗部被二次压缩；68 张随包表里 34 张已按真实响应重生成（25 张 G'MIC + 9 张配方），其余 34 张无生成器可追溯、保持原样 |
 | 取景 / 成片 | 取景只认 `View4`；成片有**两条互斥分支**（屏幕色彩开→`BV12`，关→`Still6`），两条都要指过去 |
 | 视频 | `apply` 之后直接按录像键，**首帧就带表**（p7 的 23 项档位指针表被整体指到 A18），`off` 自动停监视。长录与更多帧率尚未覆盖 |
+| 面板关闭 | **不还原**：`保存并关闭` / 半按只是关面板，表继续生效；要回原厂按面板里的「还原原厂」或 `lut.sh off` |
 | 边界 | 全是内存操作，**断电即回原状**（「开机即生效」仍需改固件镜像）；sRGB 颜色可信，AdobeRGB 只保证生效 |
 | 装载写序 | ⛔ 自己写 `+0x00C` 必须走完整 8 步：`OnOff` → 清/置 Acc → 地址 → Cfg 通道位 → bit8 脉冲 → **末尾复位 Acc**，并等取景帧结束。只写地址 + 脉冲就会花屏 —— 这才是 10-08 那条「禁区」的真实原因 |
 
@@ -113,8 +230,7 @@ pwrlog 关机取证）。
 
 双表强度的语义是**归一加权**：`r = B/(A+B)` 定比例，`s = min(A+B, 100)` 定总强度，
 最终 `T = 原厂 + s·(mix(A,B,r) − 原厂)`。所以两个都推满时得到两张表的折中，不会溢出成死黑死白。
-实测对比（偏移叠加会溢出 14%、图层覆盖会随 A/B 顺序变 7–30 级）见
-[`docs/current/DUAL_STRENGTH_2026-11-02.md`](docs/current/DUAL_STRENGTH_2026-11-02.md)。
+实测对比见 [`docs/current/DUAL_STRENGTH_2026-11-02.md`](docs/current/DUAL_STRENGTH_2026-11-02.md)。
 
 ### LUT 面板按键（NX500 实体键，全部实测）
 
@@ -132,10 +248,6 @@ pwrlog 关机取证）。
 > 三态里**唯一会改库内容**的是编辑态（删除 / 排序）。混合态的 A/B 用按钮行设
 > （`设为A` / `设为B` / `应用混合` / `退出`），退出**不会**自动应用。
 > 键位可以覆盖：`$NXUI_STATE_DIR/keys.conf` 一行 `<keysym> <action>`，`none` 表示解绑。
-
-> 面板的列表是「选中项居中」的 5 项窗口，所以**不做横滑切项**：滑动与整排平移叠加
-> 会把目标甩掉，长按也按不准。翻页只走滚条、上下键、两只拨盘 —— 滚条一次可跨全库，
-> 轨道上还画着 A（绿）/ B（橙）两个刻度。
 
 ```sh
 sh /opt/usr/nx-ks/lut.sh list | begin | apply <名> | off | status   # 滤镜库 /mnt/mmc/looks/
@@ -174,6 +286,23 @@ sh /opt/usr/nx-ks/tc.sh off
 
 细节：[`docs/current/TC_CURVE_ONDEVICE_2026-11-08.md`](docs/current/TC_CURVE_ONDEVICE_2026-11-08.md)　还原工作流：[`docs/current/TC_RESTORATION_WORKFLOW_2026-11-08.md`](docs/current/TC_RESTORATION_WORKFLOW_2026-11-08.md)
 
+## A2 p7 补丁（可选）
+
+「全七维 PW 一键直推」的固件前提。没刷也不会坏，只是 R/G/B/HUE 要靠机身「画面向导」确认一次。
+
+| 项 | 值 |
+|---|---|
+| 镜像 | `patch-a2/p7_a2.bin`（随发布包，12,075,648 B，md5 `712c6fd0a49371ec05ce94c367b0d5c7`） |
+| 目标分区 | `/dev/mmcblk0p7`（约 30 MB，**写错分区不可逆**） |
+| 通道 A | 解压包 → 相机 `dd` 写入 p7（约 1 s） |
+| 通道 B | Release 附件 `slp_a2_p7_v117.bin`（352 MB）改名 `nx500.bin` 走官方刷机链 |
+| 生效 | **正常关机 → 开机**；⛔ 不要 `systemctl restart di-camera-app` |
+| 回退 | 写入前的 `p7_backup_*.bin` 写回，或重刷官方 1.12 |
+
+完整步骤（ssh 口径、备份、回读判据、分段比对、回退）见
+[`fw/v1.12/a2/README-A2.md`](fw/v1.12/a2/README-A2.md)（[EN](fw/v1.12/a2/README-A2_EN.md)）。
+官方固件升级会重写 p7 ⇒ **升级后要重刷 A2**。
+
 ## 目录结构
 
 | 路径 | 说明 |
@@ -181,25 +310,26 @@ sh /opt/usr/nx-ks/tc.sh off
 | `install.sh` `info.tg` `nx_cs.adj` | SD 卡根触发三件套（装机 / 增量同步） |
 | `scripts/` | 全部模块母本 → 同步到相机 `/opt/usr/nx-ks/` |
 | `scripts/filmlab.sh` · `scripts/filmlab/recipes.json` | FilmLab 引擎 / 权威配方库（79 条） |
-| `scripts/EV_AEL.sh` · `scripts/EV_MOBILE.sh` | 两个组合键入口（`EV+AEL` 滤镜条 / `EV+WiFi` LUT 面板） |
+| `scripts/EV_AEL.sh` · `scripts/EV_MOBILE.sh` · `scripts/EV_EV.sh` | 三个组合键入口（滤镜条 / LUT 面板 / 主菜单） |
+| `scripts/nxui.sh` · `scripts/nxui/` | NXUI 启动器 + 面板二进制（`nxui.arm` 中文 / `nxui_en.arm` 英文）+ 字体 + `lang` |
 | `scripts/lut.sh` · `scripts/lut/` | 3D LUT 入口 + 工具集（`cube2lut` / `nx_slotwrite` / `nx_regtabwrite` / `nx_regtabdump` / `nx_lutload` / `nx_lutptr` / `lutmix`） |
 | `scripts/lut_video.sh` | 录像 LUT 监视器（随 `apply`/`off` 联动，锁与状态都在 `/tmp`） |
 | `scripts/tc.sh` · `scripts/tc/*.tcy` | TC 曲线写入与曲线库（原厂 / Log / Flat / 高对比） |
-| `scripts/gui_tc.NX500` | 原生菜单入口：实用功能 → TC 曲线 |
+| `scripts/ssh_hint.sh` · `scripts/dropbear/` | SSH 状态提示与 dropbear 本体 |
+| `scripts/pwrlog.sh` | 关机取证采样（30 s 一条到 SD） |
+| `scripts/gui_*.NX500` | 原生菜单页（`i18n/en/scripts/` 是英文覆盖层） |
 | `tools/tcgen/` · `tools/lutgen/` | PC 端工具：曲线生成 / 只读验链 / LUT 生成与体检 |
-| `scripts/nx-rc/` | Web 遥控：`web_root/` `thumb/` `capdtm/` `push/` |
-| `test_server/` | PC 端开发验证环境（模拟 API、工具链、门控） |
+| `test_server/` | PC 端开发验证环境（模拟 API、工具链、面板源码与 `make_en.py`） |
 | `uninstall_pkg/` | 相机菜单卸载入口 |
 
 ## 文档
 
 - [`docs/README.md`](docs/README.md) — **文档总索引**（`current` 现行 / `archive` 历史 / `evidence` 证据）
 - [`docs/current/HANDOVER_2026-10-16.md`](docs/current/HANDOVER_2026-10-16.md) — 总入口：约定、死路、门控、执行序
-- [`docs/current/ONDEVICE_SOP_2026-10-16.md`](docs/current/ONDEVICE_SOP_2026-10-16.md) — 上机日 SOP（就位 / 判据 / 回退）
-- [`docs/current/NXUI_NUKLEAR_2026-10-17.md`](docs/current/NXUI_NUKLEAR_2026-10-17.md) — NXUI 安装与验证
+- [`docs/current/NXUI_ENABLE_GATE_2026-11-10.md`](docs/current/NXUI_ENABLE_GATE_2026-11-10.md) — 「UI 出不来」的门禁根因与 diag
 - [`docs/current/TC_CURVE_ONDEVICE_2026-11-08.md`](docs/current/TC_CURVE_ONDEVICE_2026-11-08.md) — TC 曲线：地址链、写入协议、实机 A/B
 - [`docs/current/VIDEO_LUT_FIRSTFRAME_2026-11-07.md`](docs/current/VIDEO_LUT_FIRSTFRAME_2026-11-07.md) — 录像首帧带表：p7 档位指针表
-- [`docs/current/LUT_INPUT_CALIBRATION_2026-11-07.md`](docs/current/LUT_INPUT_CALIBRATION_2026-11-07.md) — 输入曲线实测协议与结果
+- [`fw/v1.12/a2/README-A2.md`](fw/v1.12/a2/README-A2.md) — A2 p7 补丁刷入教程
 - [`docs/current/RE_PROGRESS_2026-10-08.md`](docs/current/RE_PROGRESS_2026-10-08.md) — 逆向进度总览（含死路清单）
 
 > 历史文档里的旧结论（如"View/Still 不可分离""用户态不能写 LUT"）已被推翻，纠错见
@@ -211,13 +341,13 @@ sh /opt/usr/nx-ks/tc.sh off
 
 | 维度 | ✅ 能 | ❌ 不能 / 未验 |
 |---|---|---|
-| 平台 | NX500 固件 **1.12**（全部功能实机验证） | NX1 1.41 可装，但 LUT / FilmLab 未在 NX1 上验证；其它固件版本拒绝安装 |
+| 平台 | NX500 固件 **1.12**（全部功能实机验证） | NX1 1.41 可装，但 LUT / FilmLab / NXUI 未在 NX1 上启用；其它固件版本拒绝安装 |
 | 色彩 | **sRGB** 输出下取景与 JPEG 成片颜色可信（68 张随包表的基准，其中 34 张按实测输入域生成） | **AdobeRGB 会生效但颜色未标定**；相机智能滤镜（枚举 14–18）走另一条动态 24 档路径，不覆盖 |
 | 载体 | **JPEG 成片 + 取景器 + 录像（首帧即带表）** | **RAW（`.SRW`）不承诺被 LUT 烘焙**；地基只有 8bit 4:2:0（10bit 不可达，内置 gamma 接口无消费者）；录像长录与多帧率未覆盖 |
 | 录像曲线 | **TC 曲线四条预设，写表后 <50 ms 生效并进入 HEVC** | 只重分配 256 级码值，不产生动态范围；绝对锚点待灰卡定；录像中切换、与 3DLUT 叠加、照片路径影响均未验证 |
 | 生效 | LUT 写内存后**自动装载**（等取景帧结束，无需按键）；TC 曲线写表后 **<50 ms 自行生效** | **开机即生效做不到** —— 断电/重启回原厂，要持久化得改固件镜像 |
 | 触发 | `nx_lutload.arm once` 复刻 p7 的 Load 写序，用 `CORE RSZ_OUT1_EOF` 帧事件对齐 | 息屏或 `di-camera-app` 不在时 ISP 不取景，DMA 完成中断不会来 —— 此时退回「半按一次」 |
-| 形态 | 不刷机、不改分区，可双向回滚 | 不改固件分区 ⇒ 重启即回原厂（LUT 写入是内存操作） |
+| 形态 | 不刷机、不改分区，可双向回滚（A2 是唯一可选的 p7 写入） | 不改固件分区 ⇒ 重启即回原厂（LUT 写入是内存操作） |
 
 > 它**不是**完整色彩管理（不做输入/输出 profile 转换），**不是**所见即所得承诺（取景与成片处理链不同），
 > **不是**破解（不解除区域锁、不改录制时限）。改的只是 ISP 里的两张表：末端 3D 查找表 + 录像 tone 曲线。
