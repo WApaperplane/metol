@@ -43,7 +43,7 @@ run_tmo() {   # run_tmo <秒> <命令...>；无超时工具时降级直跑（并
 
 log() {
     if [ -f "$LOG" ] && [ "$(wc -c < "$LOG" 2>/dev/null || echo 0)" -gt "$LOGMAX" ]; then
-        tail -c 32768 "$LOG" > "$LOG.tmp" 2>/dev/null && mv -f "$LOG.tmp" "$LOG"
+        tail -c 32768 "$LOG" > "$LOG.tmp" 2>/dev/null \n            && { rm -f "$LOG" 2>/dev/null; mv -f "$LOG.tmp" "$LOG"; }
     fi
     echo "$(date '+%Y-%m-%d %H:%M:%S') $*" >> "$LOG" 2>/dev/null
 }

@@ -78,7 +78,8 @@ rotate() {
     sz=$($BB wc -c < "$LOG" 2>/dev/null | $BB tr -d ' ')
     [ -n "${sz:-}" ] || return 0
     [ "$sz" -gt 204800 ] || return 0
-    $BB tail -c 102400 "$LOG" > "$LOG.tmp" 2>/dev/null && $BB mv -f "$LOG.tmp" "$LOG"
+    $BB tail -c 102400 "$LOG" > "$LOG.tmp" 2>/dev/null \n        && { # exFAT 不覆盖式 rename：旧目录项会留在原地（2026-11-14 机上实测，每次 +1）
+             $BB rm -f "$LOG" 2>/dev/null; $BB mv -f "$LOG.tmp" "$LOG"; }
 }
 
 case "${1:-once}" in

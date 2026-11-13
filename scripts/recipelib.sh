@@ -174,6 +174,8 @@ commit() {
     cand=$1; expect=$2
     bak=$3
     cp "$cand" "$RECIPE.tmp" || die "cannot stage"
+    # # exFAT 不覆盖式 rename：旧目录项会留在原地（2026-11-14 机上实测，每次 +1）
+    $BB rm -f "$RECIPE" 2>/dev/null
     $BB mv -f "$RECIPE.tmp" "$RECIPE" || die "cannot replace $RECIPE"
     got=$(count_keys)
     if [ "$got" != "$expect" ]; then

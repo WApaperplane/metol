@@ -55,14 +55,18 @@ TRASH=$LAB/_trash               # 下架区（不是删除）
 # 直接退出，兜底根本轮不到执行（本机测出来的坑）。
 if [ -r /opt/usr/nx-ks/nxstore.sh ]; then . /opt/usr/nx-ks/nxstore.sh; fi
 command -v nx_ram >/dev/null 2>&1 || nx_ram() { _d=/tmp/nx/${1:-state}; mkdir -p "$_d" 2>/dev/null; echo "$_d"; }
-# 同理给 nx_put 留一个最小实现：老包 / 手工部署可能没有 nxstore.sh，
-# 但「tmpfs 写 SD」这个跨文件系统的落盘动作无论在哪种安装形态下都不能裸 mv。
+# 同理给 nx_put / nx_swap 留最小实现：老包 / 手工部署可能没有 nxstore.sh，
+# 但「写 SD」这件事无论在哪种安装形态下都不能裸 mv 覆盖（每次一个目录项尸体）。
+command -v nx_swap >/dev/null 2>&1 || nx_swap() {
+    [ -f "$1" ] || return 1
+    $BB rm -f "$2" 2>/dev/null
+    $BB mv -f "$1" "$2" 2>/dev/null
+}
 command -v nx_put >/dev/null 2>&1 || nx_put() {
     [ -s "$1" ] || return 1
     $BB cp -f "$1" "$2.tmp" 2>/dev/null || return 1
     $BB sync 2>/dev/null
-    $BB mv -f "$2.tmp" "$2" 2>/dev/null || { $BB rm -f "$2.tmp" 2>/dev/null; return 1; }
-    return 0
+    nx_swap "$2.tmp" "$2"
 }
 
 ST=$(nx_ram lut)                # 易失：还原点、日志、标志（tmpfs，重启即清）
@@ -188,7 +192,7 @@ order_sync() {
         # ★ 这里原来是 `mv -f "$ST/.order.1" "$ORD"` —— 源在 tmpfs、目标在
         #   exFAT，是跨文件系统的 rename+copy，中途掉电就留下半截 order。
         #   统一走 nx_put：同目录 .tmp → sync → 字节校验 → rename。
-        nx_put "$ST/.order.1" "$ORD" || $BB mv -f "$ST/.order.1" "$ORD"
+        nx_put "$ST/.order.1" "$ORD" || nx_swap "$ST/.order.1" "$ORD"
         $BB rm -f "$ST/.order.1" 2>/dev/null
     fi
     $BB rm -f "$ST/.names"
@@ -380,13 +384,13 @@ fav)
     if order_has "*$name"; then
         # 取消收藏：去掉星标，留在原位（不做位置回弹，用户调过的顺序不被打乱）
         $BB awk -v k="$name" '{ if ($0 == "*" k) print k; else print }' "$ORD" > "$ST/.o"
-        $BB mv -f "$ST/.o" "$ORD"
+        nx_swap "$ST/.o" "$ORD"
         echo "OK unfav $name"
     else
         # 新收藏 = 排到最前（收藏是「前排」语义，不是筛选维度）
         $BB awk -v k="$name" 'BEGIN { print "*" k }
                               { if ($0 == k || $0 == "*" k) next; print }' "$ORD" > "$ST/.o"
-        $BB mv -f "$ST/.o" "$ORD"
+        nx_swap "$ST/.o" "$ORD"
         echo "OK fav $name"
     fi
     ;;
@@ -412,7 +416,7 @@ move)
             for (i=1;i<=NR;i++) print line[i]
         }
     ' "$ORD" > "$ST/.o"
-    nx_put "$ST/.o" "$ORD" || $BB mv -f "$ST/.o" "$ORD"
+    nx_put "$ST/.o" "$ORD" || nx_swap "$ST/.o" "$ORD"
     $BB rm -f "$ST/.o" 2>/dev/null
     echo "OK moved $name $dir"
     ;;
@@ -441,7 +445,7 @@ del)
     $BB rm -f "$CV/$name.bin" "$CV/$name.sum" 2>/dev/null
     order_sync
     $BB awk -v k="$name" '{ if ($0 != k && $0 != "*" k) print }' "$ORD" > "$ST/.o"
-    $BB mv -f "$ST/.o" "$ORD"
+    nx_swap "$ST/.o" "$ORD"
     # 正在生效的就是它 ⇒ 一并还原，否则登记表指向一张已下架的表
     if [ -f "$ST/current" ] && [ "$(cat "$ST/current")" = "$name" ]; then
         sh "$0" off >/dev/null 2>&1 && echo "OK active look removed, restored to factory"

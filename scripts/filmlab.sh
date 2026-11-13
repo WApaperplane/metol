@@ -40,6 +40,12 @@ if [ -r /opt/usr/nx-ks/nxstore.sh ]; then . /opt/usr/nx-ks/nxstore.sh; fi
 # 兜底：nxstore 没装上时退化成 /tmp，至少不写卡（宁可缓存失效，也不打坏 exFAT）
 command -v nx_ram >/dev/null 2>&1 || nx_ram() { _d=/tmp/nx/${1:-state}; mkdir -p "$_d" 2>/dev/null; echo "$_d"; }
 command -v nx_log >/dev/null 2>&1 || nx_log() { mkdir -p /tmp/nx/log 2>/dev/null; echo "$*" >> /tmp/nx/log/main.log 2>/dev/null; }
+command -v nx_swap >/dev/null 2>&1 || nx_swap() {
+    [ -f "$1" ] || return 1
+    # exFAT 不覆盖式 rename：旧目录项会留在原地（2026-11-14 机上实测，每次 +1）
+    rm -f "$2" 2>/dev/null
+    mv -f "$1" "$2" 2>/dev/null
+}
 LAB=/mnt/mmc/filmlab
 RECIPE=$LAB/recipes.json
 LOG=$LAB/last.log
@@ -435,7 +441,7 @@ backup_apply_slot() {
     BACKVALUES="$BACKVALUES|$BACKVALUE"
   done
   printf '%s\n' "$BACKVALUES" > "$BACKFILE.tmp" || return 1
-  mv -f "$BACKFILE.tmp" "$BACKFILE"
+  nx_swap "$BACKFILE.tmp" "$BACKFILE"
 }
 # ★ 合法写入校验（2026-10-04 新增）
 #  UI 可见的只有 slot 9/10/11（自定义1/2/3）。slot 12=CUSTOM_4 在 prefman 里
@@ -1090,7 +1096,7 @@ mkgui)
   if [ ! -s "$TBL" ] || [ "$RMD5" != "$TMD5" ]; then
     jtable > "$TBL.tmp" 2>/dev/null
     if [ -s "$TBL.tmp" ]; then
-      mv -f "$TBL.tmp" "$TBL"
+      nx_swap "$TBL.tmp" "$TBL"
       printf '%s\n' "$RMD5" > "$TMD5F"
     else
       rm -f "$TBL.tmp"
@@ -1156,7 +1162,7 @@ mkgui)
   } >> "$OUT.tmp"
 
   # ★ 原子替换：mod_gui 只会看到完整菜单文件，绝不读到半成品
-  mv -f "$OUT.tmp" "$OUT"
+  nx_swap "$OUT.tmp" "$OUT"
   # ★ 记录本次生成所用的输入指纹（下次比对；内容哈希，跨文件系统可靠）
   printf '%s\n' "$SIG" > "$SIGF"
 
@@ -1184,7 +1190,7 @@ export)
   [ "$N" -gt 0 ] && EMPTY=$($BB awk -F'|' '$2 == "" { n++ } END { print n + 0 }' "$TMP" 2>/dev/null)
   case "$EMPTY" in ""|*[!0-9]*) EMPTY=0 ;; esac
   if [ "$N" -gt 0 ] && [ "$EMPTY" -eq 0 ]; then
-    mv -f $TMP $OUT
+    nx_swap "$TMP" "$OUT"
     echo "export: 已生成 $OUT — $N 个配方"
   else
     rm -f $TMP

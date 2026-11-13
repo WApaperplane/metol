@@ -56,5 +56,7 @@ if [ -f "$DST" ] && $BB cmp -s "$TMP" "$DST"; then
     $BB rm -f "$TMP"
     exit 0
 fi
+# # exFAT 不覆盖式 rename：旧目录项会留在原地（2026-11-14 机上实测，每次 +1）
+$BB rm -f "$DST" 2>/dev/null
 mv -f "$TMP" "$DST"
 exit 0

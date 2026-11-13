@@ -123,5 +123,19 @@ check "nx_st_set 空值" '[ "$(nx_st_get k X)" = "" ]'
 nx_st_set "" v >/dev/null 2>&1; rc=$?
 check "空 key 拒绝" '[ "$rc" = 1 ]'
 
+# ---- 9. 覆盖写的实现约束（exFAT 实测结论，见 nx_swap 注释）----
+# 这台相机的 exFAT 在 rename 到已存在名字时**不替换旧目录项**，每次写留一具尸体
+# （机上对照实验：mv -f 覆盖 10 次 → 11 个同名项）。WSL 的 ext4 复现不了这个，
+# 所以这里只锁实现形状：必须 rm 在前、mv 在后，且 nx_put 两个函数都走 nx_swap。
+check "nx_swap 已定义" 'command -v nx_swap >/dev/null 2>&1'
+sw=$(sed -n '/^nx_swap()/,/^}/p' "$LIB")
+check "nx_swap 先 rm 目标" 'echo "$sw" | grep -q "rm -f \"\$_nx_dst\""'
+r_lno=$(printf '%s\n' "$sw" | grep -n 'rm -f "\$_nx_dst"' | cut -d: -f1)
+m_lno=$(printf '%s\n' "$sw" | grep -n 'mv -f "\$_nx_src"' | cut -d: -f1)
+check "nx_swap 再 mv（rm 在 mv 之前）" \
+      '[ -n "$r_lno" ] && [ -n "$m_lno" ] && [ "$r_lno" -lt "$m_lno" ]' "rm=$r_lno mv=$m_lno"
+check "nx_put 走 nx_swap 而不是裸 mv" 'sed -n "/^nx_put()/,/^}/p" "$LIB" | grep -q "nx_swap"'
+check "nx_put_str 走 nx_swap" 'sed -n "/^nx_put_str()/,/^}/p" "$LIB" | grep -q "nx_swap"'
+
 printf '\n%d PASS / %d FAIL\n' "$pass" "$fail"
 [ "$fail" = 0 ]

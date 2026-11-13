@@ -4,12 +4,13 @@
 # 起因：2026-11-11 a18_orig.bin 变成 0 字节，导致「还原原厂」永久失败。
 # 查下去发现 state 目录里堆了 556 个 order-N 副本 —— chkdsk 把同一批
 # 同名目录项批量改名的结果。exFAT 不回收旧目录项、删除也不做簇引用计数，
-# 而模组里每个脚本都在用 `> 同名小文件` 反复重写状态，等于天天给目录表
-# 制造悬空项。换卡治不了，systemd 也管不到文件系统。
+# 而模组里每个脚本都在用 `mv -f .tmp 目标` 覆盖状态文件 —— 2026-11-14 的
+# 机上对照实验坐实了：原地重写不泄漏，**覆盖式 rename 每次留一个旧目录项**。
+# 换卡治不了，systemd 也管不到文件系统。
 #
 # 这一层把规则固定下来：
 #   1. 重启就该忘的东西 → /tmp（tmpfs），一个字节都不碰 SD
-#   2. 必须跨开机的 → 才落 SD，且只走 nx_put（tmp → sync → 校验 → mv）
+#   2. 必须跨开机的 → 才落 SD，且只走 nx_put（tmp → sync → 校验 → rm+mv）
 #   3. 内容没变就不写（nx_put_str 先比对）—— 这是砍写入量的主力
 #   4. 日志是往一个文件追加，不是每次新建同名文件
 #   5. NX_TRACE=1 时每次 SD 写都打到 stderr，谁在写卡一查便知
@@ -62,8 +63,31 @@ nx_sd() {
     printf '%s\n' "${_nx_d%/}"
 }
 
+# ---- 覆盖写入：必须先删目标，再 rename -------------------------------
+# ★ 2026-11-14 机上对照实验（/mnt/mmc/_xfer/sdtest.sh，每种写法各跑 10 次）：
+#     原地 `>` 重写            → 目录里 1 个同名项（不泄漏）
+#     `mv -f tmp 目标`（覆盖） → 目录里 11 个同名项（每次写 +1）
+#     `rm 目标; mv tmp 目标`   → 目录里 1 个同名项（不泄漏）
+#   结论：这张 exFAT 的 rename 不是原子替换 —— 目标已存在时旧目录项原样留着。
+#   所以「原子替换」这个动作必须以 rm 打头。state 目录里那 556 个 order-N
+#   不是「高频重写」造成的，是「高频 mv -f 覆盖」造成的（每次开面板 +1）。
+nx_swap() {
+    _nx_src=${1:-}; _nx_dst=${2:-}
+    [ -n "$_nx_src" ] && [ -n "$_nx_dst" ] || return 1
+    [ -f "$_nx_src" ] || return 1
+    _nx_mkdir "$(_nx_dirname "$_nx_dst")"
+    $NX_BB rm -f "$_nx_dst" 2>/dev/null
+    if ! $NX_BB mv -f "$_nx_src" "$_nx_dst" 2>/dev/null; then
+        # 目标刚被删、改名又失败 —— 至少把内容拷回去，不留空档
+        $NX_BB cp -f "$_nx_src" "$_nx_dst" 2>/dev/null
+        $NX_BB rm -f "$_nx_src" 2>/dev/null
+        return 1
+    fi
+    return 0
+}
+
 # ---- 持久写：原子 + 校验 -------------------------------------------
-# 先写同目录 .tmp，确认字节数一致、sync 落盘后再 rename 顶替。
+# 先写同目录 .tmp，确认字节数一致、sync 落盘后再顶替。
 # 任何一步失败都保留原文件、清掉 .tmp —— 绝不会出现"目标被清空但没写进去"。
 nx_put() {
     _nx_src=${1:-}; _nx_dst=${2:-}
@@ -79,7 +103,7 @@ nx_put() {
         return 1
     fi
     $NX_BB sync 2>/dev/null
-    $NX_BB mv -f "$_nx_tmp" "$_nx_dst" 2>/dev/null || { $NX_BB rm -f "$_nx_tmp" 2>/dev/null; return 1; }
+    nx_swap "$_nx_tmp" "$_nx_dst" || return 1
     [ "${NX_TRACE:-0}" = 1 ] && echo "NXPUT $_nx_dst ($_nx_a B)" >&2
     return 0
 }
@@ -95,7 +119,7 @@ nx_put_str() {
     _nx_mkdir "$(_nx_dirname "$_nx_dst")"
     printf '%s\n' "$_nx_v" > "$_nx_dst.tmp" 2>/dev/null || return 1
     $NX_BB sync 2>/dev/null
-    $NX_BB mv -f "$_nx_dst.tmp" "$_nx_dst" 2>/dev/null || { $NX_BB rm -f "$_nx_dst.tmp" 2>/dev/null; return 1; }
+    nx_swap "$_nx_dst.tmp" "$_nx_dst" || return 1
     [ "${NX_TRACE:-0}" = 1 ] && echo "NXPUT $_nx_dst = $_nx_v" >&2
     return 0
 }
@@ -116,7 +140,7 @@ nx_log() {
     _nx_sz=$(_nx_size "$_nx_f")
     if [ "$_nx_sz" -gt "$NX_LOG_MAX" ]; then
         $NX_BB tail -c $((NX_LOG_MAX / 2)) "$_nx_f" > "$_nx_f.t" 2>/dev/null \
-            && $NX_BB mv -f "$_nx_f.t" "$_nx_f" 2>/dev/null
+            && nx_swap "$_nx_f.t" "$_nx_f"
     fi
     printf '%s %s\n' "$(date '+%m-%d %H:%M:%S' 2>/dev/null)" "$*" >> "$_nx_f" 2>/dev/null
 }
