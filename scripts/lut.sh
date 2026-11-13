@@ -42,14 +42,38 @@ BB=$D/busybox
 TD=$D/lut                       # 工具目录（随包安装：scripts/lut -> /opt/usr/nx-ks/lut）
 LAB=/mnt/mmc/looks              # 滤镜库：*.cube / *.bin
 TRASH=$LAB/_trash               # 下架区（不是删除）
-ST=/mnt/mmc/lut/state           # 备份与状态（放 SD，随卡走）
+# ★ 2026-11-13：状态目录一分为二。这张 exFAT 卡已经被 chkdsk 反复修过
+#   （state 里查出 556 个 order-N 副本），根因是「高频重写同名小文件」——
+#   exFAT 不回收旧目录项，删除也不做簇引用计数，写几次就留一堆悬空项，
+#   极端情况下 open+truncate 成功但数据落到空闲簇上，读回来就是 0 字节
+#   （2026-11-11 的 a18_orig.bin 0 字节事故就是这么来的）。
+#
+#   所以：凡是「重启就该忘掉」的东西一律放 tmpfs，SD 上只留真正需要跨开机的。
+#   这同时解决三件事：写入量降一个数量级、备份不可能被 exFAT 弄脏、
+#   每次重启后重新 dump 的必然是 A18 的真原厂值（内存已随重启复原）。
+# 注意：不能写 `. file 2>/dev/null` —— POSIX 规定非交互 shell 在 dot 读不到文件时
+# 直接退出，兜底根本轮不到执行（本机测出来的坑）。
+if [ -r /opt/usr/nx-ks/nxstore.sh ]; then . /opt/usr/nx-ks/nxstore.sh; fi
+command -v nx_ram >/dev/null 2>&1 || nx_ram() { _d=/tmp/nx/${1:-state}; mkdir -p "$_d" 2>/dev/null; echo "$_d"; }
+# 同理给 nx_put 留一个最小实现：老包 / 手工部署可能没有 nxstore.sh，
+# 但「tmpfs 写 SD」这个跨文件系统的落盘动作无论在哪种安装形态下都不能裸 mv。
+command -v nx_put >/dev/null 2>&1 || nx_put() {
+    [ -s "$1" ] || return 1
+    $BB cp -f "$1" "$2.tmp" 2>/dev/null || return 1
+    $BB sync 2>/dev/null
+    $BB mv -f "$2.tmp" "$2" 2>/dev/null || { $BB rm -f "$2.tmp" 2>/dev/null; return 1; }
+    return 0
+}
+
+ST=$(nx_ram lut)                # 易失：还原点、日志、标志（tmpfs，重启即清）
+PD=/mnt/mmc/lut/state           # 持久：只有库顺序与转换缓存
 SLOT=0x81119F00                 # A18
 STOCK_SLOT=0x81115200           # A17 原厂表（强度 0 端基准）
 BAKDIR=/mnt/mmc/nxwa_regtab_20261018   # 原厂登记表备份（Still6 / BV12）
 STILLBAK=$BAKDIR/still6_orig.bin
 BVBAK=$BAKDIR/bv12_orig.bin
-ORD=$ST/order                   # 库顺序 + 收藏
-CV=$ST/cv                       # .cube → native 转换缓存（混合时反复用同一张）
+ORD=$PD/order                   # 库顺序 + 收藏
+CV=$PD/cv                       # .cube → native 转换缓存（混合时反复用同一张）
 
 # 工具查找：优先随包安装的 $TD，其次手工部署的 /mnt/mmc/lut
 pick_tool() {
@@ -126,7 +150,7 @@ valid_name() {
 # 重建 order：已登记且仍存在的保持顺序与星标，新文件按名字追加，消失的丢弃。
 order_sync() {
     [ -d "$LAB" ] || return 0
-    $BB mkdir -p "$ST"
+    $BB mkdir -p "$ST" "$PD"
     $BB ls "$LAB" 2>/dev/null | $BB grep -E '\.(cube|bin)$' \
         | $BB sed 's/\.[^.]*$//' | $BB grep -v '^_' | $BB sort -u > "$ST/.names"
     if [ -s "$ORD" ]; then
@@ -148,7 +172,25 @@ order_sync() {
             [ -n "$n" ] && printf '%s\n' "$n" >> "$ST/.order.1"
         done < "$ST/.names"
     fi
-    $BB mv -f "$ST/.order.1" "$ORD"
+    # ★ 内容没变就绝对不落盘。面板每次打开 LUT 列表都会跑 order_sync，
+    #   原来无条件 `mv -f` 覆盖 order —— 那是 state 目录里 556 个 order-N
+    #   副本（一次 chkdsk 批量改名的结果）的直接来源。
+    old=
+    [ -f "$ORD" ] && { old=$($BB md5sum < "$ORD" 2>/dev/null); old=${old%% *}; }
+    new=$($BB md5sum < "$ST/.order.1" 2>/dev/null); new=${new%% *}
+    if [ -n "${old:-}" ] && [ "$old" = "$new" ]; then
+        $BB rm -f "$ST/.order.1"
+    elif [ ! -s "$ST/.order.1" ]; then
+        # 空库：写一个 0 字节 order 没有意义（读侧本来就按「无 order」处理），
+        # 反而多一次目录项增删。直接删掉。
+        $BB rm -f "$ORD"
+    else
+        # ★ 这里原来是 `mv -f "$ST/.order.1" "$ORD"` —— 源在 tmpfs、目标在
+        #   exFAT，是跨文件系统的 rename+copy，中途掉电就留下半截 order。
+        #   统一走 nx_put：同目录 .tmp → sync → 字节校验 → rename。
+        nx_put "$ST/.order.1" "$ORD" || $BB mv -f "$ST/.order.1" "$ORD"
+        $BB rm -f "$ST/.order.1" 2>/dev/null
+    fi
     $BB rm -f "$ST/.names"
     return 0
 }
@@ -236,7 +278,7 @@ commit_table() {
     table=$2
     # 先记"开始"：若日志里只有 start 没有同名的 apply 收尾，就说明断电发生在写表途中。
     plog "apply start $label"
-    $BB mkdir -p "$ST"
+    $BB mkdir -p "$ST" "$PD"
 
     # 关屏幕色彩（理由见 oled_save 注释）。放在写槽之前，保证生效那一刻起 ISP
     # 只受 LUT 一层影响。
@@ -315,14 +357,19 @@ list)
     order_sync
     only_fav=0
     [ "${2:-}" = "--fav" ] && only_fav=1
-    while IFS= read -r line; do
-        [ -n "$line" ] || continue
-        key=${line#\*}
-        if [ $only_fav -eq 1 ]; then
-            case "$line" in \**) ;; *) continue ;; esac
-        fi
-        echo "$key"
-    done < "$ORD"
+    # order 文件在空库时会被 order_sync 删掉（空库没有顺序可言），
+    # 所以这里不能再假定它存在 —— 少这个判断，`done < $ORD` 会在
+    # 新卡第一次打开列表时打一行 "cannot open ... No such file"。
+    if [ -f "$ORD" ]; then
+        while IFS= read -r line; do
+            [ -n "$line" ] || continue
+            key=${line#\*}
+            if [ $only_fav -eq 1 ]; then
+                case "$line" in \**) ;; *) continue ;; esac
+            fi
+            echo "$key"
+        done < "$ORD"
+    fi
     ;;
 
 fav)
@@ -365,14 +412,17 @@ move)
             for (i=1;i<=NR;i++) print line[i]
         }
     ' "$ORD" > "$ST/.o"
-    $BB mv -f "$ST/.o" "$ORD"
+    nx_put "$ST/.o" "$ORD" || $BB mv -f "$ST/.o" "$ORD"
+    $BB rm -f "$ST/.o" 2>/dev/null
     echo "OK moved $name $dir"
     ;;
 
 index)
     [ -d "$LAB" ] || die "no $LAB"
     order_sync
-    echo "OK order rebuilt: $($BB wc -l < "$ORD" | $BB tr -d ' ') entries, $(order_fav_count) fav"
+    _n=0
+    [ -f "$ORD" ] && _n=$($BB wc -l < "$ORD" 2>/dev/null | $BB tr -d ' ')
+    echo "OK order rebuilt: ${_n:-0} entries, $(order_fav_count) fav"
     ;;
 
 del)
@@ -419,7 +469,7 @@ mix)
     [ -n "$MIX" ] && [ -x "$MIX" ] || die "missing lutmix.arm (looked in $TD and /mnt/mmc/lut)"
     ta=$(table_of "$a") || die "cannot resolve A: $a"
     tb=$(table_of "$b") || die "cannot resolve B: $b"
-    $BB mkdir -p "$ST"
+    $BB mkdir -p "$ST" "$PD"
     perm=$((pct * 10))
     "$MIX" "$ta" "$tb" "$perm" "$ST/mix.bin" > "$ST/mix.log" 2>&1 \
         || { cat "$ST/mix.log"; die "lutmix failed"; }
@@ -450,7 +500,7 @@ strength)
         echo "HINT run: sh $0 stock"
     fi
     ta=$(table_of "$name") || die "cannot resolve: $name"
-    $BB mkdir -p "$ST"
+    $BB mkdir -p "$ST" "$PD"
     perm=$((pct * 10))
     "$MIX" "$base" "$ta" "$perm" "$ST/mix.bin" > "$ST/mix.log" 2>&1 \
         || { cat "$ST/mix.log"; die "lutmix failed"; }
@@ -488,7 +538,7 @@ blend)
         echo "WARN no _stock_A17.bin; 0 strength uses identity (colder/brighter than factory)"
         echo "HINT run: sh $0 stock"
     fi
-    $BB mkdir -p "$ST"
+    $BB mkdir -p "$ST" "$PD"
     # 中间表放 /tmp（内存）：这是两次连续运算的临时产物，不该落到 exFAT 上。
     mid=/tmp/.lutblend.$$
     "$MIX" "$ta" "$tb" $((ar * 10)) "$mid" > "$ST/blend.log" 2>&1 \
@@ -505,7 +555,7 @@ blend)
 
 begin)
     need_tools
-    $BB mkdir -p "$ST" || die "cannot create $ST"
+    $BB mkdir -p "$ST" "$PD" || die "cannot create $ST"
     # 每次进入都重新取一份"当前状态"作为本次会话的还原点。
     # 但有两种例外：
     #   · 上次是半按关闭（keep 标记）⇒ 用户要保留这个 look，沿用同一份备份
@@ -531,7 +581,7 @@ verify)
     # 多半是用户自己加的，不算错 —— 但如果你没加过，就是旧批次没清干净）。
     [ -d "$LAB" ] || die "no $LAB"
     [ -f "$LAB/MANIFEST.txt" ] || die "no $LAB/MANIFEST.txt（这个包缺定档清单）"
-    $BB mkdir -p "$ST" || die "cannot create $ST"
+    $BB mkdir -p "$ST" "$PD" || die "cannot create $ST"
     seen=$ST/.verify-seen
     lf=$ST/.manifest.lf
     # 去 CR：Windows 上编辑过的 txt 会带 \r，busybox 的 read 不会自己吃
@@ -578,7 +628,7 @@ prune)
     [ -f "$LAB/obsolete.txt" ] || die "no $LAB/obsolete.txt（这个包缺旧表清单）"
     moved=0; kept=0
     lf=$ST/.obsolete.lf
-    $BB mkdir -p "$ST" || die "cannot create $ST"
+    $BB mkdir -p "$ST" "$PD" || die "cannot create $ST"
     $BB tr -d '\r' < "$LAB/obsolete.txt" > "$lf" || die "cannot read obsolete.txt"
     while IFS= read -r name; do
         case "${name:-}" in ''|\#*) continue ;; esac
@@ -618,6 +668,16 @@ apply)
     ;;
 
 off)
+    # 登记表原厂值在卡上丢了的话，从随包副本补回。nx_regtabwrite.arm 里那两条
+    # 路径是编译期硬编码的，脚本没法改，只能保证文件在那儿——否则 still/bv
+    # 两项会被静默跳过，界面却照样报成功。
+    for _f in still6_orig.bin bv12_orig.bin; do
+        if [ ! -f "$BAKDIR/$_f" ] && [ -f "$TD/factory/$_f" ]; then
+            $BB mkdir -p "$BAKDIR" 2>/dev/null
+            $BB cp -f "$TD/factory/$_f" "$BAKDIR/$_f" 2>/dev/null \
+                && echo "NOTE re-seeded $_f from package"
+        fi
+    done
     need_tools
     if [ -x "$D/lut_video.sh" ]; then
         sh "$D/lut_video.sh" off || die "could not stop video LUT watcher"
@@ -626,7 +686,9 @@ off)
     if [ -x "$D/lut/nx_lutptr.arm" ] && [ -f "$ST/lutptr.bak" ]; then
         "$D/lut/nx_lutptr.arm" restore "$ST/lutptr.bak" > "$ST/off-lutptr.log" 2>&1 || true
     fi
-    if [ ! -f "$ST/a18_orig.bin" ]; then
+    # 真的没事可做 = 没有还原点，也没有正在生效的 look。只要有 current，
+    # 内存里就确实挂着一张 LUT，不能因为还原点丢了就假装完成。
+    if [ ! -f "$ST/a18_orig.bin" ] && [ ! -f "$ST/current" ]; then
         echo "OK nothing to restore"
         exit 0
     fi
@@ -639,9 +701,31 @@ off)
     if [ -f "$BVBAK" ]; then
         "$REGT" bv-restore > "$ST/off-bv.log" 2>&1 || rc=1
     fi
-    "$SLOTW" restore "$SLOT" "$ST/a18_orig.bin" > "$ST/off-slot.log" 2>&1 || rc=1
+    # A18 写回源：优先本次会话 dump 的还原点，它坏了退到随包原厂基线。
+    # 0 字节的还原点以前只打一句 WARN 就跳过 —— 用户若不重启相机，A18 里
+    # 躺的还是那张 LUT，面板却报「已还原原厂表」，等于说谎。
+    A18SRC=
+    A18HOW=
+    if [ -s "$ST/a18_orig.bin" ]; then
+        A18SRC=$ST/a18_orig.bin; A18HOW=session
+    elif [ -s "$TD/factory/a18_orig.bin" ]; then
+        A18SRC=$TD/factory/a18_orig.bin; A18HOW=factory
+    fi
+    if [ -n "$A18SRC" ]; then
+        [ "$A18HOW" = factory ] && echo "NOTE A18 restore point unusable; writing package baseline"
+        "$SLOTW" restore "$SLOT" "$A18SRC" > "$ST/off-slot.log" 2>&1 || rc=1
+    else
+        # 连随包基线都没有（安装缺件）。登记表已还原，A18 这一格等重启复原。
+        echo "WARN no usable A18 restore point (session dump and package baseline both missing); A18 stays loaded until reboot" > "$ST/off-slot.log"
+    fi
     if [ $rc -ne 0 ]; then
-        echo "ERR restore incomplete; see $ST/off-*.log"
+        # 日志平时在 tmpfs（不写卡），但失败必须留下能带走的证据：
+        # 这次 0 字节事故就是因为现场日志全在 /tmp，重启后一无所获。
+        $BB mkdir -p "$PD/last-failure" 2>/dev/null
+        for _l in "$ST"/off-view.log "$ST"/off-still.log "$ST"/off-bv.log "$ST"/off-slot.log "$ST"/off-lutptr.log; do
+            [ -f "$_l" ] && $BB cp -f "$_l" "$PD/last-failure/" 2>/dev/null
+        done
+        echo "ERR restore incomplete; see $PD/last-failure/ (临时副本在 $ST/off-*.log，重启即失)"
         exit 1
     fi
     # ★ 还原也走秒切。先恢复屏幕色彩（这一步本身可能让 p7 重新选表），
@@ -650,7 +734,12 @@ off)
     $BB rm -f "$ST/ready" "$ST/current" "$ST/keep"
     oled_restore
     kick_current
-    echo "OK restored (view=4 factory, still=BV12+Still6 factory, A18=original)"
+    case "$A18HOW" in
+        session) _a18="A18=original" ;;
+        factory) _a18="A18=factory baseline" ;;
+        *)       _a18="A18 skipped (back to factory on reboot)" ;;
+    esac
+    echo "OK restored (view=4 factory, still=BV12+Still6 factory, $_a18)"
     plog "off"
     ;;
 

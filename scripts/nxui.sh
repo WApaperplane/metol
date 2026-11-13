@@ -96,7 +96,17 @@ export LC_ALL=C
 [ -f "$D/nxui/fonts.conf" ] && export FONTCONFIG_FILE="$D/nxui/fonts.conf"
 # 记住上次打开时停在哪一项（配方 slug / look 名，不是序号）。目录已由上面的
 # fc-cache 建好；写失败只是下次从头开始，不影响面板。
-export NXUI_STATE_DIR=/mnt/mmc/nxui
+#
+# ★ 2026-11-13：这个 last-* 每次开关面板都重写同名文件，是 exFAT 重复目录项的
+#   主要来源之一。改写到 tmpfs —— 反正它本来就是"下次从头开始也无所谓"的东西。
+#   keys.conf 是用户配置、必须跨开机，所以只在启动时从 SD 读一次拷进来（读不
+#   磨损卡）；运行中改 SD 上那份，重启后生效。
+NXS=/tmp/nx/nxui
+[ -d "$NXS" ] || $BB mkdir -p "$NXS" 2>/dev/null
+if [ -f /mnt/mmc/nxui/keys.conf ] && [ ! -f "$NXS/keys.conf" ]; then
+    $BB cp -f /mnt/mmc/nxui/keys.conf "$NXS/keys.conf" 2>/dev/null
+fi
+export NXUI_STATE_DIR=$NXS
 # Xft uses fontconfig, so Chinese can use the existing Samsung TTF.
 set -- --root "$D" --recipes "$LAB/recipes.txt" --engine "$D/filmlab.sh"
 if [ "$MODE" = menu ]; then set -- "$@" --menu gui_ini.NX500; fi

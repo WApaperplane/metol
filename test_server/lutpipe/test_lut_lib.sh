@@ -11,8 +11,14 @@ set -u
 REPO=${1:-/mnt/e/NXWA/nx500-modding-work}
 D=/opt/usr/nx-ks
 LAB=/mnt/mmc/looks
-ST=/mnt/mmc/lut/state
-CV=$ST/cv
+# 2026-11-13 起状态目录一分为二（见 scripts/lut.sh 顶部注释）：
+#   ST = 易失（tmpfs，还原点/current/日志）  PD = 持久（order/cv 转换缓存）
+# 以前这里只有一个 ST=/mnt/mmc/lut/state，断言全部落在旧的持久路径上，
+# 于是"current 写没写"之类的六条检查必然查空 —— 不是代码坏了，是测试没过期。
+ST=/tmp/nx/lut
+PD=/mnt/mmc/lut/state
+ORD=$PD/order
+CV=$PD/cv
 TRASH=$LAB/_trash
 pass=0; fail=0
 
@@ -24,7 +30,7 @@ if [ -d "$LAB" ] && [ ! -f "$LAB/.lutlib-test" ]; then
     echo "REFUSE: $LAB 里已有真实内容，不做破坏性测试" >&2; exit 1
 fi
 
-rm -rf "$LAB" "$ST"; mkdir -p "$LAB" "$ST" "$D/lut" "$TRASH"
+rm -rf "$LAB" "$ST" "$PD"; mkdir -p "$LAB" "$ST" "$PD" "$D/lut" "$TRASH"
 : > "$LAB/.lutlib-test"
 
 # busybox 垫片：把 $BB applet 直接交给系统的同名命令
@@ -48,7 +54,7 @@ cat > "$D/lut/nx_slotwrite.arm" <<'EOF'
 case "$1" in
   read)    head -c 19712 /dev/zero > "$3"; echo 'SLOT dumped' ;;
   write)   cp "$3" "$NX_TEST_LAST_TABLE"; echo 'READBACK ok' ;;
-  restore) echo 'READBACK ok' ;;
+  restore) printf 'RESTORE %s\n' "$3" >> /tmp/lutlib-slot.log; echo 'READBACK ok' ;;
   *)       exit 9 ;;
 esac
 EOF
@@ -86,6 +92,12 @@ EOF
 chmod +x "$D"/lut/*.arm "$D/busybox"
 cp "$REPO/scripts/lut.sh" "$D/lut.sh"
 chmod +x "$D/lut.sh"
+# 真机上 nxstore.sh 与 lut.sh 同目录安装，随包原厂基线在 lut/factory/。
+# 不铺进来的话，lut.sh 只能走 nx_ram/nx_put 的内联兜底 —— 那被测的就不是
+# 线上那套存储层了。
+cp "$REPO/scripts/nxstore.sh" "$D/nxstore.sh"
+mkdir -p "$D/lut/factory"
+cp "$REPO/scripts/lut/factory/"*.bin "$D/lut/factory/" 2>/dev/null
 
 # ---- 库内容 ----
 for n in zeta alpha beta gamma; do head -c 19712 /dev/zero > "$LAB/$n.bin"; done
@@ -103,10 +115,10 @@ check "list 同名 .bin/.cube 只出现一次" '[ "$(echo "$out" | grep -c "^del
 $L fav zeta >/dev/null
 out=$($L list)
 check "fav 排到最前" '[ "$(echo "$out" | head -1)" = zeta ]' "$out"
-check "fav 写进 order 带星标" 'grep -qx "\*zeta" "$ST/order"'
+check "fav 写进 order 带星标" 'grep -qx "\*zeta" "$ORD"'
 check "list 不输出星标" 'echo "$out" | head -1 | grep -qv "\*"'
 $L fav zeta >/dev/null
-check "再 fav 一次取消收藏" '! grep -qx "\*zeta" "$ST/order"'
+check "再 fav 一次取消收藏" '! grep -qx "\*zeta" "$ORD"'
 check "取消收藏后不跳位" '[ "$(echo "$($L list)" | head -1)" = zeta ]'
 
 # ---- 3. 排序 ----
@@ -124,7 +136,7 @@ $L del gamma >/dev/null
 check "del 移到 _trash" '[ -f "$TRASH/gamma.bin" ]'
 check "del 后原文件消失" '[ ! -f "$LAB/gamma.bin" ]'
 check "del 后不在列表" '! $L list | grep -qx gamma'
-check "del 后 order 里没有残留" '! grep -qx "gamma" "$ST/order"'
+check "del 后 order 里没有残留" '! grep -qx "gamma" "$ORD"'
 $L del nope >/dev/null 2>&1
 check "del 不存在的名字返回错误" '[ $? -ne 0 ]'
 
@@ -203,7 +215,7 @@ for f in "$LAB"/*.bin "$LAB"/*.cube; do rm -f "$f"; done
 head -c 19712 /dev/zero > "$LAB/replacement.bin"
 check "整库替换仍收编新条目" '[ "$($L list)" = replacement ]'
 rm -f "$LAB/replacement.bin"
-check "空库清掉旧 order" '[ -z "$($L list)" ] && [ ! -s "$ST/order" ]'
+check "空库清掉旧 order" '[ -z "$($L list)" ] && [ ! -s "$ORD" ]'
 head -c 19712 /dev/zero > "$LAB/reborn.bin"
 check "清空后再加入可见" '[ "$($L list)" = reborn ]'
 
@@ -231,6 +243,34 @@ NX_TEST_NO_CAM=1 $L apply reborn > /tmp/lutlib-k4.log 2>&1
 check "相机 App 不在时不调用 nx_lutload" '[ ! -s /tmp/lutlib-kick.log ]'
 check "相机 App 不在时说明下次 load 生效" 'grep -q "camera app not running" /tmp/lutlib-k4.log'
 
-rm -rf "$LAB" "$ST" /tmp/lutlib-*.log /tmp/lutlib-cache1
+# ---- 12. 还原点损坏 / 丢失时的 A18 兜底 ----
+# 2026-11-11 事故：begin 时 exFAT 把 a18_orig.bin 截成 0 字节，旧的 off 只打
+# 一句 WARN 就跳过 A18 —— 用户不重启相机，画面还是那张 LUT，面板却报成功。
+rm -f /tmp/lutlib-slot.log
+$L apply reborn > /dev/null 2>&1
+check "apply 建立了本次会话还原点" '[ -s "$ST/a18_orig.bin" ]'
+: > "$ST/a18_orig.bin"                     # 模拟 0 字节截断
+$L off > /tmp/lutlib-off1.log 2>&1; rc=$?
+check "0 字节还原点时 off 仍返回 0" '[ "$rc" = 0 ]' "rc=$rc"
+check "A18 退到随包原厂基线" 'grep -q "RESTORE $D/lut/factory/a18_orig.bin" /tmp/lutlib-slot.log'
+check "off 如实报告用的是包基线" 'grep -q "A18=factory baseline" /tmp/lutlib-off1.log'
+check "不谎报 A18=original" '! grep -q "A18=original" /tmp/lutlib-off1.log'
+
+rm -f /tmp/lutlib-slot.log
+$L apply reborn > /dev/null 2>&1
+rm -f "$ST/a18_orig.bin"                   # 还原点整个消失，但 LUT 还在生效
+$L off > /tmp/lutlib-off2.log 2>&1; rc=$?
+check "还原点丢失但仍生效时继续还原" 'grep -q "A18=factory baseline" /tmp/lutlib-off2.log'
+check "登记表照常写回" 'grep -q "RESTORE" /tmp/lutlib-slot.log'
+
+rm -f /tmp/lutlib-slot.log
+$L off > /tmp/lutlib-off3.log 2>&1
+check "真无活可干时才早退" 'grep -q "nothing to restore" /tmp/lutlib-off3.log'
+
+# ---- 13. 持久状态落盘形态 ----
+check "order 走 nx_put，不留 .tmp" '[ ! -e "$ORD.tmp" ]'
+check "持久区只有 order 与 cv" '[ -z "$(ls "$PD" | grep -v "^order$" | grep -v "^cv$")" ]' "$(ls "$PD")"
+
+rm -rf "$LAB" "$ST" "$PD" /tmp/lutlib-*.log /tmp/lutlib-cache1
 printf '\n%d PASS / %d FAIL\n' "$pass" "$fail"
 [ "$fail" = 0 ]

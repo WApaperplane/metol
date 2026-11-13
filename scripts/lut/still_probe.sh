@@ -16,7 +16,7 @@ set -u
 
 D=/opt/usr/nx-ks
 BB=$D/busybox
-ST=/mnt/mmc/lut/state
+ST=/tmp/nx/lut                  # apply 的运行日志在 tmpfs（2026-11-13 起）
 
 pick() {
     for d in "$D/lut" /mnt/mmc/lut; do

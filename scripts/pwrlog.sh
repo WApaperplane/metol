@@ -5,7 +5,8 @@
 #   有用户在「挑选 LUT」过程中遇到相机自己走关机画面断电。这个现象只可能是
 #   di-camera-app 的受控关机（电源键 / power_timer 自动关机 / 低电 / 镜头或
 #   快门错 / 拔卡），但关机后 /tmp 全丢、dlog 也没接，事后什么都没有。
-#   本脚本每 30 s 往 SD 追加一行状态；下次开机第一件事就是把上一次的尾巴抄进
+#   本脚本每 5 min 往 SD 追加一行状态（PWRLOG_PERIOD 可覆盖；2026-11-13 从 30 s
+#   调高——SD 卡是 exFAT，写得太勤对卡本身就不友好，而关机取证不需要分钟级粒度）；下次开机第一件事就是把上一次的尾巴抄进
 #   同一份日志。关机 → 再开 → `pwrlog.sh dump` 就能看到断在哪一步。
 #
 # 采样项（全部只读，不碰相机状态）：
@@ -14,7 +15,7 @@
 #   cap    APPPREF_CAP_POWER_OFF_STATUS（0xc2c4）—— 上一次关机的分类，开机时读
 #   ssh    :0016 是否在监听
 #   ui     nxui.arm 是否在跑（LUT/FilmLab 面板）
-#   lut    /mnt/mmc/lut/state/current（当前落地的表）
+#   lut    /tmp/nx/lut/current（当前落地的表；旧版在 /mnt/mmc/lut/state/current）
 #
 # 用法：
 #   pwrlog.sh boot    开机调用：记一条 BOOT + 上一次断电前的尾巴
@@ -31,7 +32,7 @@ D=/opt/usr/nx-ks
 BB=$D/busybox
 LOG=/mnt/mmc/nx-ks/pwrlog.txt
 PID=/tmp/nxwa-pwrlog.pid
-PERIOD=${PWRLOG_PERIOD:-30}
+PERIOD=${PWRLOG_PERIOD:-300}
 PREFMAN=$(command -v prefman 2>/dev/null || echo /usr/bin/prefman)
 
 mkdir -p /mnt/mmc/nx-ks 2>/dev/null
@@ -58,11 +59,12 @@ ui_running() {
 }
 
 lut_current() {
-    if [ -s /mnt/mmc/lut/state/current ]; then
-        $BB head -1 /mnt/mmc/lut/state/current
-    else
-        echo "-"
-    fi
+    # 2026-11-13：current 已迁到 tmpfs（见 scripts/lut.sh 顶部），SD 上的旧路径
+    # 只在"升级后没重启、老会话还在写"时可能有值，作为兜底保留。
+    for _c in /tmp/nx/lut/current /mnt/mmc/lut/state/current; do
+        if [ -s "$_c" ]; then $BB head -1 "$_c"; return 0; fi
+    done
+    echo "-"
 }
 
 sample() {

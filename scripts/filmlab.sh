@@ -33,6 +33,13 @@
 #=====================================================================
 
 BB=/opt/usr/nx-ks/busybox
+# ★ 2026-11-13 统一存储层：易失状态（cur.idx / page.idx / 配方表 / 日志）改走 tmpfs。
+#   $LAB 仍然是 SD —— 但只剩 recipes.json 和 filmlab.conf 这两个真正要跨开机的东西。
+# 注意：`. file` 读不到时 POSIX 非交互 shell 会直接退出，所以先判可读再 source
+if [ -r /opt/usr/nx-ks/nxstore.sh ]; then . /opt/usr/nx-ks/nxstore.sh; fi
+# 兜底：nxstore 没装上时退化成 /tmp，至少不写卡（宁可缓存失效，也不打坏 exFAT）
+command -v nx_ram >/dev/null 2>&1 || nx_ram() { _d=/tmp/nx/${1:-state}; mkdir -p "$_d" 2>/dev/null; echo "$_d"; }
+command -v nx_log >/dev/null 2>&1 || nx_log() { mkdir -p /tmp/nx/log 2>/dev/null; echo "$*" >> /tmp/nx/log/main.log 2>/dev/null; }
 LAB=/mnt/mmc/filmlab
 RECIPE=$LAB/recipes.json
 LOG=$LAB/last.log
@@ -567,7 +574,7 @@ jlabel() {
   ' $RECIPE 2>/dev/null
 }
 
-log() { echo "$*" >> $LOG; }
+log() { nx_log filmlab "$*"; }
 
 #===============================================================
 CMD=$1
@@ -944,8 +951,10 @@ reset)
 cycle)
   # ★ 轮换到下一个配方（为机身按键设计，零界面、零 X11）
   # ★★ 与 apply 一样：永远写 slot 9（UI「自定义1」），位置恒定 → 真正的一键
-  # 状态文件记录当前索引，SD 卡上，相机重启后保持
-  ST=/mnt/mmc/filmlab/cur.idx
+  # 状态文件记录当前索引。★ 2026-11-13 起在 tmpfs。
+  #   重启后归零是有意的：slot 9 的 PW 值会留着，但游标从头开始只是顺序错位，
+  #   不会写错数据；而把它留在 SD 上，每次按 S1 都在重写同名小文件。
+  ST=$(nx_ram filmlab)/cur.idx
   N=$(jlist | grep -c .)
   [ -z "$N" ] || [ "$N" -lt 1 ] && { echo "配方库为空"; exit 1; }
   CUR=0
@@ -1056,10 +1065,13 @@ mkgui)
   #   页状态 /mnt/mmc/filmlab/page.idx；翻页用 filmlab_page.sh
   OUT=/opt/usr/nx-ks/gui_filmlab1b.NX500
   PERPAGE=18                   # 每页配方数（同步：flab.py / filmlab_page.sh）
-  ST=$LAB/cur.idx              # 当前配方索引（打 ★）
-  PG=$LAB/page.idx             # ★ 页状态（0 基）
-  TBL=$LAB/recipes.txt         # 扁平配方表（mkgui / nxfilmui 共用）
-  SIGF=$OUT.sig                # ★ 输入指纹（上次生成时的快照）
+  NXRAM=$(nx_ram filmlab)
+  ST=$NXRAM/cur.idx            # 当前配方索引（打 ★）—— tmpfs
+  PG=$NXRAM/page.idx           # ★ 页状态（0 基）—— tmpfs
+  TBL=$LAB/recipes.txt         # 扁平配方表：export / mkgui / recipelib 三方共享的契约文件，
+                               #   ★ 必须留在 SD 同一路径，不能各自放 tmpfs
+                               #   好在它只在 recipes.json 内容变了才重建（下面有 md5 判断）
+  SIGF=$OUT.sig                # ★ 输入指纹（上次生成时的快照）—— ext4，不受影响
   TMD5F=$TBL.md5               # ★ 配方表指纹
 
   # ---- 输入指纹：用【内容哈希】，不用 mtime ----

@@ -62,7 +62,7 @@ if [ -f "$DB/dropbear" ]; then
 	fi
 fi
 # ---- pwrlog：关机取证（2.88.0-nxwa.15.1 debug）----
-# 每 30 s 一条状态到 /mnt/mmc/nx-ks/pwrlog.txt；boot 先把上一次的尾巴抄进来。
+# 每 5 min 一条状态到 /mnt/mmc/nx-ks/pwrlog.txt；boot 先把上一次的尾巴抄进来。
 # 只在 debug 版随包；正式版可以删掉这三行，不留 SD 写入。
 if [ -x /opt/usr/nx-ks/pwrlog.sh ]; then
 	/opt/usr/nx-ks/pwrlog.sh boot

@@ -76,7 +76,8 @@ case "$3" in
 esac
 '''
 
-@unittest.skipUnless(SH and shutil.which('flock'), 'requires a POSIX shell and flock (run in WSL)')
+# 这一行原来顶着 @unittest.skipUnless —— 装饰器只能贴在 def/class 上，
+# 贴在赋值前是整个文件的 SyntaxError（import 就炸），等于这个归档测试从未跑起来过。
 LEGACY = "CAP=/usr/bin/st" in PRODUCT.read_text(encoding="utf-8")
 
 

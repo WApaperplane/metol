@@ -14,8 +14,13 @@
 #=====================================================================
 BB=/opt/usr/nx-ks/busybox
 D=/opt/usr/nx-ks
+# ★ 2026-11-13 统一存储层：page.idx 是纯易失游标（重启回第 1 页无副作用），
+#   挪到 tmpfs；recipes.txt 是 export/mkgui/recipelib 三方共享文件，仍留 SD。
+if [ -r /opt/usr/nx-ks/nxstore.sh ]; then . /opt/usr/nx-ks/nxstore.sh; fi
+command -v nx_ram >/dev/null 2>&1 || nx_ram() { _d=/tmp/nx/${1:-state}; mkdir -p "$_d" 2>/dev/null; echo "$_d"; }
+command -v nx_log >/dev/null 2>&1 || nx_log() { mkdir -p /tmp/nx/log 2>/dev/null; echo "$*" >> /tmp/nx/log/main.log 2>/dev/null; }
 LAB=/mnt/mmc/filmlab
-PG=$LAB/page.idx
+PG=$(nx_ram filmlab)/page.idx
 TBL=$LAB/recipes.txt
 PERPAGE=18          # 同步：mkgui 与 flab.py 的 PERPAGE
 
@@ -55,5 +60,5 @@ while [ $i -lt 3 ]; do
 done
 
 nice -n +15 $D/mod_gui $D/gui_filmlab1b &
-echo "$(date '+%H:%M:%S') page -> $((PAGE+1))/$PAGES ($DIR)" >> $LAB/last.log
+nx_log filmlab "page -> $((PAGE+1))/$PAGES ($DIR)"
 exit 0
