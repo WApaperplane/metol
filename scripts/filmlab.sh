@@ -281,16 +281,61 @@ pw_direct() {
       echo "  ③ PW直推: 七维有空值 —— 拒绝发送（防静默坏值）"
       return 1 ;;
   esac
-  # A2：固定 id + 原始值 + 提交位（0x13B=1）
-  ARGS="0x134 $1 0x135 $2 0x136 $3 0x137 $4 0x138 $5 0x139 $6 0x13A $7 0x13B 1"
+  # ★ 2026-11-14 P2：只推变化的维。浏览时相邻配方常常只差 1~3 维，而全量推
+  #   7 对要付 7 次 svdm（实测 ~16ms/次）+ 7 次条间 sleep。
+  #   缓存放 tmpfs：重启即清；超过 90 秒没用过就作废 —— 相机别处改过 PW 时
+  #   靠这个兜底，宁可多推一次也不要按旧值算差异。
+  #   非 UI（CLI / neutral）永远全量推：诊断路径不要聪明。
+  FLCACHE=${NX_RAM:-/tmp/nx}/filmlab/last-push
+  PICK=
+  FULL=1
+  if [ "${UI_REQUEST:-0}" = 1 ] && [ -f "$FLCACHE" ]; then
+    read -r CT C1 C2 C3 C4 C5 C6 C7 < "$FLCACHE" 2>/dev/null || :
+    read -r UP < /proc/uptime 2>/dev/null || UP=0
+    UP=${UP%%.*}
+    if [ -n "${CT:-}" ] && [ "${UP:-0}" -ge "$CT" ] 2>/dev/null && [ $((UP - CT)) -le 90 ]; then
+      FULL=0
+      _pw_i=1
+      for _pw_v in "$1" "$2" "$3" "$4" "$5" "$6" "$7"; do
+        case $_pw_i in
+          1) _pw_o=$C1 ;; 2) _pw_o=$C2 ;; 3) _pw_o=$C3 ;; 4) _pw_o=$C4 ;;
+          5) _pw_o=$C5 ;; 6) _pw_o=$C6 ;; 7) _pw_o=$C7 ;;
+        esac
+        [ "$_pw_o" = "$_pw_v" ] || PICK="$PICK${PICK:+ }0x$(printf '%X' $((0x133 + _pw_i))) $_pw_v"
+        _pw_i=$((_pw_i + 1))
+      done
+    fi
+  fi
+  if [ "$FULL" = 1 ]; then
+    # A2：固定 id + 原始值 + 提交位（0x13B=1）
+    PICK="0x134 $1 0x135 $2 0x136 $3 0x137 $4 0x138 $5 0x139 $6 0x13A $7"
+  elif [ -z "$PICK" ]; then
+    # 七维一个都没变：连进程都不用起（省掉 pwsend 的 ~250ms）
+    echo "  ③ PW直推: 七维与上次相同 —— 不发送"
+    _pw_cache_put "$1 $2 $3 $4 $5 $6 $7"
+    return 0
+  fi
+  ARGS="$PICK 0x13B 1"
   YES="$8"
   # ★ 10-17：条间 150ms 是 A1 时代的保守值，svdm 是同步返回（rc=0 即已入 MCB）。
-  #   浏览预览用 FILMLAB_PWSLEEP=40（省 ~0.8s），批量写槽仍用 150。
+  #   浏览预览用 FILMLAB_PWSLEEP=20（2026-11-14 由 40 收到 20），批量写槽仍用 150。
   [ "$YES" = "--yes" ] && ARGS="$ARGS --sleep ${FILMLAB_PWSLEEP:-150}"
   echo "  ③ PW直推（A2 档位池直写；$([ "$YES" = "--yes" ] && echo 真发 || echo dry-run)）:"
   echo "     $PWSEND seq $ARGS $YES"
   # shellcheck disable=SC2086
-  "$PWSEND" seq $ARGS $YES
+  "$PWSEND" seq $ARGS $YES || return 1
+  _pw_cache_put "$1 $2 $3 $4 $5 $6 $7"
+  return 0
+}
+
+# 记录"上一次真发成功"的 7 维（tmpfs）。时间戳用 /proc/uptime 取整秒 ——
+# 比 date 少一次 fork，也不受 RTC 跳变影响。
+_pw_cache_put() {
+  FLCACHE=${NX_RAM:-/tmp/nx}/filmlab/last-push
+  [ -d "${FLCACHE%/*}" ] || $BB mkdir -p "${FLCACHE%/*}" 2>/dev/null
+  read -r UP < /proc/uptime 2>/dev/null || UP=0
+  printf '%s %s\n' "${UP%%.*}" "$1" > "$FLCACHE" 2>/dev/null
+  return 0
 }
 
 # ---- 旧触发：切一次拍摄模式（默认关闭，见上面的纠错）----
@@ -598,10 +643,11 @@ case "$CMD" in
   # ★ 2026-10-17 提速（实测 4.35s → 目标 ~1.0s）：预览/提交一律以 CUSTOM1（slot 9）
   #   为画布。理由见 apply 分支内 "UI 快路径" 注释。
   #   FILMLAB_PWSLEEP 控制 A2 条间间隔：浏览时不值得等 7×150ms。
-  preview) CMD=apply; FILMLAB_SAVE=0; FAST=1; UI_REQUEST=1; FILMLAB_PWSLEEP=40 ;;
+  preview) CMD=apply; FILMLAB_SAVE=0; FAST=1; UI_REQUEST=1; FILMLAB_PWSLEEP=20 ;;
   commit)  CMD=apply; FILMLAB_SAVE=1; FAST=1; UI_REQUEST=1 ;;
 esac
-mkdir -p $LAB 2>/dev/null
+# 每次调用都要跑这三行 → 别用 mkdir 常开：目录本来就在，[ -d ] 是内建，不 fork。
+[ -d "$LAB" ] || mkdir -p "$LAB" 2>/dev/null
 
 case $CMD in
 
@@ -660,7 +706,7 @@ neutral)
     exit 1
   fi
   if pw_direct 100 100 100 10 10 10 10 --yes; then
-    log "$(date '+%H:%M:%S') neutral -> 100/100/100 10/10/10/10"
+    log "neutral -> 100/100/100 10/10/10/10"
     echo "✓ neutral (100/100/100 10/10/10/10)"
     exit 0
   fi
@@ -799,7 +845,7 @@ apply)
       SAVED="saved"
     fi
   fi
-  log "$(date '+%H:%M:%S') apply $REC -> slot$SLOT enum$ENUM reload=$RELOAD mode=$RELOAD2 pw=$PWSTAT $SAVED"
+  log "apply $REC -> slot$SLOT enum$ENUM reload=$RELOAD mode=$RELOAD2 pw=$PWSTAT $SAVED"
   # ★ --fast 出口（10-10）：菜单路径 —— 只回一行结果，不做回读/判据（那 ~15 个进程省掉）
   if [ "$FAST" = "1" ]; then
     echo "✓ $REC -> slot$SLOT  (reload=$RELOAD pw=$PWSTAT $SAVED)"
@@ -976,7 +1022,7 @@ cycle)
   echo $NEXT > $ST
   NTH=$((NEXT+1))
   echo "[$NTH/$N] $(jlabel $KEY)  (key=$KEY, reload=$RELOAD)"
-  log "$(date '+%H:%M:%S') cycle -> [$NTH/$N] $KEY reload=$RELOAD"
+  log "cycle -> [$NTH/$N] $KEY reload=$RELOAD"
   ;;
 
 slots)
@@ -1026,7 +1072,7 @@ reload)
   echo "reload: slot$SLOT = $V0/$V1/$V2/$V3/$V4/$V5/$V6"
   echo "  ② 选择=$RELOAD  模式触发=$RELOAD2"
   check_isp_pw "" $SLOT
-  log "$(date '+%H:%M:%S') reload slot$SLOT reload=$RELOAD isp=$ISP_SYNC"
+  log "reload slot$SLOT reload=$RELOAD isp=$ISP_SYNC"
   ;;
 
 #---------------------------------------------------------------
@@ -1160,7 +1206,7 @@ mkgui)
   printf '%s\n' "$SIG" > "$SIGF"
 
   echo "mkgui: 已生成 $OUT — 第 $((PAGE+1))/$PAGES 页，$N 个配方按钮（配方库共 $TOTAL 个）"
-  log "$(date '+%H:%M:%S') mkgui -> page $((PAGE+1))/$PAGES, $N buttons (of $TOTAL)"
+  log "mkgui -> page $((PAGE+1))/$PAGES, $N buttons (of $TOTAL)"
   ;;
 
 #---------------------------------------------------------------

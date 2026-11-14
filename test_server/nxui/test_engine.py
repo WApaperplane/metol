@@ -22,6 +22,7 @@
 from pathlib import Path
 import json
 import os
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -40,6 +41,24 @@ def push_line(recipe="portra400"):
              (0x137, r["HUE"]), (0x138, r["SATURATION"]), (0x139, r["SHARPNESS"]),
              (0x13A, r["CONTRAST"]), (0x13B, 1)]
     return " ".join(f"0x{reg:03X} {val}" for reg, val in pairs)
+
+
+DIMS = ("R_COLOR", "G_COLOR", "B_COLOR", "HUE", "SATURATION", "SHARPNESS", "CONTRAST")
+
+
+def _close_pair():
+    """挑一对七维最接近的配方 —— 就是"相邻浏览"的真实场景，P2 的差异推送靠它验。"""
+    rec = _RECIPES["recipes"]
+    keys = [k for k in rec if not k.startswith("_")]
+    best = (99, None, None)
+    for i, a in enumerate(keys):
+        for b in keys[i + 1:]:
+            d = sum(1 for f in DIMS if rec[a][f] != rec[b][f])
+            if d < best[0]:
+                best = (d, a, b)
+                if d <= 1:
+                    return best
+    return best
 
 
 class EngineHarness(unittest.TestCase):
@@ -72,6 +91,14 @@ esac
 exit 0''')
         self.stub("pwsend.arm", 'echo "pwsend $*" >> "$CALLS"; echo 0x140009 > "$CURRENT_PW_FILE"; exit 0')
         self.stub("sync", 'echo "sync" >> "$CALLS"')
+        # 把真存储层也装进来：nx_ram/nx_log/nx_swap 走线上那一套，
+        # 而不是脚本里的小兜底。NX_RAM 指到临时目录，否则直推缓存
+        # （last-push）会跨用例、跨运行残留，让 P2 的差异推送变成随机行为。
+        shutil.copy(REPO / "scripts/nxstore.sh", self.bin / "nxstore.sh")
+        self.ram = self.base / "ram"; self.ram.mkdir()
+        self.sd = self.base / "sd"; self.sd.mkdir()
+        self.env.update(NX_RAM=str(self.ram), NX_SD=str(self.sd),
+                        NX_BB=str(self.bin / "busybox"))
         (self.lab / "recipes.json").write_bytes((REPO / "scripts/filmlab/recipes.json").read_bytes())
         self.engine = self.bin / "filmlab.sh"
         self.engine.write_text((REPO / "scripts/filmlab.sh").read_text()
@@ -190,10 +217,10 @@ class UiEngineTests(EngineHarness):
     #: nxui 打开面板时读一次当前档位，apply 时通过环境变量传回来（nxui.c:260）
     panel_enum = "0x140009"
 
-    def ui(self, verb, *, conf="", env=None):
+    def ui(self, verb, recipe="portra400", *, conf="", env=None):
         e = {"FILMLAB_ENUM_CACHE": self.panel_enum}
         e.update(env or {})
-        return self.run_engine(verb, "portra400", conf=conf, env=e)
+        return self.run_engine(verb, recipe, conf=conf, env=e)
 
     # ---- preview：不动任何持久状态 ----
     def test_preview_writes_no_slot_and_never_saves(self):
@@ -210,6 +237,38 @@ class UiEngineTests(EngineHarness):
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         self.assertNotIn("setusr 20", calls)
         self.assertEqual(self.current.read_text().strip(), "0x140009")
+
+    # ---- P2：只推变化维（2026-11-14）----
+    def test_preview_sends_only_changed_dims(self):
+        dist, a, b = _close_pair()
+        self.assertLessEqual(dist, 3, "配方库里找不到相邻样本，P2 无从验证")
+        r, _ = self.ui("preview", a)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.log.write_text("")
+        r, calls = self.ui("preview", b)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        sent = [ln for ln in calls.splitlines() if ln.startswith("pwsend ")]
+        self.assertEqual(len(sent), 1, calls)
+        line = sent[0]
+        changed = [i for i, f in enumerate(DIMS)
+                   if _RECIPES["recipes"][a][f] != _RECIPES["recipes"][b][f]]
+        for i, f in enumerate(DIMS):
+            reg = f"0x{0x134 + i:03X}"
+            if i in changed:
+                self.assertIn(f"{reg} {_RECIPES['recipes'][b][f]}", line,
+                              f"{a}->{b}: 变了的 {f} 必须发")
+            else:
+                self.assertNotIn(reg, line, f"{a}->{b}: 没变的 {f} 不该发")
+        self.assertIn("0x13B 1", line, "提交位每次都要带")
+
+    def test_preview_same_recipe_twice_sends_nothing(self):
+        r, _ = self.ui("preview")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.log.write_text("")
+        r, calls = self.ui("preview")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertNotIn("pwsend ", calls, "七维没变就不该起后端进程")
+        self.assertIn("七维与上次相同", r.stdout)
 
     # ---- commit：只写 slot 9，且必须落盘 ----
     def test_commit_writes_slot9_and_saves(self):

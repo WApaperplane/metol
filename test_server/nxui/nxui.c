@@ -1660,7 +1660,10 @@ int main(int argc, char **argv) {
         }
         if (shot && render_count) { snapshot(shot); break; }
         tick = now_ms(); pending = XPending(display);
-        if (child) delay = 100; /* only a running backend needs periodic reaping */
+        /* 后端在跑时只做回收，不必每秒醒 10 次。原来写死 100ms，等于给每次
+         * 预览白加最多 100ms 的「完成感知」延迟 —— 实测预览 930ms 里有 ~100 是
+         * 这一行。18ms 约等于一帧，够省 CPU，也够了。 */
+        if (child) delay = 18; /* only a running backend needs periodic reaping */
         if (services_visible() && service_due - tick < delay) delay = service_due - tick;
         if (!child && queue.desired >= 0 && (queue.desired != queue.applied || queue.commit_requested))
             if (queue.due - tick < delay) delay = queue.due - tick;
