@@ -737,19 +737,12 @@ apply)
     :
   else
   backup_apply_slot || { echo "REJECT: cannot back up slot $SLOT"; exit 1; }
-  if [ "$UI_REQUEST" = 1 ]; then
-    set_r 0 $SLOT "$V0" && set_r 1 $SLOT "$V1" && set_r 2 $SLOT "$V2" &&
-      set_r 3 $SLOT "$V3" && set_r 4 $SLOT "$V4" && set_r 5 $SLOT "$V5" &&
-      set_r 6 $SLOT "$V6" || { echo "REJECT: slot write failed"; exit 1; }
-  else
-    set_r 0 $SLOT "$V0"
-    set_r 1 $SLOT "$V1"
-    set_r 2 $SLOT "$V2"
-    set_r 3 $SLOT "$V3"
-    set_r 4 $SLOT "$V4"
-    set_r 5 $SLOT "$V5"
-    set_r 6 $SLOT "$V6"
-  fi
+  # ★ 2026-11-14：两条分支合成一条。原来 CLI 那半边是七行裸 set_r，不接返回值
+  #   ⇒ 写槽失败照样往下走：画面被直推改了、槽里却是旧值，SAVE=1 时还会把
+  #   这份不一致 save 进 eMMC。UI 那半边一直是链式判失败的，CLI 漏了。
+  set_r 0 $SLOT "$V0" && set_r 1 $SLOT "$V1" && set_r 2 $SLOT "$V2" &&
+    set_r 3 $SLOT "$V3" && set_r 4 $SLOT "$V4" && set_r 5 $SLOT "$V5" &&
+    set_r 6 $SLOT "$V6" || { echo "REJECT: slot write failed"; exit 1; }
   fi
   # v2: 白平衡不由配方控制，相机保持自动 WB（见 recipes.json 的 _note）
   # ★ 落盘（2026-10-08 实测必需）：只 set 不 save ⇒ 相机重启后槽位回退到旧值。
