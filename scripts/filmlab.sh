@@ -261,6 +261,39 @@ pw_force_reload() {
   [ "$NOW" = "$TGT" ] && RELOAD="direct" || RELOAD="direct-VERIFY-FAIL(now=$NOW want=$TGT)"
 }
 
+# ★★ 2026-11-14 新增：直推前把运行时档位落到 CUSTOM1。
+#   为什么必须"先切后推"：
+#     A2 提交位（0x13B）把 7 维写进「自定义1」位置且顺手把档位切到 CUSTOM1，
+#     但**在发送那一刻**，相机仍把改动归属到用户当时选中的那一档。用户停在
+#     自定义2 时浏览/提交配方 ⇒ 自定义2 的槽被配方值吃掉；而脚本从头到尾
+#     只 set 过 slot 9，backup 也只有 slot 9 ⇒ 那一档不可恢复。
+#     （GitHub Discussion 2026-11-12，ssam87 报告："custom 1 and 2 were both affected"）
+#   放在直推之前做而不是之后：切档本身不会搬参数（已证伪），早切不影响画面，
+#   只是把"归属窗口"关进 CUSTOM1 —— 那里本来就是配方要写的地方。
+#   失败不致命（画面优先），但必须留痕：污染发生了就没有还原点。
+pw_preenter_custom1() {
+  PREKNOWN=${1:-}
+  if [ -z "$PREKNOWN" ]; then
+    PREKNOWN=$(getusr20)
+  fi
+  if [ "$PREKNOWN" = "0x140009" ]; then
+    PREENTER="already"
+    return 0
+  fi
+  setusr20 0x140009
+  PRE_TRIES=0
+  while :; do
+    PRENOW=$(getusr20)
+    [ "$PRENOW" = "0x140009" ] && { PREENTER="ok(was=$PREKNOWN)"; return 0; }
+    [ "$PRE_TRIES" -lt 20 ] || break
+    $BB sleep 0.05
+    PRE_TRIES=$((PRE_TRIES + 1))
+  done
+  PREENTER="FAIL(now=$PRENOW was=$PREKNOWN)"
+  echo "  ⚠ 直推前切 CUSTOM1 未确认（$PREENTER）—— 非目标槽可能被污染"
+  return 1
+}
+
 # ---- ③ PW 直推（2026-10-15 起 = A2 档位池直写通道；下方旧编码器为 A1/历史参考）----
 # ★★ A2 通道（功能验证 PASS，varlist 逐值命中）：
 #    seq 0x134 R 0x135 G 0x136 B 0x137 HUE 0x138 SAT 0x139 SHARP 0x13A CON 0x13B 1
@@ -472,14 +505,17 @@ apply_slot_valid() {
 }
 # Backup before editing any current field, including a factory preset. Do not
 # source backup files as shell code. Their format is slot|R|G|B|H|S|P|C.
-backup_apply_slot() {
+# ★ 2026-11-14：参数化（原来只能备份 $SLOT）。用户打开面板时所在的那一档也
+#   要备份 —— A2 直推会把改动归属到"当时仍在用的那一档"，而不只是 slot 9。
+backup_slot() {
+  BK_SLOT=${1:-$SLOT}
   BACKDIR=$LAB/slot-backups
-  BACKFILE=$BACKDIR/slot-$SLOT.txt
+  BACKFILE=$BACKDIR/slot-$BK_SLOT.txt
   [ -s "$BACKFILE" ] && return 0
   mkdir -p "$BACKDIR" || return 1
-  BACKVALUES=$SLOT
+  BACKVALUES=$BK_SLOT
   for BACKPARAM in 0 1 2 3 4 5 6; do
-    BACKVALUE=$(get_r "$BACKPARAM" "$SLOT")
+    BACKVALUE=$(get_r "$BACKPARAM" "$BK_SLOT")
     case "$BACKVALUE" in ''|*[!0-9]*) return 1 ;; esac
     BACKMAX=20; [ "$BACKPARAM" -lt 3 ] && BACKMAX=200
     [ "$BACKVALUE" -le "$BACKMAX" ] || return 1
@@ -488,6 +524,7 @@ backup_apply_slot() {
   printf '%s\n' "$BACKVALUES" > "$BACKFILE.tmp" || return 1
   nx_swap "$BACKFILE.tmp" "$BACKFILE"
 }
+backup_apply_slot() { backup_slot "$SLOT"; }
 # ★ 合法写入校验（2026-10-04 新增）
 #  UI 可见的只有 slot 9/10/11（自定义1/2/3）。slot 12=CUSTOM_4 在 prefman 里
 #  存在但 UI 不显示 → 写进去就是"看不见的脏数据"，会污染整机状态
@@ -705,8 +742,12 @@ neutral)
     echo "REJECT: neutral requires FILMLAB_PW=1, pwsend.arm and verified A2 firmware"
     exit 1
   fi
+  # ★ 2026-11-14：直推前落到 CUSTOM1。与 apply 同理 —— 否则「还原」的中性值会被
+  #   相机归属到用户当时那一档（自定义2/3），把该档的槽写成 100/100/100 10/10/10/10。
+  #   "只改运行时"这个说法在 A2 直推面前不成立。
+  pw_preenter_custom1 || :
   if pw_direct 100 100 100 10 10 10 10 --yes; then
-    log "neutral -> 100/100/100 10/10/10/10"
+    log "neutral -> 100/100/100 10/10/10/10 pre=$PREENTER"
     echo "✓ neutral (100/100/100 10/10/10/10)"
     exit 0
   fi
@@ -749,6 +790,25 @@ apply)
     TARGET_PW=$(printf "0x%06x" $((0x140000 + ENUM)))
   fi
   apply_slot_valid "$SLOT" || { echo "REJECT: unsupported PW slot $SLOT"; exit 1; }
+  # ★★ 2026-11-14 修复（ssam87 报告）：A2 直推的改动会被相机归属到「发送那一刻
+  #   仍在用的档位」。用户停在自定义2 时预览/提交配方 ⇒ 自定义2 也被改成配方值，
+  #   而引擎只 set 过 slot 9、backup 也只有 slot 9（⇒ 无还原点）。
+  #   ① 先切 CUSTOM1 再直推：把归属窗口关进本来就该被写的那一档。
+  #   ② 打开面板时所在档位的槽，补一份备份。
+  #   代价：仅当 cache 表明"当前不在 CUSTOM1"时才多付一次 st（~1.3s）；
+  #   停在 CUSTOM1（常态）零开销。
+  if [ "$UI_REQUEST" = 1 ]; then
+    case "${FILMLAB_ENUM_CACHE:-}" in
+      0x140009) PREENTER="already" ;;
+      *)        pw_preenter_custom1 "${FILMLAB_ENUM_CACHE:-}" ;;
+    esac
+    if [ -n "${TARGET_PW:-}" ] && [ "$TARGET_PW" != "0x140009" ]; then
+      TSLOT=$(slot_of_enum "$TARGET_PW" 2>/dev/null) || TSLOT=""
+      if [ -n "$TSLOT" ] && [ "$TSLOT" != "$SLOT" ]; then
+        backup_slot "$TSLOT" || echo "  ⚠ 备份 slot$TSLOT 失败（继续；该档位将没有还原点）"
+      fi
+    fi
+  fi
   echo ">>> 应用 '$REC' -> slot $SLOT (enum $ENUM)"
   # ★★★ 2026-10-08 加固：先取全部 7 维，★ 任一为空就【拒绝写入】。
   #   起因（U2 上机实测，用户报告）：/mnt/mmc/filmlab/recipes.json 缺失时 jval 返回空串，
@@ -845,7 +905,7 @@ apply)
       SAVED="saved"
     fi
   fi
-  log "apply $REC -> slot$SLOT enum$ENUM reload=$RELOAD mode=$RELOAD2 pw=$PWSTAT $SAVED"
+  log "apply $REC -> slot$SLOT enum$ENUM reload=$RELOAD mode=$RELOAD2 pw=$PWSTAT pre=${PREENTER:-none} $SAVED"
   # ★ --fast 出口（10-10）：菜单路径 —— 只回一行结果，不做回读/判据（那 ~15 个进程省掉）
   if [ "$FAST" = "1" ]; then
     echo "✓ $REC -> slot$SLOT  (reload=$RELOAD pw=$PWSTAT $SAVED)"

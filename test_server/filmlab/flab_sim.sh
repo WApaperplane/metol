@@ -44,20 +44,37 @@ EOF
   cat > "$SIM/opt/prefman" <<EOF
 #!/bin/sh
 echo "prefman \$*" >> "$SIM/calls.log"
-case "\$1" in get) echo "value = 100";; esac
+case "\$1" in
+  get)
+    # 地址 = PW_BASE(41964) + param*52 + slot*4；param<3 是 R/G/B(0-200)，其余 0-20。
+    # 旧 shim 一律返回 100 ⇒ backup_slot 的 0-20 校验必然拒绝，整个回归从根上误报。
+    rel=\$((\$3 - 41964))
+    p=\$((rel / 52))
+    if [ "\$p" -lt 3 ]; then echo "value = 100"; else echo "value = 10"; fi
+    ;;
+  *) : ;;
+esac
 exit 0
 EOF
   cat > "$SIM/opt/st" <<EOF
 #!/bin/sh
 echo "st \$*" >> "$SIM/calls.log"
 case "\$*" in
-  "cap capdtm getusr 20"*) echo "UserData is CUSTOM (0x140009)";;
+  "cap capdtm getusr 20"*)
+      cur=\$(cat "$SIM/cur_pw" 2>/dev/null)
+      [ -n "\$cur" ] || cur="0x140009"
+      echo "UserData is CUSTOM (\$cur)"
+      ;;
+  "cap capdtm setusr 20 "*)
+      echo "\$5" > "$SIM/cur_pw"
+      ;;
   *) : ;;
 esac
 exit 0
 EOF
   cat > "$SIM/opt/pwsend.arm" <<EOF
 #!/bin/sh
+echo "pwsend.arm \$*" >> "$SIM/calls.log"
 echo "PWSEND: \$*"
 exit 0
 EOF
@@ -83,17 +100,18 @@ case_apply_fast() {
   N=$(grep -c "prefman set" "$SIM/calls.log" 2>/dev/null || echo 0)
   [ "$N" = "7" ] && ok "prefman set = 7 次" || bad "prefman set = $N（应 7）"
   T=$(grep -c "prefman\|^st " "$SIM/calls.log" 2>/dev/null || echo 0)
-  [ "$T" -le 12 ] && ok "总进程调用 = $T（≤12，旧版 ~33）" || bad "总进程调用 = $T（应 ≤12）"
+  # 组成：7 set + 7 backup 回读（仅首次）+ 1 save + 2 getusr（CLI 跟随当前档位）
+  [ "$T" -le 18 ] && ok "总进程调用 = $T（≤18）" || bad "总进程调用 = $T（应 ≤18）"
 }
 
 case_apply_pw() {
-  echo "== 用例 2：FILMLAB_PW=1 三维直推参数（10-10 上机定案：R/G/B/HUE 无外部通路）=="
+  echo "== 用例 2：FILMLAB_PW=1 A2 全 7 维直推（0x134..0x13B + 提交位）=="
   reset_calls
   OUT=$(FILMLAB_PW=1 filmlab apply portra400 --fast)
-  echo "$OUT" | grep -q "seq 0x110 0xffffd80a 0x111 0xffffd80a 0x112 0xffefd80a --yes" \
-    && ok "SAT/SHARP/CON 三维（0x110-0x112）" || bad "S/P/C 参数错：$(echo "$OUT" | grep seq)"
-  echo "$OUT" | grep -q "0x130" \
-    && bad "仍发 R/G/B/HUE（应默认跳过：无可达通路）" || ok "已跳过 0x130-0x133（无外部通路）"
+  echo "$OUT" | grep -q "seq 0x134 108 0x135 100 0x136 93 0x137 11 0x138 6 0x139 9 0x13A 8 0x13B 1" \
+    && ok "七维原始值 + 提交位" || bad "A2 seq 错：$(echo "$OUT" | grep -i 'seq ' | head -2)"
+  echo "$OUT" | grep -q "0x110" \
+    && bad "仍发 A1 三维（0x110-0x112）" || ok "未混入 A1 三维"
   echo "$OUT" | grep -q "pw=direct" && ok "fast 行含 pw=direct" || bad "fast 行缺 pw 状态"
 }
 
@@ -117,7 +135,7 @@ case_jline() {
     /^        "/ && key == want { name=$0; sub(/^ *"/,"",name); sub(/":.*$/,"",name); val=$0; gsub(/[^0-9-]/,"",val); F[name]=val; next }
     /^    \}/ { if (key == want) { printf "%s|%s|%s|%s|%s|%s|%s\n", F["R_COLOR"],F["G_COLOR"],F["B_COLOR"],F["HUE"],F["SATURATION"],F["SHARPNESS"],F["CONTRAST"]; exit } }
   ' "$RECIPES")
-  [ "$LINE" = "106|100|93|11|9|9|8" ] && ok "portra400 = $LINE" || bad "portra400 提取 = $LINE"
+  [ "$LINE" = "108|100|93|11|6|9|8" ] && ok "portra400 = $LINE" || bad "portra400 提取 = $LINE（配方调色后需同步本基线）"
 }
 
 case_mkgui() {
@@ -129,8 +147,41 @@ case_mkgui() {
   grep -q "▶ 下页" "$MENU" && ok "分页导航在" || bad "缺分页导航"
 }
 
+#--------------------------------------------------------------- 用例 6
+# ★ 2026-11-14 新增：ssam87 在 GitHub Discussion 报「换配方后 custom 1 和 custom 2
+#   都被改」。根因是 A2 直推在"用户仍停在自定义2"时发送，相机把改动归属到当前档，
+#   而引擎只 set/backup 了 slot 9。这个用例钉住两条修复：直推前先切 CUSTOM1、
+#   打开面板时所在档位也要备份。
+case_pollute() {
+  echo "== 用例 6：非 CUSTOM1 档位不被污染（ssam87 2026-11-12 报告回归）=="
+  rm -rf "$SIM/lab/slot-backups" "$SIM/ram"
+  mkdir -p "$SIM/ram"
+  echo "0x14000a" > "$SIM/cur_pw"          # 用户停在 自定义2
+  reset_calls
+  NX_RAM="$SIM/ram" FILMLAB_PW=1 FILMLAB_ENUM_CACHE=0x14000a filmlab commit portra400 >/dev/null 2>&1
+  grep -q "cap capdtm setusr 20 0x140009" "$SIM/calls.log" \
+    && ok "直推前切到 CUSTOM1" || bad "没有前置切档（污染窗口仍开着）"
+  [ -s "$SIM/lab/slot-backups/slot-10.txt" ] \
+    && ok "当前档位 slot10 已备份" || bad "slot 10 无备份（污染后不可恢复）"
+  grep -q '^10|' "$SIM/lab/slot-backups/slot-10.txt" 2>/dev/null \
+    && ok "备份格式 slot|七维" || bad "备份内容异常"
+  A=$(grep -n "setusr 20 0x140009" "$SIM/calls.log" | head -1 | cut -d: -f1)
+  B=$(grep -n "pwsend.arm seq" "$SIM/calls.log" | head -1 | cut -d: -f1)
+  if [ -n "$A" ] && [ -n "$B" ] && [ "$A" -lt "$B" ]; then
+    ok "切档早于直推（行 $A < $B）"
+  else
+    bad "顺序错：setusr@${A:-无} pwsend@${B:-无}"
+  fi
+  # 常态（停在 CUSTOM1）必须零 st 开销：cache 已说明在 9 就不该再问一次
+  echo "0x140009" > "$SIM/cur_pw"; reset_calls
+  NX_RAM="$SIM/ram" FILMLAB_PW=1 FILMLAB_ENUM_CACHE=0x140009 filmlab commit portra400 >/dev/null 2>&1
+  N=$(grep -c "cap capdtm setusr" "$SIM/calls.log" 2>/dev/null || :)
+  N=${N:-0}
+  [ "$N" = "0" ] && ok "停在 CUSTOM1 时零 setusr" || bad "多做 $N 次 setusr"
+}
+
 #--------------------------------------------------------------- main
-ALL=(apply-fast apply-pw apply-detail jline mkgui)
+ALL=(apply-fast apply-pw apply-detail jline mkgui pollute)
 WANT="${1:-all}"
 
 setup
@@ -145,6 +196,7 @@ for c in "${ALL[@]}"; do
     apply-detail) case_apply_detail ;;
     jline)        case_jline ;;
     mkgui)        case_mkgui ;;
+    pollute)      case_pollute ;;
   esac
   echo ""
 done
