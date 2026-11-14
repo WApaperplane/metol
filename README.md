@@ -9,7 +9,7 @@ Samsung NX500 / NX1（Tizen / DRIMe5）增强固件 mod，基于社区上游
 
 > English version: [README_EN.md](README_EN.md)
 
-**最新 v2.88.0-nxwa.15.3**（2026-11-10）— 双语发行：每次发版两个包，
+**最新 v2.88.0-nxwa.15.4**（2026-11-14）— 双语发行：每次发版两个包，
 `NX-WA-<ver>.zip`（中文）与 `NX-WA-<ver>-EN.zip`（英文菜单 / 英文 NXUI 面板 / 英文 README），
 Release 说明中英并列。
 

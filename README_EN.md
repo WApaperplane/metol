@@ -9,7 +9,7 @@ An enhancement mod for the **Samsung NX500 / NX1** (Tizen / DRIMe5), built on th
 
 > 中文版见 [README.md](README.md)
 
-**Latest v2.88.0-nxwa.15.3** (2026-11-10) — bilingual release: every version ships two packages,
+**Latest v2.88.0-nxwa.15.4** (2026-11-14) — bilingual release: every version ships two packages,
 `NX-WA-<ver>.zip` (Chinese) and `NX-WA-<ver>-EN.zip` (English menus / English NXUI panel / English
 README), with release notes in both languages.
 
